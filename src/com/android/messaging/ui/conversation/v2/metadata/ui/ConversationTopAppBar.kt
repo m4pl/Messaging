@@ -1,5 +1,6 @@
 package com.android.messaging.ui.conversation.v2.metadata.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,17 +49,21 @@ internal fun ConversationTopAppBar(
     metadata: ConversationMetadataUiState,
     isAddPeopleVisible: Boolean = false,
     onAddPeopleClick: () -> Unit,
+    onTitleClick: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
     val presentation = rememberConversationTopAppBarPresentation(
         metadata = metadata,
     )
+    val isTitleClickable = metadata is ConversationMetadataUiState.Present
 
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
         colors = conversationTopAppBarColors(),
         title = {
             ConversationTopAppBarTitle(
+                isClickable = isTitleClickable,
+                onClick = onTitleClick,
                 presentation = presentation,
             )
         },
@@ -117,9 +122,15 @@ private fun rememberConversationTopAppBarPresentation(
 
 @Composable
 private fun ConversationTopAppBarTitle(
+    isClickable: Boolean,
+    onClick: () -> Unit,
     presentation: ConversationTopAppBarPresentation,
 ) {
     Row(
+        modifier = Modifier.clickable(
+            enabled = isClickable,
+            onClick = onClick,
+        ),
         horizontalArrangement = Arrangement.spacedBy(
             space = CONVERSATION_TOP_APP_BAR_TITLE_SPACING,
         ),
