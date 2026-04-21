@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Description
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -23,13 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.android.messaging.R
 import com.android.messaging.ui.conversation.v2.messages.model.attachment.ConversationInlineAttachment
-import com.android.messaging.ui.conversation.v2.messages.model.attachment.ConversationInlineAttachmentKind
 
 @Composable
 internal fun ConversationGenericInlineAttachmentRow(
-    attachment: ConversationInlineAttachment,
+    attachment: ConversationInlineAttachment.File,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onLongClick: () -> Unit,
@@ -77,9 +73,7 @@ internal fun ConversationGenericInlineAttachmentRow(
                 modifier = Modifier.size(size = 28.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                ConversationInlineAttachmentIcon(
-                    kind = attachment.kind,
-                )
+                ConversationFileInlineAttachmentIcon()
             }
 
             Column(
@@ -104,31 +98,9 @@ internal fun ConversationGenericInlineAttachmentRow(
 }
 
 @Composable
-private fun ConversationInlineAttachmentIcon(
-    kind: ConversationInlineAttachmentKind,
-) {
-    when (kind) {
-        ConversationInlineAttachmentKind.AUDIO -> {
-            Icon(
-                imageVector = Icons.Rounded.PlayArrow,
-                contentDescription = stringResource(
-                    id = R.string.audio_play_content_description,
-                ),
-            )
-        }
-
-        ConversationInlineAttachmentKind.FILE -> {
-            Icon(
-                imageVector = Icons.Rounded.Description,
-                contentDescription = null,
-            )
-        }
-
-        ConversationInlineAttachmentKind.VCARD -> {
-            Icon(
-                imageVector = Icons.Rounded.Person,
-                contentDescription = null,
-            )
-        }
-    }
+private fun ConversationFileInlineAttachmentIcon() {
+    Icon(
+        imageVector = Icons.Rounded.Description,
+        contentDescription = null,
+    )
 }

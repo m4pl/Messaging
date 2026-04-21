@@ -44,14 +44,14 @@ private val AUDIO_ATTACHMENT_HEIGHT = 70.dp
 
 @Composable
 internal fun ConversationInlineAudioAttachmentRow(
-    attachment: ConversationInlineAttachment,
+    attachment: ConversationInlineAttachment.Audio,
     isIncoming: Boolean,
     isSelectionMode: Boolean,
     useStandaloneAudioAttachmentBackground: Boolean,
     onLongClick: () -> Unit,
 ) {
     val context = LocalContext.current
-    val contentUri = attachment.contentUri ?: return
+    val contentUri = attachment.contentUri
 
     val title = attachment.titleText
         ?: attachment.titleTextResId?.let { stringResource(it) }
