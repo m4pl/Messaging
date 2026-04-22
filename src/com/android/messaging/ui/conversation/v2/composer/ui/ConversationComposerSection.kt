@@ -4,21 +4,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import com.android.messaging.ui.conversation.v2.composer.model.ConversationComposerAttachmentUiState
+import com.android.messaging.ui.conversation.v2.composer.model.ComposerAttachmentUiModel
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun ConversationComposerSection(
     modifier: Modifier = Modifier,
-    attachments: List<ConversationComposerAttachmentUiState>,
+    attachments: ImmutableList<ComposerAttachmentUiModel>,
     messageText: String,
     isMessageFieldEnabled: Boolean,
     isAttachmentActionEnabled: Boolean,
     isSendActionEnabled: Boolean,
     messageFieldFocusRequester: FocusRequester,
-    onAttachmentClick: () -> Unit,
+    onContactAttachClick: () -> Unit,
+    onMediaPickerClick: () -> Unit,
     onMessageTextChange: (String) -> Unit,
     onPendingAttachmentRemove: (String) -> Unit,
-    onResolvedAttachmentClick: (ConversationComposerAttachmentUiState.Resolved) -> Unit,
+    onResolvedAttachmentClick: (ComposerAttachmentUiModel.Resolved) -> Unit,
     onResolvedAttachmentRemove: (String) -> Unit,
     onSendClick: () -> Unit,
 ) {
@@ -38,7 +40,8 @@ internal fun ConversationComposerSection(
             isAttachmentActionEnabled = isAttachmentActionEnabled,
             isSendActionEnabled = isSendActionEnabled,
             messageFieldFocusRequester = messageFieldFocusRequester,
-            onAttachmentClick = onAttachmentClick,
+            onContactAttachClick = onContactAttachClick,
+            onMediaPickerClick = onMediaPickerClick,
             onMessageTextChange = onMessageTextChange,
             onSendClick = onSendClick,
         )

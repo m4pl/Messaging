@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -32,21 +33,25 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.conversation.v2.CONVERSATION_ATTACHMENT_PREVIEW_LIST_TEST_TAG
-import com.android.messaging.ui.conversation.v2.composer.model.ConversationComposerAttachmentUiState
+import com.android.messaging.ui.conversation.v2.composer.model.ComposerAttachmentUiModel
 import com.android.messaging.ui.conversation.v2.conversationAttachmentPreviewItemTestTag
 import com.android.messaging.ui.conversation.v2.conversationAttachmentPreviewRemoveButtonTestTag
 import com.android.messaging.ui.conversation.v2.mediapicker.component.ConversationMediaThumbnail
-import com.android.messaging.util.ContentType
+import com.android.messaging.ui.conversation.v2.messages.model.attachment.ConversationVCardAttachmentUiModel
+import com.android.messaging.ui.conversation.v2.messages.ui.attachment.ConversationVCardAttachmentCardContent
+import kotlinx.collections.immutable.ImmutableList
 
 private val ATTACHMENT_PREVIEW_CORNER_RADIUS = 20.dp
+private val ATTACHMENT_PREVIEW_CARD_HEIGHT = 88.dp
+private val ATTACHMENT_PREVIEW_CARD_WIDTH = 220.dp
 private const val ATTACHMENT_PREVIEW_SIZE_PX = 256
 
 @Composable
 internal fun ConversationAttachmentPreview(
     modifier: Modifier = Modifier,
-    attachments: List<ConversationComposerAttachmentUiState>,
+    attachments: ImmutableList<ComposerAttachmentUiModel>,
     onPendingAttachmentRemove: (String) -> Unit,
-    onResolvedAttachmentClick: (ConversationComposerAttachmentUiState.Resolved) -> Unit,
+    onResolvedAttachmentClick: (ComposerAttachmentUiModel.Resolved) -> Unit,
     onResolvedAttachmentRemove: (String) -> Unit,
 ) {
     if (attachments.isEmpty()) {
@@ -68,7 +73,7 @@ internal fun ConversationAttachmentPreview(
             key = { attachment -> attachment.key },
         ) { attachment ->
             when (attachment) {
-                is ConversationComposerAttachmentUiState.Pending -> {
+                is ComposerAttachmentUiModel.Pending -> {
                     PendingAttachmentPreviewItem(
                         attachmentKey = attachment.key,
                         onRemoveClick = {
@@ -77,7 +82,7 @@ internal fun ConversationAttachmentPreview(
                     )
                 }
 
-                is ConversationComposerAttachmentUiState.Resolved -> {
+                is ComposerAttachmentUiModel.Resolved -> {
                     ResolvedAttachmentPreviewItem(
                         attachment = attachment,
                         attachmentKey = attachment.key,
@@ -100,6 +105,7 @@ private fun PendingAttachmentPreviewItem(
     onRemoveClick: () -> Unit,
 ) {
     AttachmentPreviewItemContainer(
+        modifier = Modifier.size(88.dp),
         attachmentKey = attachmentKey,
         onClick = {},
     ) {
@@ -130,7 +136,39 @@ private fun PendingAttachmentPreviewItem(
 
 @Composable
 private fun ResolvedAttachmentPreviewItem(
-    attachment: ConversationComposerAttachmentUiState.Resolved,
+    attachment: ComposerAttachmentUiModel.Resolved,
+    attachmentKey: String,
+    onAttachmentClick: () -> Unit,
+    onRemoveClick: () -> Unit,
+) {
+    when (attachment) {
+        is ComposerAttachmentUiModel.Resolved.VCard -> {
+            ConversationVCardAttachmentPreviewItem(
+                attachmentKey = attachmentKey,
+                uiModel = attachment.vCardUiModel,
+                onAttachmentClick = onAttachmentClick,
+                onRemoveClick = onRemoveClick,
+            )
+        }
+
+        is ComposerAttachmentUiModel.Resolved.Audio,
+        is ComposerAttachmentUiModel.Resolved.File,
+        is ComposerAttachmentUiModel.Resolved.VisualMedia.Image,
+        is ComposerAttachmentUiModel.Resolved.VisualMedia.Video,
+        -> {
+            ConversationResolvedAttachmentThumbnailPreviewItem(
+                attachment = attachment,
+                attachmentKey = attachmentKey,
+                onAttachmentClick = onAttachmentClick,
+                onRemoveClick = onRemoveClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConversationResolvedAttachmentThumbnailPreviewItem(
+    attachment: ComposerAttachmentUiModel.Resolved,
     attachmentKey: String,
     onAttachmentClick: () -> Unit,
     onRemoveClick: () -> Unit,
@@ -141,6 +179,7 @@ private fun ResolvedAttachmentPreviewItem(
     )
 
     AttachmentPreviewItemContainer(
+        modifier = Modifier.size(90.dp),
         attachmentKey = attachmentKey,
         onClick = onAttachmentClick,
     ) {
@@ -151,18 +190,8 @@ private fun ResolvedAttachmentPreviewItem(
             size = thumbnailSize,
         )
 
-        if (ContentType.isVideoType(attachment.contentType)) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                )
-            }
+        if (attachment is ComposerAttachmentUiModel.Resolved.VisualMedia.Video) {
+            VideoAttachmentOverlay()
         }
 
         RemoveAttachmentButton(
@@ -173,14 +202,69 @@ private fun ResolvedAttachmentPreviewItem(
 }
 
 @Composable
+private fun VideoAttachmentOverlay() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.PlayArrow,
+            contentDescription = null,
+            modifier = Modifier.size(28.dp),
+            tint = MaterialTheme.colorScheme.onPrimary,
+        )
+    }
+}
+
+@Composable
+private fun ConversationVCardAttachmentPreviewItem(
+    attachmentKey: String,
+    uiModel: ConversationVCardAttachmentUiModel,
+    onAttachmentClick: () -> Unit,
+    onRemoveClick: () -> Unit,
+) {
+    AttachmentPreviewItemContainer(
+        modifier = Modifier.size(
+            width = ATTACHMENT_PREVIEW_CARD_WIDTH,
+            height = ATTACHMENT_PREVIEW_CARD_HEIGHT,
+        ),
+        attachmentKey = attachmentKey,
+        onClick = onAttachmentClick,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            ConversationVCardAttachmentCardContent(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(alignment = Alignment.CenterStart)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                type = uiModel.type,
+                titleText = uiModel.titleText,
+                titleTextResId = uiModel.titleTextResId,
+                subtitleText = uiModel.subtitleText,
+                subtitleTextResId = uiModel.subtitleTextResId,
+            )
+
+            RemoveAttachmentButton(
+                attachmentKey = attachmentKey,
+                onClick = onRemoveClick,
+            )
+        }
+    }
+}
+
+@Composable
 private fun AttachmentPreviewItemContainer(
+    modifier: Modifier = Modifier,
     attachmentKey: String,
     onClick: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Surface(
-        modifier = Modifier
-            .size(88.dp)
+        modifier = modifier
             .clip(RoundedCornerShape(ATTACHMENT_PREVIEW_CORNER_RADIUS))
             .clickable(onClick = onClick)
             .testTag(

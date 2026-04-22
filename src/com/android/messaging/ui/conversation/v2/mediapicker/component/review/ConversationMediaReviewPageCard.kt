@@ -39,10 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import com.android.messaging.R
-import com.android.messaging.ui.conversation.v2.composer.model.ConversationComposerAttachmentUiState
+import com.android.messaging.ui.conversation.v2.composer.model.ComposerAttachmentUiModel
 import com.android.messaging.ui.conversation.v2.mediapicker.component.ConversationMediaThumbnail
 import com.android.messaging.ui.conversation.v2.mediapicker.component.PickerOverlayBackgroundButton
-import com.android.messaging.util.ContentType
 import kotlin.math.absoluteValue
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
@@ -51,15 +50,15 @@ private const val PICKER_REVIEW_PAGE_REMOVE_ANIMATION_DURATION_MILLIS = 160
 
 @Composable
 internal fun ConversationMediaReviewPageCard(
-    attachment: ConversationComposerAttachmentUiState.Resolved,
-    attachments: ImmutableList<ConversationComposerAttachmentUiState.Resolved>,
+    attachment: ComposerAttachmentUiModel.Resolved.VisualMedia,
+    attachments: ImmutableList<ComposerAttachmentUiModel.Resolved.VisualMedia>,
     page: Int,
     pageHeight: Dp,
     pageWidth: Dp,
     pagerState: PagerState,
     previewSize: IntSize,
     shouldShowDeleteChip: Boolean,
-    onAttachmentPreviewClick: (ConversationComposerAttachmentUiState.Resolved) -> Unit,
+    onAttachmentPreviewClick: (ComposerAttachmentUiModel.Resolved.VisualMedia) -> Unit,
     onAttachmentRemove: (String) -> Unit,
     onClearReview: () -> Unit,
 ) {
@@ -86,8 +85,8 @@ internal fun ConversationMediaReviewPageCard(
 
 @Composable
 private fun rememberConversationMediaReviewPageCardState(
-    attachment: ConversationComposerAttachmentUiState.Resolved,
-    attachments: ImmutableList<ConversationComposerAttachmentUiState.Resolved>,
+    attachment: ComposerAttachmentUiModel.Resolved.VisualMedia,
+    attachments: ImmutableList<ComposerAttachmentUiModel.Resolved.VisualMedia>,
     shouldShowDeleteChip: Boolean,
     onAttachmentRemove: (String) -> Unit,
     onClearReview: () -> Unit,
@@ -146,14 +145,14 @@ private fun rememberConversationMediaReviewPageCardState(
 
 @Composable
 private fun ConversationMediaReviewPageCardContent(
-    attachment: ConversationComposerAttachmentUiState.Resolved,
+    attachment: ComposerAttachmentUiModel.Resolved.VisualMedia,
     page: Int,
     pageHeight: Dp,
     pageWidth: Dp,
     pagerState: PagerState,
     previewSize: IntSize,
     contentState: ConversationMediaReviewPageCardContentState,
-    onAttachmentPreviewClick: (ConversationComposerAttachmentUiState.Resolved) -> Unit,
+    onAttachmentPreviewClick: (ComposerAttachmentUiModel.Resolved.VisualMedia) -> Unit,
     onAttachmentRemoveClick: () -> Unit,
 ) {
     val pageCardModifier = Modifier
@@ -214,7 +213,7 @@ private fun ConversationMediaReviewPageCardContent(
 
 @Composable
 private fun ConversationMediaReviewPreview(
-    attachment: ConversationComposerAttachmentUiState.Resolved,
+    attachment: ComposerAttachmentUiModel.Resolved.VisualMedia,
     modifier: Modifier = Modifier,
     previewSize: IntSize,
 ) {
@@ -244,7 +243,7 @@ private fun ConversationMediaReviewPreview(
                 backgroundColor = Color.Transparent,
             )
 
-            if (ContentType.isVideoType(attachment.contentType)) {
+            if (attachment is ComposerAttachmentUiModel.Resolved.VisualMedia.Video) {
                 ConversationMediaReviewVideoBadge()
             }
         }

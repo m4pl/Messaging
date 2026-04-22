@@ -39,7 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
-import com.android.messaging.ui.conversation.v2.composer.model.ConversationComposerAttachmentUiState
+import com.android.messaging.ui.conversation.v2.composer.model.ComposerAttachmentUiModel
 import com.android.messaging.ui.conversation.v2.composer.ui.ConversationSendActionButton
 import com.android.messaging.ui.conversation.v2.mediapicker.component.PickerOverlayIconButton
 import kotlinx.collections.immutable.ImmutableList
@@ -52,12 +52,12 @@ private const val PICKER_REVIEW_PAGE_WIDTH_FRACTION = 0.8f
 internal fun ConversationMediaReviewScene(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    attachments: ImmutableList<ConversationComposerAttachmentUiState.Resolved>,
+    attachments: ImmutableList<ComposerAttachmentUiModel.Resolved.VisualMedia>,
     conversationTitle: String?,
     initiallyReviewedContentUri: String?,
     reviewRequestSequence: Int,
     isSendActionEnabled: Boolean,
-    onAttachmentPreviewClick: (ConversationComposerAttachmentUiState.Resolved) -> Unit,
+    onAttachmentPreviewClick: (ComposerAttachmentUiModel.Resolved.VisualMedia) -> Unit,
     onCaptionChange: (String, String) -> Unit,
     onAttachmentRemove: (String) -> Unit,
     onAddMoreClick: () -> Unit,
@@ -174,10 +174,10 @@ private fun ConversationMediaReviewTopBar(
 private fun ConversationMediaReviewPager(
     modifier: Modifier = Modifier,
     attachmentContentUris: ImmutableList<String>,
-    attachments: ImmutableList<ConversationComposerAttachmentUiState.Resolved>,
+    attachments: ImmutableList<ComposerAttachmentUiModel.Resolved.VisualMedia>,
     pagerState: PagerState,
     visibleDeleteChipPage: Int?,
-    onAttachmentPreviewClick: (ConversationComposerAttachmentUiState.Resolved) -> Unit,
+    onAttachmentPreviewClick: (ComposerAttachmentUiModel.Resolved.VisualMedia) -> Unit,
     onAttachmentRemove: (String) -> Unit,
     onClearReview: () -> Unit,
 ) {
@@ -307,10 +307,10 @@ private fun ReviewCaptionTextField(
             cursorColor = MaterialTheme.colorScheme.primary,
             focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                alpha = 0.8f
+                alpha = 0.8f,
             ),
             disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                alpha = 0.5f
+                alpha = 0.5f,
             ),
         ),
         placeholder = {
@@ -324,7 +324,7 @@ private fun ReviewCaptionTextField(
 
 @Composable
 private fun ConversationMediaReviewBottomBar(
-    attachment: ConversationComposerAttachmentUiState.Resolved,
+    attachment: ComposerAttachmentUiModel.Resolved.VisualMedia,
     isSendActionEnabled: Boolean,
     onCaptionChange: (String, String) -> Unit,
     onSendClick: () -> Unit,
