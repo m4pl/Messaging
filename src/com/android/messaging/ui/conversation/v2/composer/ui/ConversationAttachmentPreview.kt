@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
@@ -81,7 +82,13 @@ internal fun ConversationAttachmentPreview(
             key = { attachment -> attachment.key },
         ) { attachment ->
             when (attachment) {
-                is ComposerAttachmentUiModel.Pending -> {
+                is ComposerAttachmentUiModel.Pending.AudioFinalizing -> {
+                    PendingAudioAttachmentPreviewItem(
+                        attachmentKey = attachment.key,
+                    )
+                }
+
+                is ComposerAttachmentUiModel.Pending.Generic -> {
                     PendingAttachmentPreviewItem(
                         attachmentKey = attachment.key,
                         onRemoveClick = {
@@ -139,6 +146,51 @@ private fun PendingAttachmentPreviewItem(
             attachmentKey = attachmentKey,
             onClick = onRemoveClick,
         )
+    }
+}
+
+@Composable
+private fun PendingAudioAttachmentPreviewItem(
+    attachmentKey: String,
+) {
+    AttachmentPreviewItemContainer(
+        modifier = Modifier
+            .height(height = ATTACHMENT_PREVIEW_CARD_HEIGHT)
+            .wrapContentWidth(),
+        attachmentKey = attachmentKey,
+        onClick = {},
+    ) {
+        Row(
+            modifier = Modifier
+                .wrapContentWidth()
+                .height(height = ATTACHMENT_PREVIEW_CARD_HEIGHT)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(shape = RoundedCornerShape(size = 20.dp))
+                    .background(color = MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+
+            Text(
+                modifier = Modifier.wrapContentWidth(),
+                text = stringResource(id = R.string.audio_recording_finalizing_attachment_label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+        }
     }
 }
 

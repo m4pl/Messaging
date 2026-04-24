@@ -28,6 +28,7 @@ internal fun ConversationComposerSection(
     onResolvedAttachmentRemove: (String) -> Unit,
     onAudioRecordingStartRequest: () -> Unit,
     onAudioRecordingFinish: () -> Unit,
+    onAudioRecordingLock: () -> Boolean,
     onAudioRecordingCancel: () -> Unit,
     onSendClick: () -> Unit,
 ) {
@@ -55,6 +56,7 @@ internal fun ConversationComposerSection(
             onMessageTextChange = onMessageTextChange,
             onAudioRecordingStartRequest = onAudioRecordingStartRequest,
             onAudioRecordingFinish = onAudioRecordingFinish,
+            onAudioRecordingLock = onAudioRecordingLock,
             onAudioRecordingCancel = onAudioRecordingCancel,
             onSendClick = onSendClick,
         )
