@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.ContentResolver
 import android.content.Context
 import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
 import dagger.Module
 import dagger.Provides
 import dagger.Reusable
@@ -86,5 +87,14 @@ internal class CoreProvidesModule {
         context: Context,
     ): SubscriptionManager {
         return context.getSystemService(SubscriptionManager::class.java)
+    }
+
+    @Provides
+    @Reusable
+    fun provideTelephonyManager(
+        @ApplicationContext
+        context: Context,
+    ): TelephonyManager {
+        return context.getSystemService(TelephonyManager::class.java)
     }
 }
