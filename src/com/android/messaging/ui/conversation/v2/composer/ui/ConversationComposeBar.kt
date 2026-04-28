@@ -11,7 +11,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -74,7 +73,6 @@ import com.android.messaging.ui.conversation.v2.CONVERSATION_TEXT_FIELD_TEST_TAG
 import com.android.messaging.ui.conversation.v2.audio.model.ConversationAudioRecordingPhase
 import com.android.messaging.ui.conversation.v2.audio.model.ConversationAudioRecordingUiState
 import com.android.messaging.ui.conversation.v2.conversationShape
-import com.android.messaging.ui.core.AppTheme
 
 internal val AUDIO_RECORD_CANCEL_THRESHOLD = 96.dp
 internal val AUDIO_RECORD_LOCK_THRESHOLD = 72.dp
@@ -703,18 +701,3 @@ private data class ConversationComposeInputState(
     val isRecordMode: Boolean,
     val isRecordingControlEnabled: Boolean,
 )
-
-@Composable
-private fun ConversationComposeBarPreviewContainer(
-    content: @Composable () -> Unit,
-) {
-    AppTheme {
-        Box(
-            modifier = Modifier
-                .background(color = MaterialTheme.colorScheme.background)
-                .padding(vertical = 24.dp),
-        ) {
-            content()
-        }
-    }
-}
