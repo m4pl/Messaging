@@ -45,8 +45,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.conversation.v2.composer.model.ComposerAttachmentUiModel
+import com.android.messaging.ui.conversation.v2.composer.model.ConversationSendActionButtonMode
 import com.android.messaging.ui.conversation.v2.composer.ui.ConversationSendActionButton
-import com.android.messaging.ui.conversation.v2.composer.ui.ConversationSendActionButtonMode
 import com.android.messaging.ui.conversation.v2.mediapicker.component.PickerOverlayIconButton
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
