@@ -39,13 +39,13 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.conversation.v2.CONVERSATION_ATTACHMENT_PREVIEW_LIST_TEST_TAG
+import com.android.messaging.ui.conversation.v2.attachment.model.ConversationVCardAttachmentUiModel
+import com.android.messaging.ui.conversation.v2.attachment.ui.ConversationMediaThumbnail
+import com.android.messaging.ui.conversation.v2.attachment.ui.ConversationVCardAttachmentCardContent
 import com.android.messaging.ui.conversation.v2.audio.formatConversationAudioDuration
 import com.android.messaging.ui.conversation.v2.composer.model.ComposerAttachmentUiModel
 import com.android.messaging.ui.conversation.v2.conversationAttachmentPreviewItemTestTag
 import com.android.messaging.ui.conversation.v2.conversationAttachmentPreviewRemoveButtonTestTag
-import com.android.messaging.ui.conversation.v2.mediapicker.component.ConversationMediaThumbnail
-import com.android.messaging.ui.conversation.v2.messages.model.attachment.ConversationVCardAttachmentUiModel
-import com.android.messaging.ui.conversation.v2.messages.ui.attachment.ConversationVCardAttachmentCardContent
 import kotlinx.collections.immutable.ImmutableList
 
 private val ATTACHMENT_PREVIEW_CORNER_RADIUS = 20.dp
