@@ -345,6 +345,7 @@ private fun ConversationMessageAttachmentBubbleContent(
                 text = bodyText,
                 style = MaterialTheme.typography.bodyLarge,
                 onExternalUriClick = onExternalUriClick,
+                onMessageLongClick = onMessageLongClick,
             )
         }
     }
@@ -392,6 +393,7 @@ private fun ConversationMessageBody(
             text = bodyText,
             style = MaterialTheme.typography.bodyLarge,
             onExternalUriClick = onExternalUriClick,
+            onMessageLongClick = onMessageLongClick,
         )
     }
 }

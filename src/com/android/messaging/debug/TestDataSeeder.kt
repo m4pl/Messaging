@@ -38,6 +38,7 @@ import kotlin.math.sin
 private const val TAG = "TestDataSeeder"
 private const val TEST_PHONE_PREFIX = "+15550"
 private const val TEST_YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+private const val TEST_LINK_MESSAGE_URL = "https://grapheneos.org"
 private const val MEDIA_SCRATCH_FILE_EXTENSION_QUERY_PARAMETER = "ext"
 private const val SEED_IMAGE_1_FILE_ID = "800001"
 private const val SEED_IMAGE_2_FILE_ID = "800002"
@@ -1052,6 +1053,7 @@ private fun seedScenarioF(db: DatabaseWrapper, selfId: String, henryId: String, 
         "It's important",
         "Please reply when you get a chance",
         "I'll be online for the next hour",
+        TEST_LINK_MESSAGE_URL,
     )
 
     var latestMsgId = 0L
@@ -1118,6 +1120,7 @@ private fun seedScenarioG(
         Msg("text", text = "I took that one on the way home", isIncoming = false),
         Msg("text", text = "You have such a good eye for photos!", isIncoming = true),
         Msg("text", text = "Thanks! We should go together sometime", isIncoming = false),
+        Msg("text", text = TEST_LINK_MESSAGE_URL, isIncoming = false),
         Msg("text", text = "Definitely, let me know when you're free", isIncoming = true),
         Msg("image", imageUri = img2, isIncoming = true),
         Msg("text", text = "And one more from yesterday", isIncoming = true),
