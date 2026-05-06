@@ -43,6 +43,7 @@ internal fun ConversationMessage(
     message: ConversationMessageUiModel,
     isSelected: Boolean = false,
     isSelectionMode: Boolean = false,
+    showIncomingSenderLabel: Boolean = true,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit = { _, _ -> },
     onExternalUriClick: (String) -> Unit = {},
     onMessageClick: () -> Unit = {},
@@ -57,7 +58,10 @@ internal fun ConversationMessage(
             (maxWidth * MESSAGE_BUBBLE_WIDTH_FRACTION)
                 .coerceAtMost(MESSAGE_BUBBLE_MAX_WIDTH_DP.dp)
         }
-        val layout = rememberConversationMessageLayout(message = message)
+        val layout = rememberConversationMessageLayout(
+            message = message,
+            showIncomingSenderLabel = showIncomingSenderLabel,
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -97,6 +101,7 @@ internal enum class ConversationMessageBubbleLayoutMode {
 @Composable
 private fun rememberConversationMessageLayout(
     message: ConversationMessageUiModel,
+    showIncomingSenderLabel: Boolean,
 ): ConversationMessageLayout {
     val bubbleShape = remember(
         message.canClusterWithPrevious,
@@ -109,11 +114,13 @@ private fun rememberConversationMessageLayout(
     val metadataText = rememberConversationMessageMetadataText(message = message)
 
     val showSender = remember(
+        showIncomingSenderLabel,
         message.isIncoming,
         message.senderDisplayName,
         message.canClusterWithPrevious,
     ) {
         message.isIncoming &&
+            showIncomingSenderLabel &&
             !message.senderDisplayName.isNullOrBlank() &&
             !message.canClusterWithPrevious
     }

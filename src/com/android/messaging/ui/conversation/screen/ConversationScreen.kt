@@ -42,6 +42,7 @@ import com.android.messaging.ui.conversation.mediapicker.rememberConversationMed
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessagesUiState
 import com.android.messaging.ui.conversation.messages.ui.ConversationMessages
+import com.android.messaging.ui.conversation.metadata.model.ConversationMetadataUiState
 import com.android.messaging.ui.conversation.metadata.ui.ConversationTopAppBar
 import com.android.messaging.ui.conversation.screen.model.ConversationMessageDeleteConfirmationUiState
 import com.android.messaging.ui.conversation.screen.model.ConversationScreenScaffoldUiState
@@ -394,6 +395,10 @@ private fun ConversationScreenContent(
                 conversationId = conversationId,
             )
 
+            val showIncomingSenderLabels = shouldShowIncomingSenderLabels(
+                metadata = uiState.metadata,
+            )
+
             AutoScrollToLatestMessage(
                 conversationId = conversationId,
                 messages = messagesState.messages,
@@ -414,6 +419,7 @@ private fun ConversationScreenContent(
                 messages = messagesState.messages,
                 listState = messagesListState,
                 selectedMessageIds = uiState.selection.selectedMessageIds,
+                showIncomingSenderLabels = showIncomingSenderLabels,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
@@ -421,6 +427,15 @@ private fun ConversationScreenContent(
                 onMessageResendClick = onMessageResendClick,
             )
         }
+    }
+}
+
+private fun shouldShowIncomingSenderLabels(metadata: ConversationMetadataUiState): Boolean {
+    return when (metadata) {
+        is ConversationMetadataUiState.Present -> metadata.participantCount > 1
+        ConversationMetadataUiState.Loading,
+        ConversationMetadataUiState.Unavailable,
+        -> false
     }
 }
 
