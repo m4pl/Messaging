@@ -6,6 +6,8 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +17,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -39,6 +42,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private const val LINK_CLICK_SUPPRESSION_AFTER_LONG_PRESS_MILLIS = 500L
+
+internal val LocalConversationMessageLinkColor: ProvidableCompositionLocal<Color?> =
+    compositionLocalOf {
+        null
+    }
 
 @Composable
 internal fun ConversationMessageText(
@@ -145,7 +153,8 @@ private fun ConversationMessageTextContent(
 
 @Composable
 private fun rememberConversationTextLinkStyle(): TextLinkStyles {
-    val linkColor = MaterialTheme.colorScheme.primary
+    val linkColor = LocalConversationMessageLinkColor.current
+        ?: MaterialTheme.colorScheme.primary
 
     return remember(linkColor) {
         TextLinkStyles(

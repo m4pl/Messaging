@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +26,7 @@ import com.android.messaging.ui.conversation.messages.model.message.Conversation
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
 import com.android.messaging.ui.conversation.messages.ui.attachment.ConversationMessageAttachments
 import com.android.messaging.ui.conversation.messages.ui.text.ConversationMessageText
+import com.android.messaging.ui.conversation.messages.ui.text.LocalConversationMessageLinkColor
 
 private val MESSAGE_BUBBLE_MEDIA_SECTION_SPACING = 8.dp
 private val MESSAGE_BUBBLE_MEDIA_TEXT_PADDING = 12.dp
@@ -186,19 +188,30 @@ private fun ConversationMessageBubbleSurface(
     layout: ConversationMessageLayout,
     bubbleContent: @Composable () -> Unit,
 ) {
+    val contentColor = messageBubbleContentColor(
+        message = message,
+        isSelected = isSelected,
+    )
+
+    val linkColor = when {
+        isSelected -> contentColor
+        else -> MaterialTheme.colorScheme.primary
+    }
+
     Surface(
         color = messageBubbleColor(
             message = message,
             isSelected = isSelected,
         ),
-        contentColor = messageBubbleContentColor(
-            message = message,
-            isSelected = isSelected,
-        ),
+        contentColor = contentColor,
         shape = layout.bubbleShape,
         modifier = modifier,
     ) {
-        bubbleContent()
+        CompositionLocalProvider(
+            LocalConversationMessageLinkColor provides linkColor,
+        ) {
+            bubbleContent()
+        }
     }
 }
 
