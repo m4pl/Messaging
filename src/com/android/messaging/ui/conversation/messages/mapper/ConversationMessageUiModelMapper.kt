@@ -37,6 +37,7 @@ internal class ConversationMessageUiModelMapperImpl @Inject constructor(
             senderDisplayName = data.senderDisplayName,
             senderAvatarUri = data.senderProfilePhotoUri,
             senderContactLookupKey = data.senderContactLookupKey,
+            selfParticipantId = data.selfParticipantId?.takeIf { it.isNotBlank() },
             canClusterWithPrevious = data.canClusterWithPreviousMessage,
             canClusterWithNext = data.canClusterWithNextMessage,
             canCopyMessageToClipboard = data.canCopyMessageToClipboard,

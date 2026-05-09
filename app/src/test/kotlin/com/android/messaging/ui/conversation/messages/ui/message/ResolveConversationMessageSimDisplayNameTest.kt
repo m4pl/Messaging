@@ -1,0 +1,146 @@
+package com.android.messaging.ui.conversation.messages.ui.message
+
+import com.android.messaging.ui.conversation.messages.model.message.ConversationMessagePartUiModel
+import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+private const val SIM_1_ID = "self-sim-1"
+private const val SIM_2_ID = "self-sim-2"
+private const val SIM_1_NAME = "SIM 1"
+private const val SIM_2_NAME = "SIM 2"
+
+private val SIM_DISPLAY_NAMES = mapOf(
+    SIM_1_ID to SIM_1_NAME,
+    SIM_2_ID to SIM_2_NAME,
+)
+
+class ResolveConversationMessageSimDisplayNameTest {
+
+    @Test
+    fun returnsNullWhenSingleSubscription() {
+        val message = message(selfParticipantId = SIM_1_ID, isIncoming = false)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = null,
+            simDisplayNameByParticipantId = mapOf(SIM_1_ID to SIM_1_NAME),
+        )
+
+        assertNull(result)
+    }
+
+    @Test
+    fun returnsNullWhenMessageHasNoSelfParticipantId() {
+        val message = message(selfParticipantId = null, isIncoming = true)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = null,
+            simDisplayNameByParticipantId = SIM_DISPLAY_NAMES,
+        )
+
+        assertNull(result)
+    }
+
+    @Test
+    fun returnsNullWhenSelfParticipantIdMissingFromMap() {
+        val message = message(selfParticipantId = "unknown", isIncoming = false)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = null,
+            simDisplayNameByParticipantId = SIM_DISPLAY_NAMES,
+        )
+
+        assertNull(result)
+    }
+
+    @Test
+    fun returnsDisplayNameWhenLastMessageInConversation() {
+        val message = message(selfParticipantId = SIM_2_ID, isIncoming = false)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = null,
+            simDisplayNameByParticipantId = SIM_DISPLAY_NAMES,
+        )
+
+        assertEquals(SIM_2_NAME, result)
+    }
+
+    @Test
+    fun returnsDisplayNameWhenNextMessageUsesDifferentSim() {
+        val message = message(selfParticipantId = SIM_1_ID, isIncoming = false)
+        val below = message(selfParticipantId = SIM_2_ID, isIncoming = false)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = below,
+            simDisplayNameByParticipantId = SIM_DISPLAY_NAMES,
+        )
+
+        assertEquals(SIM_1_NAME, result)
+    }
+
+    @Test
+    fun returnsDisplayNameWhenNextMessageHasOppositeDirection() {
+        val message = message(selfParticipantId = SIM_1_ID, isIncoming = false)
+        val below = message(selfParticipantId = SIM_1_ID, isIncoming = true)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = below,
+            simDisplayNameByParticipantId = SIM_DISPLAY_NAMES,
+        )
+
+        assertEquals(SIM_1_NAME, result)
+    }
+
+    @Test
+    fun returnsNullWhenInsideContiguousSimRun() {
+        val message = message(selfParticipantId = SIM_1_ID, isIncoming = false)
+        val below = message(selfParticipantId = SIM_1_ID, isIncoming = false)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = below,
+            simDisplayNameByParticipantId = SIM_DISPLAY_NAMES,
+        )
+
+        assertNull(result)
+    }
+}
+
+private fun message(
+    selfParticipantId: String?,
+    isIncoming: Boolean,
+): ConversationMessageUiModel {
+    return ConversationMessageUiModel(
+        messageId = "id-${selfParticipantId.orEmpty()}-$isIncoming",
+        conversationId = "conversation",
+        text = "text",
+        parts = listOf(
+            ConversationMessagePartUiModel.Text(text = "text"),
+        ),
+        sentTimestamp = 0L,
+        receivedTimestamp = 0L,
+        displayTimestamp = 0L,
+        status = ConversationMessageUiModel.Status.Outgoing.Complete,
+        isIncoming = isIncoming,
+        senderDisplayName = null,
+        senderAvatarUri = null,
+        senderContactLookupKey = null,
+        selfParticipantId = selfParticipantId,
+        canClusterWithPrevious = false,
+        canClusterWithNext = false,
+        canCopyMessageToClipboard = false,
+        canDownloadMessage = false,
+        canForwardMessage = false,
+        canResendMessage = false,
+        canSaveAttachments = false,
+        mmsSubject = null,
+        protocol = ConversationMessageUiModel.Protocol.SMS,
+    )
+}

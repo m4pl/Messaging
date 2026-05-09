@@ -12,6 +12,7 @@ import android.graphics.Paint
 import android.net.Uri
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
+import com.android.messaging.data.conversation.repository.ConversationSubscriptionsRepository
 import com.android.messaging.datamodel.DataModel
 import com.android.messaging.datamodel.DatabaseHelper
 import com.android.messaging.datamodel.DatabaseHelper.ConversationColumns
@@ -27,6 +28,10 @@ import com.android.messaging.datamodel.data.ParticipantData
 import com.android.messaging.util.ContentType
 import com.android.messaging.util.LogUtil
 import com.android.messaging.util.db.ext.withTransaction
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -34,6 +39,8 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.PI
 import kotlin.math.sin
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 private const val TAG = "TestDataSeeder"
 private const val TEST_PHONE_PREFIX = "+15550"
@@ -60,6 +67,12 @@ private data class SeedVCards(
     val locationUri: String,
 )
 
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+private interface SeedSubscriptionsEntryPoint {
+    fun subscriptionsRepository(): ConversationSubscriptionsRepository
+}
+
 fun seedTestData(context: Context) {
     clearSeededTestData(context = context)
 
@@ -69,6 +82,8 @@ fun seedTestData(context: Context) {
         LogUtil.w(TAG, "No self participant found — open the app at least once before seeding")
         return
     }
+
+    val (simAId, simBId) = resolveDualSimSelfIds(context = context)
 
     val testImages = buildTestImages(context)
     val testAudio = buildTestAudio()
@@ -91,6 +106,7 @@ fun seedTestData(context: Context) {
         val liam = upsertParticipant(db, "${TEST_PHONE_PREFIX}012345", "Liam Lewis", "Liam")
         val mia = upsertParticipant(db, "${TEST_PHONE_PREFIX}013456", "Mia Miller", "Mia")
         val noah = upsertParticipant(db, "${TEST_PHONE_PREFIX}014567", "Noah Nguyen", "Noah")
+        val olivia = upsertParticipant(db, "${TEST_PHONE_PREFIX}015678", "Olivia Ortega", "Olivia")
 
         seedScenarioA(db, selfId, alice, now)
         seedScenarioB(db, selfId, bob, now)
@@ -113,10 +129,42 @@ fun seedTestData(context: Context) {
         seedScenarioI(db, selfId, carol, dave, eve, now)
         seedScenarioJ(db, selfId, kim, testImages, now)
         seedScenarioK(db, selfId, liam, mia, noah, testImages, now)
+        if (simAId != null && simBId != null) {
+            seedScenarioL(
+                db = db,
+                realSelfId = selfId,
+                simAId = simAId,
+                simBId = simBId,
+                oliviaId = olivia,
+                now = now,
+            )
+        }
     }
 
     MessagingContentProvider.notifyConversationListChanged()
     LogUtil.d(TAG, "Test data seeded successfully")
+}
+
+private fun resolveDualSimSelfIds(context: Context): Pair<String?, String?> {
+    DebugSimEmulationStore.setMode(mode = DebugSimEmulationMode.DUAL)
+
+    val repository = EntryPointAccessors
+        .fromApplication(
+            context.applicationContext,
+            SeedSubscriptionsEntryPoint::class.java,
+        )
+        .subscriptionsRepository()
+
+    val subscriptions = runCatching {
+        runBlocking {
+            repository.observeActiveSubscriptions().first { it.size >= 2 }
+        }
+    }.getOrElse { throwable ->
+        LogUtil.w(TAG, "Failed to resolve dual SIM subscriptions for seeding", throwable)
+        return null to null
+    }
+
+    return subscriptions[0].selfParticipantId to subscriptions[1].selfParticipantId
 }
 
 fun clearSeededTestData(context: Context) {
@@ -1599,6 +1647,81 @@ private fun seedScenarioJ(
                 mmsSubject = m.subject,
             )
         }
+        latestTime = msgTime
+    }
+
+    finalizeConversation(db, convId, latestMsgId, latestTime, latestText)
+}
+
+/**
+ * 1:1 SMS thread with Olivia exercising every branch of the SIM annotation rule.
+ *
+ * The annotation appears on the LAST message of each contiguous SIM run. The sequence below
+ * walks: a 3-message SIM-A burst (annotation only on the 3rd), a single SIM-B run, a 2-message
+ * SIM-A burst, a 2-message incoming SIM-B burst (direction change ends the run), and a final
+ * outgoing SIM-A message (last in conversation).
+ *
+ * Outgoing rows keep [realSelfId] as their sender so the participants table FK remains valid;
+ * only [MessageColumns.SELF_PARTICIPANT_ID] varies between [simAId] and [simBId].
+ */
+private fun seedScenarioL(
+    db: DatabaseWrapper,
+    realSelfId: String,
+    simAId: String,
+    simBId: String,
+    oliviaId: String,
+    now: Long,
+) {
+    val baseTime = now - 90 * MINUTES
+    val convId = createConversation(
+        db = db,
+        name = "Olivia Ortega",
+        selfId = simAId,
+        participantIds = listOf(oliviaId),
+        sortTimestamp = baseTime,
+    )
+
+    data class SimMixMessage(
+        val text: String,
+        val isIncoming: Boolean,
+        val simSelfId: String,
+        val offsetMillis: Long,
+    )
+
+    val messages = listOf(
+        SimMixMessage("Heads up — switching SIMs today", false, simAId, 0L),
+        SimMixMessage("Two more on this number", false, simAId, 30_000L),
+        SimMixMessage("Third one wraps the SIM 1 burst", false, simAId, 60_000L),
+        SimMixMessage("Now sending from SIM 2 just once", false, simBId, 6 * MINUTES),
+        SimMixMessage("Back to SIM 1", false, simAId, 12 * MINUTES),
+        SimMixMessage("Still on SIM 1", false, simAId, 12 * MINUTES + 30_000L),
+        SimMixMessage("Got it — replying on SIM 2", true, simBId, 18 * MINUTES),
+        SimMixMessage("And one more reply", true, simBId, 18 * MINUTES + 30_000L),
+        SimMixMessage("Last message — back on SIM 1", false, simAId, 24 * MINUTES),
+    )
+
+    var latestMsgId = 0L
+    var latestTime = baseTime
+    var latestText = ""
+    for (message in messages) {
+        val msgTime = baseTime + message.offsetMillis
+        val senderId = if (message.isIncoming) oliviaId else realSelfId
+        val status = if (message.isIncoming) {
+            MessageData.BUGLE_STATUS_INCOMING_COMPLETE
+        } else {
+            MessageData.BUGLE_STATUS_OUTGOING_COMPLETE
+        }
+        latestText = message.text
+        latestMsgId = insertTextMessage(
+            db = db,
+            conversationId = convId,
+            senderId = senderId,
+            selfId = message.simSelfId,
+            text = message.text,
+            status = status,
+            protocol = MessageData.PROTOCOL_SMS,
+            timestamp = msgTime,
+        )
         latestTime = msgTime
     }
 

@@ -185,6 +185,7 @@ internal fun ConversationScreenScaffold(
             onMessageClick = screenModel::onMessageClick,
             onMessageLongClick = screenModel::onMessageLongClick,
             onMessageResendClick = screenModel::onMessageResendClick,
+            onSimSelectorClick = simSheetState::show,
         )
     }
 
@@ -321,6 +322,7 @@ private fun ConversationScreenContent(
     onMessageClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
+    onSimSelectorClick: () -> Unit,
 ) {
     when (val messagesState = uiState.messages) {
         is ConversationMessagesUiState.Loading -> {
@@ -366,11 +368,13 @@ private fun ConversationScreenContent(
                 listState = messagesListState,
                 selectedMessageIds = uiState.selection.selectedMessageIds,
                 showIncomingSenderLabels = showIncomingSenderLabels,
+                subscriptions = uiState.composer.simSelector.subscriptions,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
+                onSimSelectorClick = onSimSelectorClick,
             )
         }
     }

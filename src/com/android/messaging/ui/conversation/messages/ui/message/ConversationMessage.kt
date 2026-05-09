@@ -37,11 +37,13 @@ internal fun ConversationMessage(
     isSelected: Boolean = false,
     isSelectionMode: Boolean = false,
     showIncomingSenderLabel: Boolean = true,
+    simDisplayName: String? = null,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit = { _, _ -> },
     onExternalUriClick: (String) -> Unit = {},
     onMessageClick: () -> Unit = {},
     onMessageLongClick: () -> Unit = {},
     onMessageResendClick: () -> Unit = {},
+    onSimSelectorClick: () -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -66,11 +68,13 @@ internal fun ConversationMessage(
                 isSelectionMode = isSelectionMode,
                 layout = layout,
                 maxBubbleWidth = maxBubbleWidth,
+                simDisplayName = simDisplayName,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
+                onSimSelectorClick = onSimSelectorClick,
             )
         }
     }
@@ -218,11 +222,13 @@ private fun ConversationMessageContent(
     isSelectionMode: Boolean,
     layout: ConversationMessageLayout,
     maxBubbleWidth: Dp,
+    simDisplayName: String?,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: () -> Unit,
     onMessageLongClick: () -> Unit,
     onMessageResendClick: () -> Unit,
+    onSimSelectorClick: () -> Unit,
 ) {
     Column(
         horizontalAlignment = messageContentHorizontalAlignment(message = message),
@@ -245,6 +251,8 @@ private fun ConversationMessageContent(
             isSelectionMode = isSelectionMode,
             layout = layout,
             maxBubbleWidth = maxBubbleWidth,
+            simDisplayName = simDisplayName,
+            onSimSelectorClick = onSimSelectorClick,
         )
     }
 }

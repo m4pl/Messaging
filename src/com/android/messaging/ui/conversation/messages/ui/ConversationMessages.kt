@@ -19,18 +19,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.android.messaging.data.conversation.model.metadata.ConversationSubscription
 import com.android.messaging.ui.conversation.CONVERSATION_MESSAGES_LIST_TEST_TAG
 import com.android.messaging.ui.conversation.conversationMessageItemTestTag
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
 import com.android.messaging.ui.conversation.messages.ui.message.ConversationMessage
 import com.android.messaging.ui.conversation.messages.ui.message.conversationMessageDisplayEpochDay
 import com.android.messaging.ui.conversation.messages.ui.message.formatDateSeparatorText
+import com.android.messaging.ui.conversation.messages.ui.message.resolveConversationMessageSimDisplayName
+import com.android.messaging.ui.conversation.resolveDisplayName
 import java.util.TimeZone
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 
 private val CONVERSATION_MESSAGES_CONTENT_PADDING = PaddingValues(
@@ -60,18 +65,29 @@ internal fun ConversationMessages(
     listState: LazyListState,
     selectedMessageIds: ImmutableSet<String> = persistentSetOf(),
     showIncomingSenderLabels: Boolean = true,
+    subscriptions: ImmutableList<ConversationSubscription> = persistentListOf(),
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
+    onSimSelectorClick: () -> Unit = {},
 ) {
     val configuration = LocalConfiguration.current
+    val resources = LocalResources.current
     val displayMessages = remember(messages) {
         messages.asReversed()
     }
     val timeZone = remember(configuration) {
         TimeZone.getDefault()
+    }
+
+    val simDisplayNameByParticipantId = remember(subscriptions, resources) {
+        subscriptions.associate { subscription ->
+            subscription.selfParticipantId to subscription.label.resolveDisplayName(
+                resources = resources,
+            )
+        }
     }
 
     LazyColumn(
@@ -100,14 +116,20 @@ internal fun ConversationMessages(
                     messages = displayMessages,
                     index = index,
                 ),
+                messageBelow = messageBelowCurrent(
+                    messages = displayMessages,
+                    index = index,
+                ),
                 isSelectionMode = selectedMessageIds.isNotEmpty(),
                 isSelected = selectedMessageIds.contains(message.messageId),
                 showIncomingSenderLabels = showIncomingSenderLabels,
+                simDisplayNameByParticipantId = simDisplayNameByParticipantId,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
+                onSimSelectorClick = onSimSelectorClick,
             )
         }
     }
@@ -147,23 +169,41 @@ private fun messageAboveCurrent(
     return messages.getOrNull(index + 1)
 }
 
+private fun messageBelowCurrent(
+    messages: List<ConversationMessageUiModel>,
+    index: Int,
+): ConversationMessageUiModel? {
+    return messages.getOrNull(index - 1)
+}
+
 @Composable
 private fun ConversationMessagesItem(
     message: ConversationMessageUiModel,
     messageAbove: ConversationMessageUiModel?,
+    messageBelow: ConversationMessageUiModel?,
     isSelectionMode: Boolean,
     isSelected: Boolean,
     showIncomingSenderLabels: Boolean,
+    simDisplayNameByParticipantId: Map<String, String>,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
+    onSimSelectorClick: () -> Unit,
 ) {
     val presentation = rememberConversationMessagesItemPresentation(
         message = message,
         messageAbove = messageAbove,
     )
+
+    val simDisplayName = remember(message, messageBelow, simDisplayNameByParticipantId) {
+        resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = messageBelow,
+            simDisplayNameByParticipantId = simDisplayNameByParticipantId,
+        )
+    }
 
     ColumnWithSeparator(
         showDateSeparator = presentation.showDateSeparator,
@@ -177,6 +217,7 @@ private fun ConversationMessagesItem(
             isSelectionMode = isSelectionMode,
             message = message,
             showIncomingSenderLabel = showIncomingSenderLabels,
+            simDisplayName = simDisplayName,
             onAttachmentClick = onAttachmentClick,
             onExternalUriClick = onExternalUriClick,
             onMessageClick = {
@@ -188,6 +229,7 @@ private fun ConversationMessagesItem(
             onMessageResendClick = {
                 onMessageResendClick(message.messageId)
             },
+            onSimSelectorClick = onSimSelectorClick,
         )
     }
 }

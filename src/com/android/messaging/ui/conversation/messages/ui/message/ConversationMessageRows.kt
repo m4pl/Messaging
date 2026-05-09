@@ -174,6 +174,8 @@ internal fun ConversationMessageMetadataRow(
     isSelectionMode: Boolean,
     layout: ConversationMessageLayout,
     maxBubbleWidth: Dp,
+    simDisplayName: String?,
+    onSimSelectorClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -200,6 +202,8 @@ internal fun ConversationMessageMetadataRow(
                 ConversationMessageMetadata(
                     message = message,
                     metadataText = layout.metadataText,
+                    simDisplayName = simDisplayName,
+                    onSimSelectorClick = onSimSelectorClick,
                 )
             }
         }

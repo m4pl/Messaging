@@ -160,6 +160,7 @@ private fun outgoingMessage(text: String): ConversationMessageUiModel {
         senderDisplayName = null,
         senderAvatarUri = null,
         senderContactLookupKey = null,
+        selfParticipantId = null,
         canClusterWithPrevious = false,
         canClusterWithNext = false,
         canCopyMessageToClipboard = true,
