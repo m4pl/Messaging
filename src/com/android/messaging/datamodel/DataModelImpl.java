@@ -45,9 +45,6 @@ import com.android.messaging.datamodel.data.ParticipantListItemData;
 import com.android.messaging.datamodel.data.PeopleAndOptionsData;
 import com.android.messaging.datamodel.data.PeopleAndOptionsData.PeopleAndOptionsDataListener;
 import com.android.messaging.datamodel.data.PeopleOptionsItemData;
-import com.android.messaging.datamodel.data.SettingsData;
-import com.android.messaging.datamodel.data.SettingsData.SettingsDataListener;
-import com.android.messaging.datamodel.data.SubscriptionListData;
 import com.android.messaging.datamodel.data.VCardContactItemData;
 import com.android.messaging.sms.MmsConfig;
 import com.android.messaging.util.Assert;
@@ -150,16 +147,6 @@ public class DataModelImpl extends DataModel {
     public ParticipantListItemData createParticipantListItemData(
             final ParticipantData participant) {
         return new ParticipantListItemData(participant);
-    }
-
-    @Override
-    public SubscriptionListData createSubscriptonListData(Context context) {
-        return new SubscriptionListData(context);
-    }
-
-    @Override
-    public SettingsData createSettingsData(Context context, SettingsDataListener listener) {
-        return new SettingsData(context, listener);
     }
 
     @Override

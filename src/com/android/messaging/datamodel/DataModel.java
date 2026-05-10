@@ -45,9 +45,6 @@ import com.android.messaging.datamodel.data.ParticipantListItemData;
 import com.android.messaging.datamodel.data.PeopleAndOptionsData;
 import com.android.messaging.datamodel.data.PeopleAndOptionsData.PeopleAndOptionsDataListener;
 import com.android.messaging.datamodel.data.PeopleOptionsItemData;
-import com.android.messaging.datamodel.data.SettingsData;
-import com.android.messaging.datamodel.data.SettingsData.SettingsDataListener;
-import com.android.messaging.datamodel.data.SubscriptionListData;
 import com.android.messaging.datamodel.data.VCardContactItemData;
 import com.android.messaging.util.Assert.DoesNotRunOnMainThread;
 
@@ -102,10 +99,6 @@ public abstract class DataModel {
 
     public abstract BlockedParticipantsData createBlockedParticipantsData(Context context,
             BlockedParticipantsDataListener listener);
-
-    public abstract SubscriptionListData createSubscriptonListData(Context context);
-
-    public abstract SettingsData createSettingsData(Context context, SettingsDataListener listener);
 
     public abstract DraftMessageData createDraftMessageData(String conversationId);
 
