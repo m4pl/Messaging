@@ -32,10 +32,12 @@ class SettingsScreenTest {
 
     private val fakeUiStateFlow = MutableStateFlow(createSingleSimState())
     private lateinit var screenModel: SettingsScreenModel
+    private lateinit var effectHandler: SettingsEffectHandler
 
     @Before
     fun setup() {
         screenModel = mockk(relaxed = true)
+        effectHandler = mockk(relaxed = true)
         every { screenModel.uiState } returns fakeUiStateFlow
     }
 
@@ -94,6 +96,7 @@ class SettingsScreenTest {
             CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
                 AppTheme {
                     SettingsScreen(
+                        effectHandler = effectHandler,
                         onNavigateBack = {},
                         screenModel = screenModel,
                     )
@@ -275,6 +278,7 @@ class SettingsScreenTest {
         composeTestRule.setContent {
             AppTheme {
                 SettingsScreen(
+                    effectHandler = effectHandler,
                     onNavigateBack = {},
                     intentSubId = intentSubId,
                     intentSubTitle = intentSubTitle,

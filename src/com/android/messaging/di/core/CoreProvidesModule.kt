@@ -1,5 +1,6 @@
 package com.android.messaging.di.core
 
+import android.app.role.RoleManager
 import android.content.ContentResolver
 import android.content.Context
 import android.telephony.SubscriptionManager
@@ -53,5 +54,14 @@ internal class CoreProvidesModule {
         context: Context,
     ): SubscriptionManager {
         return context.getSystemService(SubscriptionManager::class.java)
+    }
+
+    @Provides
+    @Reusable
+    fun provideRoleManager(
+        @ApplicationContext
+        context: Context,
+    ): RoleManager {
+        return context.getSystemService(RoleManager::class.java)
     }
 }

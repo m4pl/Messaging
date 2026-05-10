@@ -17,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +33,7 @@ private const val SLIDE_OFFSET_DIVISOR = 3
 
 @Composable
 internal fun SettingsScreen(
+    effectHandler: SettingsEffectHandler,
     onNavigateBack: (() -> Unit),
     modifier: Modifier = Modifier,
     intentSubId: Int = ParticipantData.DEFAULT_SELF_SUB_ID,
@@ -41,7 +41,6 @@ internal fun SettingsScreen(
     isTopLevelIntent: Boolean = false,
     screenModel: SettingsScreenModel = viewModel<SettingsViewModel>(),
 ) {
-    val context = LocalContext.current
     val uiState by screenModel.uiState.collectAsStateWithLifecycle()
 
     var currentRoute by remember {
@@ -59,7 +58,6 @@ internal fun SettingsScreen(
         screenModel.refreshState()
     }
 
-    val effectHandler = remember(context) { SettingsEffectHandlerImpl(context) }
     LaunchedEffect(screenModel, effectHandler) {
         screenModel.effects.collect(effectHandler::handle)
     }
