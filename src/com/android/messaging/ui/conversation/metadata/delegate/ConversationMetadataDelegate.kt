@@ -1,8 +1,11 @@
 package com.android.messaging.ui.conversation.metadata.delegate
 
+import com.android.messaging.R
 import com.android.messaging.data.conversation.model.metadata.ConversationMetadata
 import com.android.messaging.data.conversation.repository.ConversationsRepository
 import com.android.messaging.di.core.DefaultDispatcher
+import com.android.messaging.domain.conversation.usecase.action.CheckConversationActionRequirements
+import com.android.messaging.domain.conversation.usecase.action.ConversationActionRequirementsResult
 import com.android.messaging.ui.conversation.common.ConversationScreenDelegate
 import com.android.messaging.ui.conversation.metadata.mapper.ConversationMetadataUiStateMapper
 import com.android.messaging.ui.conversation.metadata.model.ConversationMetadataUiState
@@ -36,6 +39,7 @@ internal interface ConversationMetadataDelegate :
 }
 
 internal class ConversationMetadataDelegateImpl @Inject constructor(
+    private val checkConversationActionRequirements: CheckConversationActionRequirements,
     private val conversationsRepository: ConversationsRepository,
     private val conversationMetadataUiStateMapper: ConversationMetadataUiStateMapper,
     @param:DefaultDispatcher
@@ -130,8 +134,44 @@ internal class ConversationMetadataDelegateImpl @Inject constructor(
     }
 
     override fun onDeleteConversationClick() {
-        currentConversationId?.let {
-            _isDeleteConversationConfirmationVisible.value = true
+        if (currentConversationId == null) {
+            return
+        }
+
+        when (checkConversationActionRequirements()) {
+            ConversationActionRequirementsResult.Ready -> {
+                _isDeleteConversationConfirmationVisible.value = true
+            }
+
+            ConversationActionRequirementsResult.SmsNotCapable -> {
+                emitEffect(
+                    effect = ConversationScreenEffect.ShowMessage(
+                        messageResId = R.string.sms_disabled,
+                    ),
+                )
+            }
+
+            ConversationActionRequirementsResult.NoPreferredSmsSim -> {
+                emitEffect(
+                    effect = ConversationScreenEffect.ShowMessage(
+                        messageResId = R.string.no_preferred_sim_selected,
+                    ),
+                )
+            }
+
+            ConversationActionRequirementsResult.MissingDefaultSmsRole -> {
+                emitEffect(
+                    effect = ConversationScreenEffect.RequestDefaultSmsRole(
+                        isSending = false,
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun emitEffect(effect: ConversationScreenEffect) {
+        boundScope?.launch(defaultDispatcher) {
+            _effects.emit(effect)
         }
     }
 
