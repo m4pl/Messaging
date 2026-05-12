@@ -18,7 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -31,12 +35,21 @@ internal fun RecipientSelectionContent(
     rowDecorators: RecipientSelectionRowDecorators,
     onRecipientDestinationClick: OnRecipientDestinationAction,
     modifier: Modifier = Modifier,
+    autoFocusQuery: Boolean = false,
     onLoadMore: () -> Unit = {},
     onPrimaryActionClick: () -> Unit = {},
     onQueryChanged: (String) -> Unit = {},
     onRecipientDestinationLongClick: OnRecipientDestinationAction? = null,
     topListContent: (@Composable () -> Unit)? = null,
 ) {
+    val queryFocusRequester = remember { FocusRequester() }
+
+    if (autoFocusQuery) {
+        LaunchedEffect(Unit) {
+            queryFocusRequester.requestFocus()
+        }
+    }
+
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -54,6 +67,7 @@ internal fun RecipientSelectionContent(
                 prefixText = strings.queryPrefixText,
                 placeholderText = strings.queryPlaceholderText,
                 onQueryChanged = onQueryChanged,
+                focusRequester = queryFocusRequester,
             )
 
             Spacer(modifier = Modifier.height(height = 12.dp))
@@ -79,9 +93,12 @@ private fun RecipientSelectionQueryField(
     prefixText: String,
     placeholderText: String,
     onQueryChanged: (String) -> Unit,
+    focusRequester: FocusRequester,
 ) {
     TextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester = focusRequester),
         value = query,
         onValueChange = onQueryChanged,
         enabled = enabled,

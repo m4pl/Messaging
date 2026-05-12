@@ -185,6 +185,7 @@ private fun NewChatRecipientSelectionContent(
             }
         },
         modifier = modifier,
+        autoFocusQuery = true,
         onLoadMore = onLoadMore,
         onPrimaryActionClick = onCreateGroupConfirmed,
         onQueryChanged = onQueryChanged,
