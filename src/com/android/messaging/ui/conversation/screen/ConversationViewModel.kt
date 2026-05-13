@@ -73,6 +73,7 @@ internal interface ConversationScreenModel {
     )
 
     fun onMessageClick(messageId: String)
+    fun onMessageDownloadClick(messageId: String)
     fun onMessageLongClick(messageId: String)
     fun onMessageResendClick(messageId: String)
     fun onMessageSelectionActionClick(action: ConversationMessageSelectionAction)
@@ -474,6 +475,10 @@ internal class ConversationViewModel @Inject constructor(
 
     override fun onMessageClick(messageId: String) {
         conversationMessageSelectionDelegate.onMessageClick(messageId = messageId)
+    }
+
+    override fun onMessageDownloadClick(messageId: String) {
+        conversationMessageSelectionDelegate.onMessageDownloadClick(messageId = messageId)
     }
 
     override fun onMessageLongClick(messageId: String) {

@@ -2,6 +2,7 @@ package com.android.messaging.ui.conversation.messages.ui.message
 
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessagePartUiModel
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
+import com.android.messaging.ui.conversation.messages.model.message.MmsDownloadUiModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -111,11 +112,30 @@ class ResolveConversationMessageSimDisplayNameTest {
 
         assertNull(result)
     }
+
+    @Test
+    fun returnsDisplayNameForMmsDownloadInsideContiguousSimRun() {
+        val message = message(
+            selfParticipantId = SIM_1_ID,
+            isIncoming = true,
+            mmsDownload = mmsDownload(),
+        )
+        val below = message(selfParticipantId = SIM_1_ID, isIncoming = true)
+
+        val result = resolveConversationMessageSimDisplayName(
+            message = message,
+            messageBelow = below,
+            simDisplayNameByParticipantId = SIM_DISPLAY_NAMES,
+        )
+
+        assertEquals(SIM_1_NAME, result)
+    }
 }
 
 private fun message(
     selfParticipantId: String?,
     isIncoming: Boolean,
+    mmsDownload: MmsDownloadUiModel? = null,
 ): ConversationMessageUiModel {
     return ConversationMessageUiModel(
         messageId = "id-${selfParticipantId.orEmpty()}-$isIncoming",
@@ -140,7 +160,16 @@ private fun message(
         canForwardMessage = false,
         canResendMessage = false,
         canSaveAttachments = false,
+        mmsDownload = mmsDownload,
         mmsSubject = null,
         protocol = ConversationMessageUiModel.Protocol.SMS,
+    )
+}
+
+private fun mmsDownload(): MmsDownloadUiModel {
+    return MmsDownloadUiModel(
+        state = MmsDownloadUiModel.State.AwaitingManualDownload,
+        sizeBytes = 0L,
+        expiryTimestamp = 0L,
     )
 }

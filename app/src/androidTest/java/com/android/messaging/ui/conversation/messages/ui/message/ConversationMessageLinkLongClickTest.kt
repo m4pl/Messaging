@@ -168,6 +168,7 @@ private fun outgoingMessage(text: String): ConversationMessageUiModel {
         canForwardMessage = true,
         canResendMessage = false,
         canSaveAttachments = false,
+        mmsDownload = null,
         mmsSubject = null,
         protocol = ConversationMessageUiModel.Protocol.SMS,
     )

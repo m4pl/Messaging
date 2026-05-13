@@ -28,11 +28,65 @@ internal fun ConversationMessageBubbleRow(
     isSelectionMode: Boolean,
     layout: ConversationMessageLayout,
     maxBubbleWidth: Dp,
+    simDisplayName: String?,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: () -> Unit,
+    onMessageDownloadClick: () -> Unit,
     onMessageLongClick: () -> Unit,
     onMessageResendClick: () -> Unit,
+) {
+    ConversationMessageBubbleRowContainer(
+        message = message,
+        isSelected = isSelected,
+        isSelectionMode = isSelectionMode,
+        onMessageClick = onMessageClick,
+        onMessageLongClick = onMessageLongClick,
+    ) {
+        ConversationMessageBubble(
+            modifier = Modifier.conversationMessageBubbleInteractionModifier(
+                message = message,
+                isSelectionMode = isSelectionMode,
+                layout = layout,
+                onMessageDownloadClick = onMessageDownloadClick,
+                onMessageLongClick = onMessageLongClick,
+                onMessageResendClick = onMessageResendClick,
+            ),
+            message = message,
+            isSelected = isSelected,
+            isSelectionMode = isSelectionMode,
+            layout = layout,
+            maxBubbleWidth = maxBubbleWidth,
+            simDisplayName = simDisplayName,
+            onAttachmentClick = { contentType, contentUri ->
+                when {
+                    isSelectionMode -> onMessageClick()
+                    message.canDownloadMessage -> onMessageDownloadClick()
+                    message.canResendMessage -> onMessageResendClick()
+                    else -> onAttachmentClick(contentType, contentUri)
+                }
+            },
+            onExternalUriClick = { uri ->
+                when {
+                    isSelectionMode -> onMessageClick()
+                    message.canDownloadMessage -> onMessageDownloadClick()
+                    message.canResendMessage -> onMessageResendClick()
+                    else -> onExternalUriClick(uri)
+                }
+            },
+            onMessageLongClick = onMessageLongClick,
+        )
+    }
+}
+
+@Composable
+private fun ConversationMessageBubbleRowContainer(
+    message: ConversationMessageUiModel,
+    isSelected: Boolean,
+    isSelectionMode: Boolean,
+    onMessageClick: () -> Unit,
+    onMessageLongClick: () -> Unit,
+    content: @Composable () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -59,35 +113,7 @@ internal fun ConversationMessageBubbleRow(
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ConversationMessageBubble(
-                modifier = Modifier.conversationMessageBubbleInteractionModifier(
-                    message = message,
-                    isSelectionMode = isSelectionMode,
-                    layout = layout,
-                    onMessageLongClick = onMessageLongClick,
-                    onMessageResendClick = onMessageResendClick,
-                ),
-                message = message,
-                isSelected = isSelected,
-                isSelectionMode = isSelectionMode,
-                layout = layout,
-                maxBubbleWidth = maxBubbleWidth,
-                onAttachmentClick = { contentType, contentUri ->
-                    when {
-                        isSelectionMode -> onMessageClick()
-                        message.canResendMessage -> onMessageResendClick()
-                        else -> onAttachmentClick(contentType, contentUri)
-                    }
-                },
-                onExternalUriClick = { uri ->
-                    when {
-                        isSelectionMode -> onMessageClick()
-                        message.canResendMessage -> onMessageResendClick()
-                        else -> onExternalUriClick(uri)
-                    }
-                },
-                onMessageLongClick = onMessageLongClick,
-            )
+            content()
         }
     }
 }
@@ -141,6 +167,7 @@ private fun Modifier.conversationMessageBubbleInteractionModifier(
     message: ConversationMessageUiModel,
     isSelectionMode: Boolean,
     layout: ConversationMessageLayout,
+    onMessageDownloadClick: () -> Unit,
     onMessageLongClick: () -> Unit,
     onMessageResendClick: () -> Unit,
 ): Modifier {
@@ -155,8 +182,9 @@ private fun Modifier.conversationMessageBubbleInteractionModifier(
             bubbleModifier.combinedClickable(
                 enabled = true,
                 onClick = {
-                    if (message.canResendMessage) {
-                        onMessageResendClick()
+                    when {
+                        message.canDownloadMessage -> onMessageDownloadClick()
+                        message.canResendMessage -> onMessageResendClick()
                     }
                 },
                 onLongClick = {

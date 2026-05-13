@@ -107,6 +107,7 @@ fun seedTestData(context: Context) {
         val mia = upsertParticipant(db, "${TEST_PHONE_PREFIX}013456", "Mia Miller", "Mia")
         val noah = upsertParticipant(db, "${TEST_PHONE_PREFIX}014567", "Noah Nguyen", "Noah")
         val olivia = upsertParticipant(db, "${TEST_PHONE_PREFIX}015678", "Olivia Ortega", "Olivia")
+        val nora = upsertParticipant(db, "${TEST_PHONE_PREFIX}016789", "Nora Notifications", "Nora")
 
         seedScenarioA(db, selfId, alice, now)
         seedScenarioB(db, selfId, bob, now)
@@ -139,6 +140,13 @@ fun seedTestData(context: Context) {
                 now = now,
             )
         }
+        seedScenarioM(
+            db = db,
+            realSelfId = selfId,
+            secondarySelfId = simBId ?: selfId,
+            noraId = nora,
+            now = now,
+        )
     }
 
     MessagingContentProvider.notifyConversationListChanged()
@@ -822,6 +830,55 @@ private fun insertMessageRow(
         if (mmsSubject != null) put(MessageColumns.MMS_SUBJECT, mmsSubject)
     },
 )
+
+private fun insertMmsDownloadMessage(
+    db: DatabaseWrapper,
+    conversationId: Long,
+    senderId: String,
+    selfId: String,
+    status: Int,
+    timestamp: Long,
+    messageSizeBytes: Long,
+    expiryTimestamp: Long,
+    seedIndex: Int,
+): Long {
+    val messageId = db.insert(
+        DatabaseHelper.MESSAGES_TABLE,
+        null,
+        ContentValues().apply {
+            put(MessageColumns.CONVERSATION_ID, conversationId)
+            put(MessageColumns.SENDER_PARTICIPANT_ID, senderId)
+            put(MessageColumns.SELF_PARTICIPANT_ID, selfId)
+            put(MessageColumns.STATUS, status)
+            put(MessageColumns.PROTOCOL, MessageData.PROTOCOL_MMS_PUSH_NOTIFICATION)
+            put(MessageColumns.SENT_TIMESTAMP, timestamp)
+            put(MessageColumns.RECEIVED_TIMESTAMP, timestamp)
+            put(MessageColumns.SEEN, 1)
+            put(MessageColumns.READ, 1)
+            put(MessageColumns.SMS_MESSAGE_URI, "content://mms/${900_000 + seedIndex}")
+            put(MessageColumns.SMS_PRIORITY, 0)
+            put(MessageColumns.SMS_MESSAGE_SIZE, messageSizeBytes)
+            put(MessageColumns.MMS_TRANSACTION_ID, "seeded-transaction-$seedIndex")
+            put(MessageColumns.MMS_CONTENT_LOCATION, "https://example.invalid/mms/$seedIndex")
+            put(MessageColumns.MMS_EXPIRY, expiryTimestamp)
+            put(MessageColumns.RAW_TELEPHONY_STATUS, MessageData.RAW_TELEPHONY_STATUS_UNDEFINED)
+            put(MessageColumns.RETRY_START_TIMESTAMP, timestamp)
+        },
+    )
+
+    db.insert(
+        DatabaseHelper.PARTS_TABLE,
+        null,
+        ContentValues().apply {
+            put(PartColumns.MESSAGE_ID, messageId)
+            put(PartColumns.CONVERSATION_ID, conversationId)
+            put(PartColumns.CONTENT_TYPE, ContentType.TEXT_PLAIN)
+            put(PartColumns.TEXT, "")
+        },
+    )
+
+    return messageId
+}
 
 private fun finalizeConversation(
     db: DatabaseWrapper,
@@ -1726,6 +1783,101 @@ private fun seedScenarioL(
     }
 
     finalizeConversation(db, convId, latestMsgId, latestTime, latestText)
+}
+
+/**
+ * 1:1 MMS notification thread covering manual download rendering states.
+ *
+ * The last two rows intentionally mirror the regression case: the upper placeholder remains
+ * actionable while only the lower placeholder is in a downloading state.
+ */
+private fun seedScenarioM(
+    db: DatabaseWrapper,
+    realSelfId: String,
+    secondarySelfId: String,
+    noraId: String,
+    now: Long,
+) {
+    val baseTime = now - 40 * MINUTES
+    val conversationId = createConversation(
+        db = db,
+        name = "MMS Download States",
+        selfId = realSelfId,
+        participantIds = listOf(noraId),
+        sortTimestamp = baseTime,
+    )
+
+    data class MmsDownloadSeedMessage(
+        val status: Int,
+        val selfId: String,
+        val offsetMillis: Long,
+        val sizeBytes: Long,
+        val expiryTimestamp: Long,
+        val snippet: String,
+    )
+
+    val messages = listOf(
+        MmsDownloadSeedMessage(
+            status = MessageData.BUGLE_STATUS_INCOMING_DOWNLOAD_FAILED,
+            selfId = realSelfId,
+            offsetMillis = 0L,
+            sizeBytes = 4_096L,
+            expiryTimestamp = now + 2 * DAYS,
+            snippet = "Couldn't download MMS",
+        ),
+        MmsDownloadSeedMessage(
+            status = MessageData.BUGLE_STATUS_INCOMING_EXPIRED_OR_NOT_AVAILABLE,
+            selfId = realSelfId,
+            offsetMillis = 8 * MINUTES,
+            sizeBytes = 9_216L,
+            expiryTimestamp = now - 1 * DAYS,
+            snippet = "MMS expired",
+        ),
+        MmsDownloadSeedMessage(
+            status = MessageData.BUGLE_STATUS_INCOMING_YET_TO_MANUAL_DOWNLOAD,
+            selfId = realSelfId,
+            offsetMillis = 16 * MINUTES,
+            sizeBytes = 1_548L,
+            expiryTimestamp = now + 3 * DAYS,
+            snippet = "Tap to download MMS",
+        ),
+        MmsDownloadSeedMessage(
+            status = MessageData.BUGLE_STATUS_INCOMING_MANUAL_DOWNLOADING,
+            selfId = secondarySelfId,
+            offsetMillis = 17 * MINUTES,
+            sizeBytes = 1_548L,
+            expiryTimestamp = now + 3 * DAYS,
+            snippet = "Downloading MMS",
+        ),
+    )
+
+    var latestMessageId = 0L
+    var latestTime = baseTime
+    var latestSnippet = ""
+    for ((index, message) in messages.withIndex()) {
+        val messageTime = baseTime + message.offsetMillis
+        latestMessageId = insertMmsDownloadMessage(
+            db = db,
+            conversationId = conversationId,
+            senderId = noraId,
+            selfId = message.selfId,
+            status = message.status,
+            timestamp = messageTime,
+            messageSizeBytes = message.sizeBytes,
+            expiryTimestamp = message.expiryTimestamp,
+            seedIndex = index + 1,
+        )
+        latestTime = messageTime
+        latestSnippet = message.snippet
+    }
+
+    finalizeConversation(
+        db = db,
+        conversationId = conversationId,
+        latestMessageId = latestMessageId,
+        latestTimestamp = latestTime,
+        snippetText = latestSnippet,
+    )
 }
 
 /**

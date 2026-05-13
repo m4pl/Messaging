@@ -41,6 +41,8 @@ internal interface ConversationMessageSelectionDelegate :
 
     fun onMessageClick(messageId: String)
 
+    fun onMessageDownloadClick(messageId: String)
+
     fun onMessageLongClick(messageId: String)
 
     fun onMessageResendClick(messageId: String)
@@ -102,6 +104,10 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
         if (state.value.isSelectionMode) {
             toggleMessageSelection(messageId = messageId)
         }
+    }
+
+    override fun onMessageDownloadClick(messageId: String) {
+        conversationsRepository.downloadMessage(messageId = messageId)
     }
 
     override fun onMessageLongClick(messageId: String) {

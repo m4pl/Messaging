@@ -69,26 +69,21 @@ internal fun ConversationMessages(
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
+    onMessageDownloadClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
     onSimSelectorClick: () -> Unit = {},
 ) {
     val configuration = LocalConfiguration.current
-    val resources = LocalResources.current
     val displayMessages = remember(messages) {
         messages.asReversed()
     }
     val timeZone = remember(configuration) {
         TimeZone.getDefault()
     }
-
-    val simDisplayNameByParticipantId = remember(subscriptions, resources) {
-        subscriptions.associate { subscription ->
-            subscription.selfParticipantId to subscription.label.resolveDisplayName(
-                resources = resources,
-            )
-        }
-    }
+    val simDisplayNameByParticipantId = rememberSimDisplayNameByParticipantId(
+        subscriptions = subscriptions,
+    )
 
     LazyColumn(
         state = listState,
@@ -127,9 +122,25 @@ internal fun ConversationMessages(
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
+                onMessageDownloadClick = onMessageDownloadClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
                 onSimSelectorClick = onSimSelectorClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun rememberSimDisplayNameByParticipantId(
+    subscriptions: ImmutableList<Subscription>,
+): Map<String, String> {
+    val resources = LocalResources.current
+
+    return remember(subscriptions, resources) {
+        subscriptions.associate { subscription ->
+            subscription.selfParticipantId to subscription.label.resolveDisplayName(
+                resources = resources,
             )
         }
     }
@@ -188,6 +199,7 @@ private fun ConversationMessagesItem(
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
+    onMessageDownloadClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
     onSimSelectorClick: () -> Unit,
@@ -222,6 +234,9 @@ private fun ConversationMessagesItem(
             onExternalUriClick = onExternalUriClick,
             onMessageClick = {
                 onMessageClick(message.messageId)
+            },
+            onMessageDownloadClick = {
+                onMessageDownloadClick(message.messageId)
             },
             onMessageLongClick = {
                 onMessageLongClick(message.messageId)

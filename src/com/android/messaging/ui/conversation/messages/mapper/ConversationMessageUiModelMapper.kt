@@ -7,6 +7,7 @@ import com.android.messaging.ui.conversation.attachment.mapper.ConversationVCard
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessagePartUiModel
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel.Status
+import com.android.messaging.ui.conversation.messages.model.message.MmsDownloadUiModel
 import com.android.messaging.util.ContentType
 import com.android.messaging.util.LogUtil
 import javax.inject.Inject
@@ -45,9 +46,44 @@ internal class ConversationMessageUiModelMapperImpl @Inject constructor(
             canForwardMessage = data.canForwardMessage,
             canResendMessage = data.showResendMessage,
             canSaveAttachments = canSaveAttachments(data),
+            mmsDownload = mapMmsDownload(data = data),
             mmsSubject = data.mmsSubject,
             protocol = mapProtocol(data),
         )
+    }
+
+    private fun mapMmsDownload(data: ConversationMessageData): MmsDownloadUiModel? {
+        val state = when (data.status) {
+            MessageData.BUGLE_STATUS_INCOMING_YET_TO_MANUAL_DOWNLOAD -> {
+                MmsDownloadUiModel.State.AwaitingManualDownload
+            }
+
+            MessageData.BUGLE_STATUS_INCOMING_AUTO_DOWNLOADING,
+            MessageData.BUGLE_STATUS_INCOMING_MANUAL_DOWNLOADING,
+            MessageData.BUGLE_STATUS_INCOMING_RETRYING_AUTO_DOWNLOAD,
+            MessageData.BUGLE_STATUS_INCOMING_RETRYING_MANUAL_DOWNLOAD,
+            -> {
+                MmsDownloadUiModel.State.Downloading
+            }
+
+            MessageData.BUGLE_STATUS_INCOMING_DOWNLOAD_FAILED -> {
+                MmsDownloadUiModel.State.DownloadFailed
+            }
+
+            MessageData.BUGLE_STATUS_INCOMING_EXPIRED_OR_NOT_AVAILABLE -> {
+                MmsDownloadUiModel.State.ExpiredOrUnavailable
+            }
+
+            else -> null
+        }
+
+        return state?.let {
+            MmsDownloadUiModel(
+                state = state,
+                sizeBytes = data.smsMessageSize.toLong(),
+                expiryTimestamp = data.mmsExpiry,
+            )
+        }
     }
 
     private fun canSaveAttachments(data: ConversationMessageData): Boolean {

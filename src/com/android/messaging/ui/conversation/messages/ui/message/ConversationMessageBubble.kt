@@ -42,6 +42,7 @@ internal fun ConversationMessageBubble(
     isSelectionMode: Boolean,
     layout: ConversationMessageLayout,
     maxBubbleWidth: Dp,
+    simDisplayName: String?,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageLongClick: () -> Unit,
@@ -84,6 +85,7 @@ internal fun ConversationMessageBubble(
                 isSelected = isSelected,
                 message = message,
                 isSelectionMode = isSelectionMode,
+                simDisplayName = simDisplayName,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageLongClick = onMessageLongClick,
@@ -158,6 +160,7 @@ private fun ConversationMessageTextSurfaceBubble(
     isSelected: Boolean,
     message: ConversationMessageUiModel,
     isSelectionMode: Boolean,
+    simDisplayName: String?,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageLongClick: () -> Unit,
@@ -173,6 +176,7 @@ private fun ConversationMessageTextSurfaceBubble(
             message = message,
             isSelected = isSelected,
             isSelectionMode = isSelectionMode,
+            simDisplayName = simDisplayName,
             onAttachmentClick = onAttachmentClick,
             onExternalUriClick = onExternalUriClick,
             onMessageLongClick = onMessageLongClick,
@@ -254,6 +258,7 @@ private fun ConversationMessageTextBubbleContent(
     message: ConversationMessageUiModel,
     isSelected: Boolean,
     isSelectionMode: Boolean,
+    simDisplayName: String?,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageLongClick: () -> Unit,
@@ -274,14 +279,31 @@ private fun ConversationMessageTextBubbleContent(
             showSender = layout.showSender,
         )
 
-        ConversationMessageBody(
-            content = layout.content,
-            isIncoming = message.isIncoming,
-            isSelectionMode = isSelectionMode,
-            onAttachmentClick = onAttachmentClick,
-            onExternalUriClick = onExternalUriClick,
-            onMessageLongClick = onMessageLongClick,
-        )
+        when {
+            message.mmsDownload != null -> {
+                ConversationMmsDownloadBody(
+                    download = message.mmsDownload,
+                    canDownloadMessage = message.canDownloadMessage,
+                    isSelected = isSelected,
+                    contentColor = messageBubbleContentColor(
+                        message = message,
+                        isSelected = isSelected,
+                    ),
+                    simDisplayName = simDisplayName,
+                )
+            }
+
+            else -> {
+                ConversationMessageBody(
+                    content = layout.content,
+                    isIncoming = message.isIncoming,
+                    isSelectionMode = isSelectionMode,
+                    onAttachmentClick = onAttachmentClick,
+                    onExternalUriClick = onExternalUriClick,
+                    onMessageLongClick = onMessageLongClick,
+                )
+            }
+        }
     }
 }
 

@@ -16,6 +16,7 @@ internal fun resolveConversationMessageSimDisplayName(
 
     return when {
         simDisplayNameByParticipantId.size <= 1 -> null
+        message.mmsDownload != null -> displayName
         !isLastInSimRun -> null
         else -> displayName
     }

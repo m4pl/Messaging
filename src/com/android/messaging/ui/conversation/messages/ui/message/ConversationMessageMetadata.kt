@@ -32,6 +32,10 @@ internal fun ConversationMessageMetadata(
     simDisplayName: String?,
     onSimSelectorClick: () -> Unit,
 ) {
+    if (message.mmsDownload != null) {
+        return
+    }
+
     val linkColor = MaterialTheme.colorScheme.primary
     val resources = LocalResources.current
 
@@ -152,8 +156,6 @@ private fun messageMetadataColor(
         Status.Outgoing.AwaitingRetry,
         Status.Outgoing.Failed,
         Status.Outgoing.FailedEmergencyNumber,
-        Status.Incoming.DownloadFailed,
-        Status.Incoming.ExpiredOrNotAvailable,
         -> MaterialTheme.colorScheme.error
 
         else -> MaterialTheme.colorScheme.onSurfaceVariant

@@ -41,6 +41,7 @@ internal fun ConversationMessage(
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit = { _, _ -> },
     onExternalUriClick: (String) -> Unit = {},
     onMessageClick: () -> Unit = {},
+    onMessageDownloadClick: () -> Unit = {},
     onMessageLongClick: () -> Unit = {},
     onMessageResendClick: () -> Unit = {},
     onSimSelectorClick: () -> Unit = {},
@@ -72,6 +73,7 @@ internal fun ConversationMessage(
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
+                onMessageDownloadClick = onMessageDownloadClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
                 onSimSelectorClick = onSimSelectorClick,
@@ -183,8 +185,13 @@ private fun rememberConversationMessageContent(
 private fun rememberConversationMessageMetadataText(
     message: ConversationMessageUiModel,
 ): String? {
+    if (message.mmsDownload != null) {
+        return null
+    }
+
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
+
     val statusTextResourceId = remember(message.status) {
         messageStatusTextResourceId(status = message.status)
     }
@@ -226,6 +233,7 @@ private fun ConversationMessageContent(
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: () -> Unit,
+    onMessageDownloadClick: () -> Unit,
     onMessageLongClick: () -> Unit,
     onMessageResendClick: () -> Unit,
     onSimSelectorClick: () -> Unit,
@@ -239,9 +247,11 @@ private fun ConversationMessageContent(
             isSelectionMode = isSelectionMode,
             layout = layout,
             maxBubbleWidth = maxBubbleWidth,
+            simDisplayName = simDisplayName,
             onAttachmentClick = onAttachmentClick,
             onExternalUriClick = onExternalUriClick,
             onMessageClick = onMessageClick,
+            onMessageDownloadClick = onMessageDownloadClick,
             onMessageLongClick = onMessageLongClick,
             onMessageResendClick = onMessageResendClick,
         )
@@ -362,7 +372,6 @@ private fun buildTimestampMetadataText(
     }
 }
 
-@Suppress("CyclomaticComplexMethod")
 private fun messageStatusTextResourceId(status: Status): Int? {
     return when (status) {
         Status.Outgoing.Delivered -> R.string.delivered_status_content_description
@@ -374,13 +383,6 @@ private fun messageStatusTextResourceId(status: Status): Int? {
         Status.Outgoing.FailedEmergencyNumber -> {
             R.string.message_status_send_failed_emergency_number
         }
-        Status.Incoming.YetToManualDownload -> R.string.message_status_download
-        Status.Incoming.RetryingManualDownload -> R.string.message_status_downloading
-        Status.Incoming.ManualDownloading -> R.string.message_status_downloading
-        Status.Incoming.RetryingAutoDownload -> R.string.message_status_downloading
-        Status.Incoming.AutoDownloading -> R.string.message_status_downloading
-        Status.Incoming.DownloadFailed -> R.string.message_status_download_failed
-        Status.Incoming.ExpiredOrNotAvailable -> R.string.message_status_download_error
         else -> null
     }
 }

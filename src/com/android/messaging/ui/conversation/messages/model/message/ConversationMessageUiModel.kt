@@ -25,6 +25,7 @@ internal data class ConversationMessageUiModel(
     val canForwardMessage: Boolean,
     val canResendMessage: Boolean,
     val canSaveAttachments: Boolean,
+    val mmsDownload: MmsDownloadUiModel?,
     val mmsSubject: String?,
     val protocol: Protocol,
 ) {
