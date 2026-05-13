@@ -9,6 +9,7 @@ import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.conversation.ConversationActivity
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsScreenEffect as Effect
 import com.android.messaging.util.NotificationChannelUtil
+import com.android.messaging.util.UiUtils
 
 internal interface ConversationSettingsEffectHandler {
     fun handle(effect: Effect)
@@ -52,6 +53,10 @@ internal class ConversationSettingsEffectHandlerImpl(
 
             is Effect.CopyToClipboard -> {
                 clipboardManager.setPrimaryClip(ClipData.newPlainText(null, effect.text))
+            }
+
+            is Effect.ShowMessage -> {
+                UiUtils.showToastAtBottom(effect.messageResId)
             }
         }
     }

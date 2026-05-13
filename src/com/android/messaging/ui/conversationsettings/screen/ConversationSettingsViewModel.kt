@@ -3,6 +3,7 @@ package com.android.messaging.ui.conversationsettings.screen
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.messaging.R
 import com.android.messaging.di.core.MainDispatcher
 import com.android.messaging.domain.conversation.usecase.participant.ResolveConversationId
 import com.android.messaging.domain.conversation.usecase.participant.model.ResolveConversationIdResult
@@ -151,7 +152,7 @@ internal class ConversationSettingsViewModel @Inject constructor(
             ResolveConversationIdResult.EmptyDestinations,
             ResolveConversationIdResult.NotResolved,
             -> {
-                // TODO: Consider how to handle these states
+                emitEffect(Effect.ShowMessage(R.string.conversation_creation_failure))
             }
         }
     }

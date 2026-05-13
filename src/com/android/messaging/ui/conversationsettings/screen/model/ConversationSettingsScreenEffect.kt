@@ -19,4 +19,8 @@ internal sealed interface ConversationSettingsScreenEffect {
     data class CopyToClipboard(
         val text: String,
     ) : ConversationSettingsScreenEffect
+
+    data class ShowMessage(
+        val messageResId: Int,
+    ) : ConversationSettingsScreenEffect
 }
