@@ -187,6 +187,7 @@ internal fun ConversationScreenScaffold(
             onAttachmentClick = screenModel::onMessageAttachmentClicked,
             onExternalUriClick = screenModel::onExternalUriClicked,
             onMessageClick = screenModel::onMessageClick,
+            onMessageAvatarClick = screenModel::onMessageAvatarClick,
             onMessageDownloadClick = screenModel::onMessageDownloadClick,
             onMessageLongClick = screenModel::onMessageLongClick,
             onMessageResendClick = screenModel::onMessageResendClick,
@@ -326,6 +327,7 @@ private fun ConversationScreenContent(
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
+    onMessageAvatarClick: (String) -> Unit,
     onMessageDownloadClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
@@ -350,7 +352,7 @@ private fun ConversationScreenContent(
                 conversationId = conversationId,
             )
 
-            val showIncomingSenderLabels = shouldShowIncomingSenderLabels(
+            val showIncomingParticipantIdentity = shouldShowIncomingParticipantIdentity(
                 metadata = uiState.metadata,
             )
 
@@ -374,11 +376,12 @@ private fun ConversationScreenContent(
                 messages = messagesState.messages,
                 listState = messagesListState,
                 selectedMessageIds = uiState.selection.selectedMessageIds,
-                showIncomingSenderLabels = showIncomingSenderLabels,
+                showIncomingParticipantIdentity = showIncomingParticipantIdentity,
                 subscriptions = uiState.composer.simSelector.subscriptions,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
+                onMessageAvatarClick = onMessageAvatarClick,
                 onMessageDownloadClick = onMessageDownloadClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
@@ -388,9 +391,12 @@ private fun ConversationScreenContent(
     }
 }
 
-private fun shouldShowIncomingSenderLabels(metadata: ConversationMetadataUiState): Boolean {
+private fun shouldShowIncomingParticipantIdentity(
+    metadata: ConversationMetadataUiState,
+): Boolean {
     return when (metadata) {
         is ConversationMetadataUiState.Present -> metadata.participantCount > 1
+
         ConversationMetadataUiState.Loading,
         ConversationMetadataUiState.Unavailable,
         -> false

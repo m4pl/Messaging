@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Point
+import android.view.View
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect as ComposeRect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -31,6 +33,7 @@ import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.conversation.MessageDetailsDialog
 import com.android.messaging.ui.conversation.screen.model.ConversationScreenEffect
 import com.android.messaging.util.BuglePrefs
+import com.android.messaging.util.ContactUtil
 import com.android.messaging.util.LogUtil
 import com.android.messaging.util.MediaUtil
 import com.android.messaging.util.UiUtils
@@ -45,6 +48,7 @@ internal fun ConversationScreenEffects(
     onNavigateBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
     val defaultSmsRoleLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
@@ -52,10 +56,18 @@ internal fun ConversationScreenEffects(
     }
     val draftSentTick = remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(screenModel, context, snackbarHostState, hostBoundsState, onNavigateBack) {
+    LaunchedEffect(
+        screenModel,
+        context,
+        view,
+        snackbarHostState,
+        hostBoundsState,
+        onNavigateBack,
+    ) {
         screenModel.effects.collect { effect ->
             screenModel.handleConversationScreenEffect(
                 context = context,
+                view = view,
                 snackbarHostState = snackbarHostState,
                 hostBoundsState = hostBoundsState,
                 effect = effect,
@@ -71,6 +83,7 @@ internal fun ConversationScreenEffects(
 
 private suspend fun ConversationScreenModel.handleConversationScreenEffect(
     context: Context,
+    view: View,
     snackbarHostState: SnackbarHostState,
     hostBoundsState: State<ComposeRect?>,
     effect: ConversationScreenEffect,
@@ -121,10 +134,12 @@ private suspend fun ConversationScreenModel.handleConversationScreenEffect(
         is ConversationScreenEffect.PlacePhoneCall,
         is ConversationScreenEffect.ShowMessage,
         is ConversationScreenEffect.ShowMessageDetails,
+        is ConversationScreenEffect.ShowOrAddParticipantContact,
         is ConversationScreenEffect.ShowSaveAttachmentsResult,
         -> {
             handleImmediateConversationScreenEffect(
                 context = context,
+                view = view,
                 effect = effect,
                 onDraftSent = onDraftSent,
             )
@@ -134,6 +149,7 @@ private suspend fun ConversationScreenModel.handleConversationScreenEffect(
 
 private fun handleImmediateConversationScreenEffect(
     context: Context,
+    view: View,
     effect: ConversationScreenEffect,
     onDraftSent: () -> Unit,
 ) {
@@ -181,6 +197,16 @@ private fun handleImmediateConversationScreenEffect(
                 effect.message,
                 effect.participants,
                 effect.selfParticipant,
+            )
+        }
+
+        is ConversationScreenEffect.ShowOrAddParticipantContact -> {
+            ContactUtil.showOrAddContact(
+                view,
+                effect.contactId,
+                effect.contactLookupKey,
+                effect.avatarUri,
+                effect.normalizedDestination,
             )
         }
 

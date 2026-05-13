@@ -1,5 +1,6 @@
 package com.android.messaging.ui.conversation.messages.ui.message
 
+import com.android.messaging.datamodel.data.ParticipantData
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessagePartUiModel
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
 import com.android.messaging.ui.conversation.messages.model.message.MmsDownloadUiModel
@@ -151,7 +152,10 @@ private fun message(
         isIncoming = isIncoming,
         senderDisplayName = null,
         senderAvatarUri = null,
+        senderContactId = ParticipantData.PARTICIPANT_CONTACT_ID_NOT_RESOLVED,
         senderContactLookupKey = null,
+        senderNormalizedDestination = null,
+        senderParticipantId = null,
         selfParticipantId = selfParticipantId,
         canClusterWithPrevious = false,
         canClusterWithNext = false,

@@ -34,9 +34,11 @@ import com.android.messaging.ui.conversation.messages.ui.message.resolveConversa
 import com.android.messaging.ui.conversation.resolveDisplayName
 import java.util.TimeZone
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableMap
 
 private val CONVERSATION_MESSAGES_CONTENT_PADDING = PaddingValues(
     start = 16.dp,
@@ -64,11 +66,12 @@ internal fun ConversationMessages(
     messages: ImmutableList<ConversationMessageUiModel>,
     listState: LazyListState,
     selectedMessageIds: ImmutableSet<String> = persistentSetOf(),
-    showIncomingSenderLabels: Boolean = true,
+    showIncomingParticipantIdentity: Boolean = true,
     subscriptions: ImmutableList<Subscription> = persistentListOf(),
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
+    onMessageAvatarClick: (String) -> Unit,
     onMessageDownloadClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
@@ -117,11 +120,12 @@ internal fun ConversationMessages(
                 ),
                 isSelectionMode = selectedMessageIds.isNotEmpty(),
                 isSelected = selectedMessageIds.contains(message.messageId),
-                showIncomingSenderLabels = showIncomingSenderLabels,
+                showIncomingParticipantIdentity = showIncomingParticipantIdentity,
                 simDisplayNameByParticipantId = simDisplayNameByParticipantId,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
+                onMessageAvatarClick = onMessageAvatarClick,
                 onMessageDownloadClick = onMessageDownloadClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
@@ -134,15 +138,17 @@ internal fun ConversationMessages(
 @Composable
 private fun rememberSimDisplayNameByParticipantId(
     subscriptions: ImmutableList<Subscription>,
-): Map<String, String> {
+): ImmutableMap<String, String> {
     val resources = LocalResources.current
 
     return remember(subscriptions, resources) {
-        subscriptions.associate { subscription ->
-            subscription.selfParticipantId to subscription.label.resolveDisplayName(
-                resources = resources,
-            )
-        }
+        subscriptions
+            .associate { subscription ->
+                subscription.selfParticipantId to subscription.label.resolveDisplayName(
+                    resources = resources,
+                )
+            }
+            .toImmutableMap()
     }
 }
 
@@ -194,11 +200,12 @@ private fun ConversationMessagesItem(
     messageBelow: ConversationMessageUiModel?,
     isSelectionMode: Boolean,
     isSelected: Boolean,
-    showIncomingSenderLabels: Boolean,
-    simDisplayNameByParticipantId: Map<String, String>,
+    showIncomingParticipantIdentity: Boolean,
+    simDisplayNameByParticipantId: ImmutableMap<String, String>,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
+    onMessageAvatarClick: (String) -> Unit,
     onMessageDownloadClick: (String) -> Unit,
     onMessageLongClick: (String) -> Unit,
     onMessageResendClick: (String) -> Unit,
@@ -228,12 +235,15 @@ private fun ConversationMessagesItem(
             isSelected = isSelected,
             isSelectionMode = isSelectionMode,
             message = message,
-            showIncomingSenderLabel = showIncomingSenderLabels,
+            showIncomingParticipantIdentity = showIncomingParticipantIdentity,
             simDisplayName = simDisplayName,
             onAttachmentClick = onAttachmentClick,
             onExternalUriClick = onExternalUriClick,
             onMessageClick = {
                 onMessageClick(message.messageId)
+            },
+            onMessageAvatarClick = {
+                onMessageAvatarClick(message.messageId)
             },
             onMessageDownloadClick = {
                 onMessageDownloadClick(message.messageId)

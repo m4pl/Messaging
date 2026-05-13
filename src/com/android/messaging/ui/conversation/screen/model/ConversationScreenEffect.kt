@@ -1,6 +1,7 @@
 package com.android.messaging.ui.conversation.screen.model
 
 import android.content.Intent
+import android.net.Uri
 import com.android.messaging.datamodel.data.ConversationMessageData
 import com.android.messaging.datamodel.data.ConversationParticipantsData
 import com.android.messaging.datamodel.data.MessageData
@@ -56,6 +57,13 @@ internal sealed interface ConversationScreenEffect {
 
     data class ShowMessage(
         val messageResId: Int,
+    ) : ConversationScreenEffect
+
+    data class ShowOrAddParticipantContact(
+        val contactId: Long,
+        val contactLookupKey: String?,
+        val avatarUri: Uri?,
+        val normalizedDestination: String?,
     ) : ConversationScreenEffect
 
     data class ShowMessageDetails(

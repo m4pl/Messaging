@@ -36,11 +36,12 @@ internal fun ConversationMessage(
     message: ConversationMessageUiModel,
     isSelected: Boolean = false,
     isSelectionMode: Boolean = false,
-    showIncomingSenderLabel: Boolean = true,
+    showIncomingParticipantIdentity: Boolean = true,
     simDisplayName: String? = null,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit = { _, _ -> },
     onExternalUriClick: (String) -> Unit = {},
     onMessageClick: () -> Unit = {},
+    onMessageAvatarClick: () -> Unit = {},
     onMessageDownloadClick: () -> Unit = {},
     onMessageLongClick: () -> Unit = {},
     onMessageResendClick: () -> Unit = {},
@@ -50,14 +51,25 @@ internal fun ConversationMessage(
         modifier = modifier
             .fillMaxWidth(),
     ) {
+        val layout = rememberConversationMessageLayout(
+            message = message,
+            showIncomingParticipantIdentity = showIncomingParticipantIdentity,
+        )
+
         val maxBubbleWidth = remember(maxWidth) {
             (maxWidth * MESSAGE_BUBBLE_WIDTH_FRACTION)
                 .coerceAtMost(MESSAGE_BUBBLE_MAX_WIDTH_DP.dp)
         }
-        val layout = rememberConversationMessageLayout(
-            message = message,
-            showIncomingSenderLabel = showIncomingSenderLabel,
-        )
+
+        val maxAdjustedBubbleWidth = remember(
+            maxBubbleWidth,
+            layout.showAvatarGutter,
+        ) {
+            conversationMessageMaxBubbleWidth(
+                maxBubbleWidth = maxBubbleWidth,
+                showAvatarGutter = layout.showAvatarGutter,
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -68,11 +80,12 @@ internal fun ConversationMessage(
                 isSelected = isSelected,
                 isSelectionMode = isSelectionMode,
                 layout = layout,
-                maxBubbleWidth = maxBubbleWidth,
+                maxBubbleWidth = maxAdjustedBubbleWidth,
                 simDisplayName = simDisplayName,
                 onAttachmentClick = onAttachmentClick,
                 onExternalUriClick = onExternalUriClick,
                 onMessageClick = onMessageClick,
+                onMessageAvatarClick = onMessageAvatarClick,
                 onMessageDownloadClick = onMessageDownloadClick,
                 onMessageLongClick = onMessageLongClick,
                 onMessageResendClick = onMessageResendClick,
@@ -89,6 +102,8 @@ internal data class ConversationMessageLayout(
     val content: ConversationMessageContent,
     val metadataText: String?,
     val showSender: Boolean,
+    val showAvatarGutter: Boolean,
+    val showAvatar: Boolean,
 )
 
 internal enum class ConversationMessageBubbleLayoutMode {
@@ -100,7 +115,7 @@ internal enum class ConversationMessageBubbleLayoutMode {
 @Composable
 private fun rememberConversationMessageLayout(
     message: ConversationMessageUiModel,
-    showIncomingSenderLabel: Boolean,
+    showIncomingParticipantIdentity: Boolean,
 ): ConversationMessageLayout {
     val bubbleShape = remember(
         message.canClusterWithPrevious,
@@ -112,17 +127,14 @@ private fun rememberConversationMessageLayout(
     val content = rememberConversationMessageContent(message = message)
     val metadataText = rememberConversationMessageMetadataText(message = message)
 
-    val showSender = remember(
-        showIncomingSenderLabel,
-        message.isIncoming,
-        message.senderDisplayName,
-        message.canClusterWithPrevious,
-    ) {
-        message.isIncoming &&
-            showIncomingSenderLabel &&
-            !message.senderDisplayName.isNullOrBlank() &&
-            !message.canClusterWithPrevious
-    }
+    val showSender = message.isIncoming &&
+        showIncomingParticipantIdentity &&
+        !message.senderDisplayName.isNullOrBlank() &&
+        !message.canClusterWithPrevious
+
+    val showAvatarGutter = message.isIncoming && showIncomingParticipantIdentity
+
+    val showAvatar = showAvatarGutter && !message.canClusterWithNext
 
     val bubbleLayoutMode = remember(
         content,
@@ -140,6 +152,8 @@ private fun rememberConversationMessageLayout(
         content,
         metadataText,
         showSender,
+        showAvatarGutter,
+        showAvatar,
     ) {
         ConversationMessageLayout(
             bubbleShape = bubbleShape,
@@ -147,7 +161,23 @@ private fun rememberConversationMessageLayout(
             content = content,
             metadataText = metadataText,
             showSender = showSender,
+            showAvatarGutter = showAvatarGutter,
+            showAvatar = showAvatar,
         )
+    }
+}
+
+private fun conversationMessageMaxBubbleWidth(
+    maxBubbleWidth: Dp,
+    showAvatarGutter: Boolean,
+): Dp {
+    return when {
+        showAvatarGutter -> {
+            (maxBubbleWidth - CONVERSATION_MESSAGE_AVATAR_GUTTER_WIDTH)
+                .coerceAtLeast(0.dp)
+        }
+
+        else -> maxBubbleWidth
     }
 }
 
@@ -233,6 +263,7 @@ private fun ConversationMessageContent(
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: () -> Unit,
+    onMessageAvatarClick: () -> Unit,
     onMessageDownloadClick: () -> Unit,
     onMessageLongClick: () -> Unit,
     onMessageResendClick: () -> Unit,
@@ -251,6 +282,7 @@ private fun ConversationMessageContent(
             onAttachmentClick = onAttachmentClick,
             onExternalUriClick = onExternalUriClick,
             onMessageClick = onMessageClick,
+            onMessageAvatarClick = onMessageAvatarClick,
             onMessageDownloadClick = onMessageDownloadClick,
             onMessageLongClick = onMessageLongClick,
             onMessageResendClick = onMessageResendClick,

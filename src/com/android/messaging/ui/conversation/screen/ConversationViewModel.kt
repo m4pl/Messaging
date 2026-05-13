@@ -73,6 +73,7 @@ internal interface ConversationScreenModel {
     )
 
     fun onMessageClick(messageId: String)
+    fun onMessageAvatarClick(messageId: String)
     fun onMessageDownloadClick(messageId: String)
     fun onMessageLongClick(messageId: String)
     fun onMessageResendClick(messageId: String)
@@ -475,6 +476,36 @@ internal class ConversationViewModel @Inject constructor(
 
     override fun onMessageClick(messageId: String) {
         conversationMessageSelectionDelegate.onMessageClick(messageId = messageId)
+    }
+
+    override fun onMessageAvatarClick(messageId: String) {
+        val message = when (val messagesState = conversationMessagesDelegate.state.value) {
+            is ConversationMessagesUiState.Present -> {
+                messagesState
+                    .messages
+                    .firstOrNull { candidate ->
+                        candidate.messageId == messageId
+                    }
+                    ?.takeIf { it.canShowContactCard }
+            }
+
+            else -> null
+        }
+
+        if (message == null) {
+            return
+        }
+
+        viewModelScope.launch(defaultDispatcher) {
+            _effects.emit(
+                ConversationScreenEffect.ShowOrAddParticipantContact(
+                    contactId = message.senderContactId,
+                    contactLookupKey = message.senderContactLookupKey,
+                    avatarUri = message.senderAvatarUri,
+                    normalizedDestination = message.senderNormalizedDestination,
+                ),
+            )
+        }
     }
 
     override fun onMessageDownloadClick(messageId: String) {

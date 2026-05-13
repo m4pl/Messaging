@@ -3,6 +3,8 @@ package com.android.messaging.ui.conversation.messages.model.message
 import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import com.android.messaging.datamodel.data.ParticipantData
+
 @Immutable
 internal data class ConversationMessageUiModel(
     val messageId: String,
@@ -16,7 +18,10 @@ internal data class ConversationMessageUiModel(
     val isIncoming: Boolean,
     val senderDisplayName: String?,
     val senderAvatarUri: Uri?,
+    val senderContactId: Long,
     val senderContactLookupKey: String?,
+    val senderNormalizedDestination: String?,
+    val senderParticipantId: String?,
     val selfParticipantId: String?,
     val canClusterWithPrevious: Boolean,
     val canClusterWithNext: Boolean,
@@ -29,6 +34,12 @@ internal data class ConversationMessageUiModel(
     val mmsSubject: String?,
     val protocol: Protocol,
 ) {
+
+    val canShowContactCard: Boolean
+        get() {
+            return senderContactId > ParticipantData.PARTICIPANT_CONTACT_ID_NOT_RESOLVED ||
+                !senderNormalizedDestination.isNullOrBlank()
+        }
 
     @Stable
     sealed interface Status {

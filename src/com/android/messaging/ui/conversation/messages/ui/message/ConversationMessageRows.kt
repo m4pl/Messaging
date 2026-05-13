@@ -3,9 +3,11 @@ package com.android.messaging.ui.conversation.messages.ui.message
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -32,6 +34,7 @@ internal fun ConversationMessageBubbleRow(
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: () -> Unit,
+    onMessageAvatarClick: () -> Unit,
     onMessageDownloadClick: () -> Unit,
     onMessageLongClick: () -> Unit,
     onMessageResendClick: () -> Unit,
@@ -40,7 +43,9 @@ internal fun ConversationMessageBubbleRow(
         message = message,
         isSelected = isSelected,
         isSelectionMode = isSelectionMode,
+        layout = layout,
         onMessageClick = onMessageClick,
+        onMessageAvatarClick = onMessageAvatarClick,
         onMessageLongClick = onMessageLongClick,
     ) {
         ConversationMessageBubble(
@@ -84,7 +89,9 @@ private fun ConversationMessageBubbleRowContainer(
     message: ConversationMessageUiModel,
     isSelected: Boolean,
     isSelectionMode: Boolean,
+    layout: ConversationMessageLayout,
     onMessageClick: () -> Unit,
+    onMessageAvatarClick: () -> Unit,
     onMessageLongClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -111,9 +118,51 @@ private fun ConversationMessageBubbleRowContainer(
             horizontalArrangement = conversationMessageRowHorizontalArrangement(
                 message = message,
             ),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
         ) {
+            ConversationMessageAvatarGutter(
+                message = message,
+                isSelectionMode = isSelectionMode,
+                layout = layout,
+                onAvatarClick = onMessageAvatarClick,
+                onMessageClick = onMessageClick,
+                onMessageLongClick = onMessageLongClick,
+            )
+
             content()
+        }
+    }
+}
+
+@Composable
+private fun ConversationMessageAvatarGutter(
+    message: ConversationMessageUiModel,
+    isSelectionMode: Boolean,
+    layout: ConversationMessageLayout,
+    onAvatarClick: () -> Unit,
+    onMessageClick: () -> Unit,
+    onMessageLongClick: () -> Unit,
+) {
+    if (!layout.showAvatarGutter) {
+        return
+    }
+
+    Box(
+        modifier = Modifier
+            .width(width = CONVERSATION_MESSAGE_AVATAR_GUTTER_WIDTH),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        if (layout.showAvatar) {
+            ConversationMessageAvatar(
+                message = message,
+                onClick = {
+                    when {
+                        isSelectionMode -> onMessageClick()
+                        else -> onAvatarClick()
+                    }
+                },
+                onLongClick = onMessageLongClick,
+            )
         }
     }
 }
@@ -220,6 +269,8 @@ internal fun ConversationMessageMetadataRow(
                 message = message,
             ),
         ) {
+            ConversationMessageAvatarMetadataOffset(layout = layout)
+
             Column(
                 modifier = Modifier.widthIn(max = maxBubbleWidth),
                 horizontalAlignment = when {
@@ -236,4 +287,18 @@ internal fun ConversationMessageMetadataRow(
             }
         }
     }
+}
+
+@Composable
+private fun ConversationMessageAvatarMetadataOffset(
+    layout: ConversationMessageLayout,
+) {
+    if (!layout.showAvatarGutter) {
+        return
+    }
+
+    Box(
+        modifier = Modifier
+            .width(width = CONVERSATION_MESSAGE_AVATAR_GUTTER_WIDTH),
+    )
 }
