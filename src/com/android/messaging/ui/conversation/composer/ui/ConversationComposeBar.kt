@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -226,6 +228,15 @@ internal fun ConversationComposeInputContent(
         isRecordActionEnabled = isRecordActionEnabled,
         isSendActionEnabled = isSendActionEnabled,
     )
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(inputState.isActiveRecording) {
+        if (inputState.isActiveRecording) {
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
+        }
+    }
 
     Row(
         modifier = Modifier
@@ -386,6 +397,9 @@ private fun ConversationComposeMessageRecordingContent(
     onSubjectChipClick: () -> Unit,
     onSubjectChipClear: () -> Unit,
 ) {
+    val isTextEntryEnabled = isMessageFieldEnabled && !inputState.isActiveRecording
+    val isInputActionEnabled = !inputState.isActiveRecording
+
     Surface(
         modifier = modifier,
         shape = presentation.fieldShape,
@@ -409,13 +423,13 @@ private fun ConversationComposeMessageRecordingContent(
                             onMessageTextChange(updatedMessageText)
                         }
                     },
-                    enabled = isMessageFieldEnabled,
+                    enabled = isTextEntryEnabled,
                     sendProtocol = sendProtocol,
                     isVisuallyHidden = inputState.isActiveRecording,
                     messageFieldFocusRequester = messageFieldFocusRequester,
                     presentation = presentation,
-                    isAttachmentActionEnabled = isAttachmentActionEnabled,
-                    isAudioRecordActionEnabled = isRecordActionEnabled,
+                    isAttachmentActionEnabled = isAttachmentActionEnabled && isInputActionEnabled,
+                    isAudioRecordActionEnabled = isRecordActionEnabled && isInputActionEnabled,
                     onContactAttachClick = onContactAttachClick,
                     onMediaPickerClick = onMediaPickerClick,
                     onAudioAttachClick = onLockedAudioRecordingStartRequest,
