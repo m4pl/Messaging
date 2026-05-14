@@ -36,8 +36,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 
-private val MESSAGE_SELECTION_INDICATOR_GUTTER_WIDTH = 48.dp
 private val MESSAGE_SELECTION_INDICATOR_SIZE = 22.dp
+private val MESSAGE_SELECTION_INDICATOR_HORIZONTAL_GAP = 16.dp
+private val MESSAGE_SELECTION_INDICATOR_GUTTER_WIDTH = MESSAGE_SELECTION_INDICATOR_SIZE +
+    MESSAGE_SELECTION_INDICATOR_HORIZONTAL_GAP
 private val MESSAGE_SELECTION_INDICATOR_CHECK_SIZE = 16.dp
 private val MESSAGE_SELECTION_INDICATOR_BORDER_WIDTH = 2.dp
 
@@ -112,7 +114,7 @@ private fun ConversationMessageSelectionIndicatorContent(
         modifier = Modifier
             .width(width = MESSAGE_SELECTION_INDICATOR_GUTTER_WIDTH)
             .height(height = MESSAGE_SELECTION_INDICATOR_SIZE),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.CenterStart,
     ) {
         Box(
             modifier = Modifier

@@ -143,7 +143,7 @@ private fun ConversationMessageAvatarGutter(
     onMessageClick: () -> Unit,
     onMessageLongClick: () -> Unit,
 ) {
-    if (!layout.showAvatarGutter) {
+    if (isSelectionMode || !layout.showAvatarGutter) {
         return
     }
 
@@ -269,7 +269,10 @@ internal fun ConversationMessageMetadataRow(
                 message = message,
             ),
         ) {
-            ConversationMessageAvatarMetadataOffset(layout = layout)
+            ConversationMessageAvatarMetadataOffset(
+                isSelectionMode = isSelectionMode,
+                layout = layout,
+            )
 
             Column(
                 modifier = Modifier.widthIn(max = maxBubbleWidth),
@@ -291,9 +294,10 @@ internal fun ConversationMessageMetadataRow(
 
 @Composable
 private fun ConversationMessageAvatarMetadataOffset(
+    isSelectionMode: Boolean,
     layout: ConversationMessageLayout,
 ) {
-    if (!layout.showAvatarGutter) {
+    if (isSelectionMode || !layout.showAvatarGutter) {
         return
     }
 
