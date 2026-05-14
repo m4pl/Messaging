@@ -2,6 +2,7 @@ package com.android.messaging.ui.conversationsettings.screen.mapper
 
 import android.content.ContentResolver
 import com.android.messaging.data.conversation.repository.ConversationNotificationRepository
+import com.android.messaging.data.subscription.model.Subscription
 import com.android.messaging.datamodel.MessagingContentProvider
 import com.android.messaging.datamodel.data.ConversationParticipantsData
 import com.android.messaging.datamodel.data.ParticipantData
@@ -9,10 +10,16 @@ import com.android.messaging.datamodel.data.PeopleOptionsItemData
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsUiState
 import com.android.messaging.ui.conversationsettings.screen.model.ParticipantUiState
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
 internal interface ConversationSettingsUiStateMapper {
-    fun map(conversationId: String): ConversationSettingsUiState
+    fun map(
+        conversationId: String,
+        subscriptions: ImmutableList<Subscription> = persistentListOf(),
+        selfIdOverride: String? = null,
+    ): ConversationSettingsUiState
 }
 
 internal class ConversationSettingsUiStateMapperImpl @Inject constructor(
@@ -20,7 +27,11 @@ internal class ConversationSettingsUiStateMapperImpl @Inject constructor(
     private val notificationRepository: ConversationNotificationRepository,
 ) : ConversationSettingsUiStateMapper {
 
-    override fun map(conversationId: String): ConversationSettingsUiState {
+    override fun map(
+        conversationId: String,
+        subscriptions: ImmutableList<Subscription>,
+        selfIdOverride: String?,
+    ): ConversationSettingsUiState {
         val isSnoozed = notificationRepository.isSnoozed(conversationId)
         val participantsData = ConversationParticipantsData().apply {
             contentResolver.query(
@@ -51,8 +62,17 @@ internal class ConversationSettingsUiStateMapperImpl @Inject constructor(
                     conversationId = conversationId,
                     isSnoozed = isSnoozed,
                     participants = participants,
+                    selfParticipantId = selfIdOverride.orEmpty(),
+                    availableSubscriptions = subscriptions,
                 )
             } else {
+                val dbSelfId = cursor.getString(
+                    PeopleOptionsItemData.INDEX_CURRENT_SELF_ID,
+                ).orEmpty()
+                val effectiveSelfId = selfIdOverride
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: dbSelfId
+
                 ConversationSettingsUiState(
                     conversationId = conversationId,
                     conversationTitle = cursor.getString(
@@ -63,6 +83,8 @@ internal class ConversationSettingsUiStateMapperImpl @Inject constructor(
                     ) == 1,
                     isSnoozed = isSnoozed,
                     participants = participants,
+                    selfParticipantId = effectiveSelfId,
+                    availableSubscriptions = subscriptions,
                 )
             }
         }
