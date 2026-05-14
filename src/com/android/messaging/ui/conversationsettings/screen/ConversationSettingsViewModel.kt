@@ -136,6 +136,10 @@ internal class ConversationSettingsViewModel @Inject constructor(
                     shouldOpenChat = false,
                 )
             }
+
+            is Action.SimSelected -> {
+                delegate.setSelfParticipantId(action.selfParticipantId)
+            }
         }
     }
 
