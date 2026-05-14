@@ -31,4 +31,8 @@ internal sealed interface ConversationSettingsAction {
     data class ParticipantActionPressed(
         val destination: String,
     ) : ConversationSettingsAction
+
+    data class SimSelected(
+        val selfParticipantId: String,
+    ) : ConversationSettingsAction
 }

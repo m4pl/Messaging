@@ -980,6 +980,8 @@
     <string name="sim_selector_button_content_description">SIM selector</string>
     <!-- Content description for the SIM selector button with selected sim name -->
     <string name="sim_selector_button_content_description_with_selection"><xliff:g id="sim">%1$s</xliff:g> selected, SIM selector</string>
+    <!-- Title shown above the SIM switch row in conversation settings -->
+    <string name="sim_selector_item_title">Send with</string>
     <!-- Title for the modal bottom sheet that lets the user pick which SIM sends a message -->
     <string name="sim_selector_sheet_title">Send from</string>
     <!-- Accessibility label for an item in the SIM picker that is currently selected -->

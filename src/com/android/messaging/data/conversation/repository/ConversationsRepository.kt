@@ -1,12 +1,15 @@
 package com.android.messaging.data.conversation.repository
 
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.database.ContentObserver
 import android.net.Uri
 import com.android.messaging.data.conversation.model.message.ConversationMessageDetailsData
 import com.android.messaging.data.conversation.model.metadata.ConversationComposerAvailability
 import com.android.messaging.data.conversation.model.metadata.ConversationMetadata
 import com.android.messaging.data.conversation.model.send.ConversationSendData
+import com.android.messaging.datamodel.BugleDatabaseOperations
+import com.android.messaging.datamodel.DataModel
 import com.android.messaging.datamodel.DatabaseHelper.ConversationColumns
 import com.android.messaging.datamodel.DatabaseHelper.ParticipantColumns
 import com.android.messaging.datamodel.MessagingContentProvider
@@ -64,6 +67,8 @@ internal interface ConversationsRepository {
     fun unarchiveConversation(conversationId: String)
 
     fun deleteConversation(conversationId: String, cutoffTimestamp: Long)
+
+    suspend fun setConversationSelfId(conversationId: String, selfId: String)
 }
 
 internal class ConversationsRepositoryImpl @Inject constructor(
@@ -204,6 +209,31 @@ internal class ConversationsRepositoryImpl @Inject constructor(
             conversationId,
             cutoffTimestamp,
         )
+    }
+
+    override suspend fun setConversationSelfId(conversationId: String, selfId: String) {
+        if (conversationId.isBlank() || selfId.isBlank()) return
+
+        withContext(ioDispatcher) {
+            val db = DataModel.get().database
+            db.beginTransaction()
+            try {
+                val values = ContentValues().apply {
+                    put(ConversationColumns.CURRENT_SELF_ID, selfId)
+                }
+                BugleDatabaseOperations.updateConversationRowIfExists(
+                    db,
+                    conversationId,
+                    values,
+                )
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+
+            MessagingContentProvider.notifyConversationListChanged()
+            MessagingContentProvider.notifyConversationMetadataChanged(conversationId)
+        }
     }
 
     private fun observeUri(uri: Uri): Flow<Unit> {

@@ -1,6 +1,7 @@
 package com.android.messaging.ui.conversationsettings.screen.model
 
 import androidx.compose.runtime.Immutable
+import com.android.messaging.data.subscription.model.Subscription
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -11,9 +12,20 @@ internal data class ConversationSettingsUiState(
     val isArchived: Boolean = false,
     val isSnoozed: Boolean = false,
     val participants: ImmutableList<ParticipantUiState> = persistentListOf(),
+    val selfParticipantId: String = "",
+    val availableSubscriptions: ImmutableList<Subscription> = persistentListOf(),
 ) {
     val otherParticipant: ParticipantUiState?
         get() = participants.singleOrNull()
+
+    val selectedSubscription: Subscription?
+        get() {
+            return availableSubscriptions.firstOrNull { it.selfParticipantId == selfParticipantId }
+                ?: availableSubscriptions.firstOrNull()
+        }
+
+    val isSimSwitchAvailable: Boolean
+        get() = availableSubscriptions.size > 1
 }
 
 @Immutable

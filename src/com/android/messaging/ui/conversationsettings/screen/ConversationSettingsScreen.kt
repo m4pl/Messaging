@@ -8,7 +8,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -26,11 +29,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.SimCard
 import androidx.compose.material.icons.filled.Snooze
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -58,11 +66,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.messaging.R
 import com.android.messaging.data.conversation.model.notification.SnoozeOption
+import com.android.messaging.data.subscription.model.Subscription
 import com.android.messaging.ui.conversation.ConversationActivity
 import com.android.messaging.ui.conversationsettings.common.ConversationHeader
 import com.android.messaging.ui.conversationsettings.common.ConversationSettingsItem
 import com.android.messaging.ui.conversationsettings.common.ConversationSettingsTopAppBar
+import com.android.messaging.ui.conversationsettings.common.ConversationSimAvatar
 import com.android.messaging.ui.conversationsettings.common.ParticipantItem
+import com.android.messaging.ui.conversationsettings.common.resolveDisplayName
 import com.android.messaging.ui.conversationsettings.screen.ConversationSettingsNavRouteSavedState as NavRouteSavedState
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsAction as Action
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsNavEvent as NavEvent
@@ -246,6 +257,11 @@ private fun ConversationSettingsContent(
                 )
             }
 
+            simSwitchItem(
+                uiState = uiState,
+                onAction = onAction,
+            )
+
             generalSettingsItems(
                 uiState = uiState,
                 onAction = onAction,
@@ -345,6 +361,154 @@ private fun LazyListScope.generalSettingsItems(
                 },
                 contentColor = MaterialTheme.colorScheme.error,
             )
+        }
+    }
+}
+
+private fun LazyListScope.simSwitchItem(
+    uiState: State,
+    onAction: (Action) -> Unit,
+) {
+    if (!uiState.isSimSwitchAvailable) return
+
+    val selected = uiState.selectedSubscription ?: return
+
+    item(key = "sim_switch") {
+        SimSwitchItem(
+            subscriptions = uiState.availableSubscriptions,
+            selected = selected,
+            onSimSelected = { selfParticipantId ->
+                onAction(Action.SimSelected(selfParticipantId))
+            },
+        )
+    }
+}
+
+@Composable
+private fun SimSwitchItem(
+    subscriptions: ImmutableList<Subscription>,
+    selected: Subscription,
+    onSimSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        onClick = { expanded = true },
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                start = 16.dp,
+                end = 8.dp,
+                top = 12.dp,
+                bottom = 12.dp,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Default.SimCard,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp),
+            )
+
+            Spacer(modifier = Modifier.width(20.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.sim_selector_item_title),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+
+                val subtitle = selected.displayDestination
+                    ?: selected.label.resolveDisplayName()
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Box {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.SwapHoriz,
+                        contentDescription = stringResource(
+                            R.string.sim_selector_item_title,
+                        ),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    shape = RoundedCornerShape(20.dp),
+                    onDismissRequest = { expanded = false },
+                ) {
+                    SimSelectorPopupContent(
+                        subscriptions = subscriptions,
+                        onSimSelected = { id ->
+                            expanded = false
+                            onSimSelected(id)
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SimSelectorPopupContent(
+    subscriptions: ImmutableList<Subscription>,
+    onSimSelected: (String) -> Unit,
+) {
+    Column {
+        subscriptions.forEach { subscription ->
+            SimSelectorRow(
+                subscription = subscription,
+                onClick = { onSimSelected(subscription.selfParticipantId) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SimSelectorRow(
+    subscription: Subscription,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = 16.dp,
+                vertical = 12.dp,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(space = 16.dp),
+    ) {
+        ConversationSimAvatar(subscription = subscription)
+
+        Column(modifier = Modifier.weight(weight = 1f)) {
+            Text(
+                text = subscription.label.resolveDisplayName(),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            subscription.displayDestination?.let { destination ->
+                Text(
+                    text = destination,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

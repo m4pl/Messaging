@@ -4,9 +4,12 @@ import android.content.ContentResolver
 import android.content.Context
 import android.database.ContentObserver
 import com.android.messaging.data.conversation.repository.ConversationsRepository
+import com.android.messaging.data.subscription.repository.ConversationSimSelectionStore
+import com.android.messaging.data.subscription.repository.SubscriptionsRepository
 import com.android.messaging.datamodel.MessagingContentProvider
 import com.android.messaging.datamodel.action.BugleActionToasts
 import com.android.messaging.datamodel.action.UpdateDestinationBlockedAction
+import com.android.messaging.di.core.ApplicationCoroutineScope
 import com.android.messaging.di.core.DefaultDispatcher
 import com.android.messaging.ui.conversationsettings.common.ConversationSettingsScreenDelegate
 import com.android.messaging.ui.conversationsettings.screen.mapper.ConversationSettingsUiStateMapper
@@ -24,11 +27,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -38,6 +42,7 @@ internal interface ConversationSettingsDelegate :
     fun setConversationId(conversationId: String)
     fun setDestinationBlocked(blocked: Boolean)
     fun setArchived(archived: Boolean)
+    fun setSelfParticipantId(selfParticipantId: String)
 }
 
 internal class ConversationSettingsDelegateImpl @Inject constructor(
@@ -45,6 +50,10 @@ internal class ConversationSettingsDelegateImpl @Inject constructor(
     private val contentResolver: ContentResolver,
     private val mapper: ConversationSettingsUiStateMapper,
     private val conversationsRepository: ConversationsRepository,
+    private val subscriptionsRepository: SubscriptionsRepository,
+    private val simSelectionStore: ConversationSimSelectionStore,
+    @param:ApplicationCoroutineScope
+    private val applicationScope: CoroutineScope,
     @param:DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ConversationSettingsDelegate {
 
@@ -52,8 +61,8 @@ internal class ConversationSettingsDelegateImpl @Inject constructor(
     override val state: StateFlow<ConversationSettingsUiState> = _state.asStateFlow()
 
     private val refreshTriggers: Channel<Unit> = Channel(Channel.CONFLATED)
-
     private val conversationId = MutableStateFlow("")
+
     private var isBound = false
 
     override fun setConversationId(conversationId: String) {
@@ -65,16 +74,29 @@ internal class ConversationSettingsDelegateImpl @Inject constructor(
         if (isBound) return
         isBound = true
 
-        scope.launch {
-            merge(
-                conversationId.flatMapLatest(::conversationChangesFlow),
-                refreshTriggers.receiveAsFlow(),
+        conversationId
+            .flatMapLatest(::observeUiState)
+            .flowOn(defaultDispatcher)
+            .onEach { _state.value = it }
+            .launchIn(scope)
+    }
+
+    private fun observeUiState(id: String): Flow<ConversationSettingsUiState> {
+        val triggers = merge(
+            conversationChangesFlow(id),
+            refreshTriggers.receiveAsFlow(),
+        ).onStart { emit(Unit) }
+
+        return combine(
+            triggers,
+            subscriptionsRepository.observeActiveSubscriptions(),
+            simSelectionStore.observe(id),
+        ) { _, subscriptions, storedOverride ->
+            mapper.map(
+                conversationId = id,
+                subscriptions = subscriptions,
+                selfIdOverride = storedOverride,
             )
-                .onStart { emit(Unit) }
-                .conflate()
-                .map { mapper.map(conversationId.value) }
-                .flowOn(defaultDispatcher)
-                .collect { _state.value = it }
         }
     }
 
@@ -94,14 +116,29 @@ internal class ConversationSettingsDelegateImpl @Inject constructor(
     }
 
     override fun setArchived(archived: Boolean) {
-        val conversationId = this@ConversationSettingsDelegateImpl.conversationId.value.takeIf {
-            it.isNotEmpty()
-        } ?: return
+        val conversationId = conversationId.value.takeIf { it.isNotEmpty() } ?: return
 
         if (archived) {
             conversationsRepository.archiveConversation(conversationId)
         } else {
             conversationsRepository.unarchiveConversation(conversationId)
+        }
+    }
+
+    override fun setSelfParticipantId(selfParticipantId: String) {
+        val conversationId = this.conversationId.value
+        if (conversationId.isEmpty() || selfParticipantId.isEmpty()) return
+        if (_state.value.selfParticipantId == selfParticipantId) return
+
+        simSelectionStore.setSelectedSelfId(
+            conversationId = conversationId,
+            selfId = selfParticipantId
+        )
+        applicationScope.launch {
+            conversationsRepository.setConversationSelfId(
+                conversationId = conversationId,
+                selfId = selfParticipantId
+            )
         }
     }
 
