@@ -19,6 +19,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -35,7 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 
-private val MESSAGE_SELECTION_INDICATOR_TOUCH_SIZE = 48.dp
+private val MESSAGE_SELECTION_INDICATOR_GUTTER_WIDTH = 48.dp
 private val MESSAGE_SELECTION_INDICATOR_SIZE = 22.dp
 private val MESSAGE_SELECTION_INDICATOR_CHECK_SIZE = 16.dp
 private val MESSAGE_SELECTION_INDICATOR_BORDER_WIDTH = 2.dp
@@ -108,7 +109,9 @@ private fun ConversationMessageSelectionIndicatorContent(
     val checkmarkScale by selectionTransition.animateSelectionIndicatorCheckmarkScale()
 
     Box(
-        modifier = Modifier.size(size = MESSAGE_SELECTION_INDICATOR_TOUCH_SIZE),
+        modifier = Modifier
+            .width(width = MESSAGE_SELECTION_INDICATOR_GUTTER_WIDTH)
+            .height(height = MESSAGE_SELECTION_INDICATOR_SIZE),
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -167,7 +170,7 @@ internal fun ConversationMessageSelectionIndicatorOffset(
     ) {
         Spacer(
             modifier = Modifier
-                .width(width = MESSAGE_SELECTION_INDICATOR_TOUCH_SIZE),
+                .width(width = MESSAGE_SELECTION_INDICATOR_GUTTER_WIDTH),
         )
     }
 }
