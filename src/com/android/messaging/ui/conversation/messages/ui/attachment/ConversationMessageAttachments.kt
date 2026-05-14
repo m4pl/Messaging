@@ -30,7 +30,7 @@ internal fun ConversationMessageAttachments(
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 2.dp),
     ) {
         if (hasGalleryVisualAttachments) {
             ConversationGalleryVisualAttachments(
