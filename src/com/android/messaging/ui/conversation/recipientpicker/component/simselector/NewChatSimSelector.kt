@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
@@ -31,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.data.subscription.model.Subscription
@@ -179,6 +179,8 @@ private fun NewChatSimSelectorDropdownItem(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
+    val label = subscription.label.resolveDisplayName()
+
     DropdownMenuItem(
         modifier = Modifier
             .testTag(
@@ -194,38 +196,45 @@ private fun NewChatSimSelectorDropdownItem(
             )
         },
         text = {
-            Row(
-                modifier = Modifier
-                    .size(width = 240.dp, height = DropdownAvatarSize),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
-            ) {
-                Column(modifier = Modifier.weight(weight = 1f)) {
-                    Text(
-                        text = subscription.label.resolveDisplayName(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-
-                    subscription.displayDestination?.let { destination ->
-                        Text(
-                            text = destination,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                if (isSelected) {
-                    Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = stringResource(
-                            id = R.string.sim_selector_item_selected,
-                        ),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
+            NewChatSimSelectorDropdownItemText(
+                label = label,
+                destination = subscription.displayDestination,
+            )
+        },
+        trailingIcon = {
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = stringResource(id = R.string.sim_selector_item_selected),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
             }
         },
     )
+}
+
+@Composable
+private fun NewChatSimSelectorDropdownItemText(
+    label: String,
+    destination: String?,
+) {
+    Column {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        destination?.let {
+            Text(
+                text = destination,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
