@@ -7,6 +7,7 @@ import com.android.messaging.data.conversation.repository.ConversationsRepositor
 import com.android.messaging.data.subscription.repository.ConversationSimSelectionStore
 import com.android.messaging.data.subscription.repository.SubscriptionsRepository
 import com.android.messaging.datamodel.MessagingContentProvider
+import com.android.messaging.datamodel.ParticipantRefresh
 import com.android.messaging.datamodel.action.BugleActionToasts
 import com.android.messaging.datamodel.action.UpdateDestinationBlockedAction
 import com.android.messaging.di.core.ApplicationCoroutineScope
@@ -101,6 +102,7 @@ internal class ConversationSettingsDelegateImpl @Inject constructor(
     }
 
     override fun refresh() {
+        ParticipantRefresh.refreshParticipantsIfNeeded()
         refreshTriggers.trySend(Unit)
     }
 
