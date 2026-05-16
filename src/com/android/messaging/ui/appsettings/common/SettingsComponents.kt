@@ -46,7 +46,7 @@ private fun contentColor(
 @Composable
 internal fun SettingsClickableItem(
     title: String,
-    onClick: (() -> Unit),
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     summary: String? = null,
     icon: ImageVector? = null,

@@ -13,7 +13,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.android.messaging.R
 import com.android.messaging.ui.appsettings.general.model.AppSettingsUiState
 import com.android.messaging.ui.appsettings.screen.model.SettingsUiState
-import com.android.messaging.ui.appsettings.subscription.model.SubscriptionSettingsUiState
+import com.android.messaging.ui.appsettings.subscription.model.SubscriptionUiState
 import com.android.messaging.ui.core.AppTheme
 import io.mockk.every
 import io.mockk.mockk
@@ -297,7 +297,7 @@ class SettingsScreenTest {
                 sendSoundEnabled = true,
             ),
             subscriptionSettings = persistentListOf(
-                SubscriptionSettingsUiState(
+                SubscriptionUiState(
                     subId = 1,
                     displayName = "Advanced Settings",
                     displayDetail = "+1234567890",
@@ -316,12 +316,12 @@ class SettingsScreenTest {
                 sendSoundEnabled = true,
             ),
             subscriptionSettings = persistentListOf(
-                SubscriptionSettingsUiState(
+                SubscriptionUiState(
                     subId = 1,
                     displayName = "SIM 1",
                     displayDetail = "+1234567890",
                 ),
-                SubscriptionSettingsUiState(
+                SubscriptionUiState(
                     subId = 2,
                     displayName = "SIM 2",
                     displayDetail = "+0987654321",

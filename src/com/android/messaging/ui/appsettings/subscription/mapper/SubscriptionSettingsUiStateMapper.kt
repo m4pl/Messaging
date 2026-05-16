@@ -1,19 +1,13 @@
 package com.android.messaging.ui.appsettings.subscription.mapper
 
-import android.content.ContentResolver
 import android.content.Context
-import android.content.pm.PackageManager
 import androidx.core.text.BidiFormatter
 import androidx.core.text.TextDirectionHeuristicsCompat
-import com.android.messaging.Factory
 import com.android.messaging.R
-import com.android.messaging.datamodel.DatabaseHelper.ParticipantColumns
-import com.android.messaging.datamodel.MessagingContentProvider
-import com.android.messaging.datamodel.data.ParticipantData
-import com.android.messaging.sms.MmsConfig
-import com.android.messaging.ui.UIIntents
+import com.android.messaging.data.subscriptionsettings.model.PerSubscriptionData
+import com.android.messaging.data.subscriptionsettings.model.SubscriptionSettingsData
 import com.android.messaging.ui.appsettings.subscription.model.SubscriptionSettingsUiState
-import com.android.messaging.util.PhoneUtils
+import com.android.messaging.ui.appsettings.subscription.model.SubscriptionUiState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
@@ -21,148 +15,116 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
 internal interface SubscriptionSettingsUiStateMapper {
-    fun isMultiSim(): Boolean
-    fun mapSubscriptions(): ImmutableList<SubscriptionSettingsUiState>
+    fun map(data: SubscriptionSettingsData): SubscriptionSettingsUiState
 }
 
 internal class SubscriptionSettingsUiStateMapperImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val contentResolver: ContentResolver,
+    @param:ApplicationContext private val context: Context,
 ) : SubscriptionSettingsUiStateMapper {
 
-    override fun isMultiSim(): Boolean {
-        return PhoneUtils.getDefault().activeSubscriptionCount > 1
-    }
-
-    override fun mapSubscriptions(): ImmutableList<SubscriptionSettingsUiState> {
-        return when (PhoneUtils.getDefault().activeSubscriptionCount) {
-            0 -> persistentListOf()
-
-            1 -> persistentListOf(
-                mapSingleSubscription(
-                    subId = ParticipantData.DEFAULT_SELF_SUB_ID,
-                    displayName = context.getString(R.string.advanced_settings),
-                ),
-            )
-
-            else -> mapMultiSimSubscriptions()
-        }
-    }
-
-    private fun mapMultiSimSubscriptions(): ImmutableList<SubscriptionSettingsUiState> {
-        val nonDefaultSelfs = querySelfParticipants().filter {
-            !it.isDefaultSelf && it.isActiveSubscription
-        }
-
-        return when {
-            nonDefaultSelfs.size > 1 -> nonDefaultSelfs.map { self ->
-                mapSingleSubscription(
-                    subId = self.subId,
-                    displayName = context.getString(
-                        R.string.sim_specific_settings,
-                        self.subscriptionName,
-                    ),
-                )
-            }.toImmutableList()
-
-            nonDefaultSelfs.size == 1 -> persistentListOf(
-                mapSingleSubscription(
-                    subId = nonDefaultSelfs.first().subId,
-                    displayName = context.getString(R.string.advanced_settings),
-                ),
-            )
-
-            else -> persistentListOf(
-                mapSingleSubscription(
-                    subId = ParticipantData.DEFAULT_SELF_SUB_ID,
-                    displayName = context.getString(R.string.advanced_settings),
-                ),
-            )
-        }
-    }
-
-    private fun mapSingleSubscription(
-        subId: Int,
-        displayName: String,
-    ): SubscriptionSettingsUiState {
-        val subPrefs = Factory.get().getSubscriptionPrefs(subId)
-        val phoneUtils = PhoneUtils.get(subId)
-        val mmsConfig = MmsConfig.get(subId)
-
-        val phoneNumberKey = context.getString(R.string.mms_phone_number_pref_key)
-        val savedPhoneNumber = subPrefs.getString(phoneNumberKey, "")
-        val defaultPhoneNumber = phoneUtils.getCanonicalForSelf(false)
-
-        val formattedNumber = when {
-            !savedPhoneNumber.isNullOrEmpty() -> phoneUtils.formatForDisplay(savedPhoneNumber)
-            !defaultPhoneNumber.isNullOrEmpty() -> phoneUtils.formatForDisplay(defaultPhoneNumber)
-            else -> context.getString(R.string.unknown_phone_number_pref_display_value)
-        }
-        val displayPhoneNumber = BidiFormatter.getInstance()
-            .unicodeWrap(formattedNumber, TextDirectionHeuristicsCompat.LTR)
-
-        val isDefaultSmsApp = PhoneUtils.getDefault().isDefaultSmsApp
-        val groupMmsPrefKey = context.getString(R.string.group_mms_pref_key)
-        val autoRetrieveKey = context.getString(R.string.auto_retrieve_mms_pref_key)
-        val autoRetrieveRoamingKey =
-            context.getString(R.string.auto_retrieve_mms_when_roaming_pref_key)
-        val deliveryReportsKey = context.getString(R.string.delivery_reports_pref_key)
-
+    override fun map(data: SubscriptionSettingsData): SubscriptionSettingsUiState {
         return SubscriptionSettingsUiState(
-            subId = subId,
-            displayName = displayName,
-            displayDetail = displayPhoneNumber,
-            phoneNumber = savedPhoneNumber.orEmpty(),
-            defaultPhoneNumber = defaultPhoneNumber.orEmpty(),
-            isGroupMmsSupported = mmsConfig.groupMmsEnabled,
-            isGroupMmsEnabled = subPrefs.getBoolean(
-                groupMmsPrefKey,
-                context.resources.getBoolean(R.bool.group_mms_pref_default),
-            ),
-            autoRetrieveMms = subPrefs.getBoolean(
-                autoRetrieveKey,
-                context.resources.getBoolean(R.bool.auto_retrieve_mms_pref_default),
-            ),
-            autoRetrieveMmsWhenRoaming = subPrefs.getBoolean(
-                autoRetrieveRoamingKey,
-                context.resources.getBoolean(R.bool.auto_retrieve_mms_when_roaming_pref_default),
-            ),
-            isDeliveryReportsSupported = mmsConfig.smsDeliveryReportsEnabled,
-            deliveryReportsEnabled = subPrefs.getBoolean(
-                deliveryReportsKey,
-                context.resources.getBoolean(R.bool.delivery_reports_pref_default),
-            ),
-            isWirelessAlertsSupported = mmsConfig.showCellBroadcast && isCellBroadcastAppEnabled(),
-            isDefaultSmsApp = isDefaultSmsApp,
+            isMultiSim = data.activeSubscriptionCount > 1,
+            isLoaded = true,
+            subscriptions = mapSubscriptions(data),
         )
     }
 
-    private fun querySelfParticipants(): List<ParticipantData> {
-        val cursor = contentResolver.query(
-            MessagingContentProvider.PARTICIPANTS_URI,
-            ParticipantData.ParticipantsQuery.PROJECTION,
-            ParticipantColumns.SUB_ID + " <> ?",
-            arrayOf(ParticipantData.OTHER_THAN_SELF_SUB_ID.toString()),
-            null,
-        ) ?: return emptyList()
+    private fun mapSubscriptions(
+        data: SubscriptionSettingsData,
+    ): ImmutableList<SubscriptionUiState> {
+        return when (data.activeSubscriptionCount) {
+            0 -> {
+                persistentListOf()
+            }
 
-        return cursor.use {
-            buildList {
-                while (it.moveToNext()) {
-                    add(ParticipantData.getFromCursor(it))
-                }
+            1 -> {
+                persistentListOf(
+                    mapSingleSubscription(
+                        perSub = data.defaultSelfSubscription,
+                        displayName = context.getString(R.string.advanced_settings),
+                        isDefaultSmsApp = data.isDefaultSmsApp,
+                        isCellBroadcastAppEnabled = data.isCellBroadcastAppEnabled,
+                    ),
+                )
+            }
+
+            else -> {
+                mapMultiSimSubscriptions(data)
             }
         }
     }
 
-    private fun isCellBroadcastAppEnabled(): Boolean {
-        return try {
-            val state = context.packageManager.getApplicationEnabledSetting(
-                UIIntents.CMAS_COMPONENT
-            )
-            state != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        } catch (_: IllegalArgumentException) {
-            false
+    private fun mapMultiSimSubscriptions(
+        data: SubscriptionSettingsData,
+    ): ImmutableList<SubscriptionUiState> {
+        val nonDefaults = data.nonDefaultActiveSelfSubscriptions
+
+        return when {
+            nonDefaults.size > 1 -> {
+                nonDefaults.map { per ->
+                    mapSingleSubscription(
+                        perSub = per,
+                        displayName = context.getString(
+                            R.string.sim_specific_settings,
+                            per.subscriptionName,
+                        ),
+                        isDefaultSmsApp = data.isDefaultSmsApp,
+                        isCellBroadcastAppEnabled = data.isCellBroadcastAppEnabled,
+                    )
+                }.toImmutableList()
+            }
+
+            nonDefaults.size == 1 -> {
+                persistentListOf(
+                    mapSingleSubscription(
+                        perSub = nonDefaults.first(),
+                        displayName = context.getString(R.string.advanced_settings),
+                        isDefaultSmsApp = data.isDefaultSmsApp,
+                        isCellBroadcastAppEnabled = data.isCellBroadcastAppEnabled,
+                    ),
+                )
+            }
+
+            else -> {
+                persistentListOf(
+                    mapSingleSubscription(
+                        perSub = data.defaultSelfSubscription,
+                        displayName = context.getString(R.string.advanced_settings),
+                        isDefaultSmsApp = data.isDefaultSmsApp,
+                        isCellBroadcastAppEnabled = data.isCellBroadcastAppEnabled,
+                    ),
+                )
+            }
         }
+    }
+
+    private fun mapSingleSubscription(
+        perSub: PerSubscriptionData,
+        displayName: String,
+        isDefaultSmsApp: Boolean,
+        isCellBroadcastAppEnabled: Boolean,
+    ): SubscriptionUiState {
+        val formattedNumber = perSub.formattedSavedPhoneNumber
+            ?: perSub.formattedDefaultPhoneNumber
+            ?: context.getString(R.string.unknown_phone_number_pref_display_value)
+        val displayPhoneNumber = BidiFormatter.getInstance()
+            .unicodeWrap(formattedNumber, TextDirectionHeuristicsCompat.LTR)
+
+        return SubscriptionUiState(
+            subId = perSub.subId,
+            displayName = displayName,
+            displayDetail = displayPhoneNumber,
+            phoneNumber = perSub.savedPhoneNumber,
+            defaultPhoneNumber = perSub.defaultPhoneNumber,
+            isGroupMmsSupported = perSub.isGroupMmsSupported,
+            isGroupMmsEnabled = perSub.isGroupMmsEnabled,
+            autoRetrieveMms = perSub.autoRetrieveMms,
+            autoRetrieveMmsWhenRoaming = perSub.autoRetrieveMmsWhenRoaming,
+            isDeliveryReportsSupported = perSub.isDeliveryReportsSupported,
+            deliveryReportsEnabled = perSub.deliveryReportsEnabled,
+            isWirelessAlertsSupported = perSub.showCellBroadcast && isCellBroadcastAppEnabled,
+            isDefaultSmsApp = isDefaultSmsApp,
+        )
     }
 }

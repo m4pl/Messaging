@@ -29,26 +29,38 @@ internal sealed interface SettingsNavRouteSavedState : Parcelable {
 
 private fun SettingsNavRoute.toSavedState(): SettingsNavRouteSavedState {
     return when (this) {
-        SettingsNavRoute.Main -> SettingsNavRouteSavedState.Main
+        SettingsNavRoute.Main -> {
+            SettingsNavRouteSavedState.Main
+        }
 
-        SettingsNavRoute.AppSettings -> SettingsNavRouteSavedState.AppSettings
+        SettingsNavRoute.AppSettings -> {
+            SettingsNavRouteSavedState.AppSettings
+        }
 
-        is SettingsNavRoute.SubscriptionSettings -> SettingsNavRouteSavedState.SubscriptionSettings(
-            subId = subId,
-            title = title,
-        )
+        is SettingsNavRoute.SubscriptionSettings -> {
+            SettingsNavRouteSavedState.SubscriptionSettings(
+                subId = subId,
+                title = title,
+            )
+        }
     }
 }
 
 private fun SettingsNavRouteSavedState.toRoute(): SettingsNavRoute {
     return when (this) {
-        SettingsNavRouteSavedState.Main -> SettingsNavRoute.Main
+        SettingsNavRouteSavedState.Main -> {
+            SettingsNavRoute.Main
+        }
 
-        SettingsNavRouteSavedState.AppSettings -> SettingsNavRoute.AppSettings
+        SettingsNavRouteSavedState.AppSettings -> {
+            SettingsNavRoute.AppSettings
+        }
 
-        is SettingsNavRouteSavedState.SubscriptionSettings -> SettingsNavRoute.SubscriptionSettings(
-            subId = subId,
-            title = title,
-        )
+        is SettingsNavRouteSavedState.SubscriptionSettings -> {
+            SettingsNavRoute.SubscriptionSettings(
+                subId = subId,
+                title = title,
+            )
+        }
     }
 }

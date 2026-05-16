@@ -24,9 +24,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.messaging.datamodel.data.ParticipantData
 import com.android.messaging.ui.appsettings.general.ui.AppSettingsScreen
+import com.android.messaging.ui.appsettings.screen.model.SettingsAction as Action
 import com.android.messaging.ui.appsettings.screen.model.SettingsNavRoute
 import com.android.messaging.ui.appsettings.screen.model.SettingsUiState
-import com.android.messaging.ui.appsettings.subscription.model.SubscriptionSettingsUiState
+import com.android.messaging.ui.appsettings.subscription.model.SubscriptionUiState
 import com.android.messaging.ui.appsettings.subscription.ui.SubscriptionSettingsScreen
 import kotlinx.collections.immutable.ImmutableList
 
@@ -35,7 +36,7 @@ private const val SLIDE_OFFSET_DIVISOR = 3
 @Composable
 internal fun SettingsScreen(
     effectHandler: SettingsEffectHandler,
-    onNavigateBack: (() -> Unit),
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     intentSubId: Int = ParticipantData.DEFAULT_SELF_SUB_ID,
     intentSubTitle: String? = null,
@@ -73,7 +74,7 @@ internal fun SettingsScreen(
     val isRootRoute = effectiveRoute is SettingsNavRoute.Main ||
         (effectiveRoute is SettingsNavRoute.AppSettings && uiState.isMultiSim == false)
 
-    val navigateUp: (() -> Unit) = buildNavigateUp(
+    val navigateUp: () -> Unit = buildNavigateUp(
         isRootRoute = isRootRoute,
         effectiveRoute = effectiveRoute,
         isMultiSim = uiState.isMultiSim,
@@ -95,7 +96,7 @@ internal fun SettingsScreen(
     SettingsNavHost(
         effectiveRoute = effectiveRoute,
         uiState = uiState,
-        screenModel = screenModel,
+        onAction = screenModel::onAction,
         onNavigateBack = onNavigateBack,
         navigateUp = navigateUp,
         onRouteChange = { currentRoute = it },
@@ -107,7 +108,7 @@ internal fun SettingsScreen(
 private fun SettingsNavHost(
     effectiveRoute: SettingsNavRoute,
     uiState: SettingsUiState,
-    screenModel: SettingsScreenModel,
+    onAction: (Action) -> Unit,
     onNavigateBack: () -> Unit,
     navigateUp: () -> Unit,
     onRouteChange: (SettingsNavRoute) -> Unit,
@@ -146,7 +147,7 @@ private fun SettingsNavHost(
                 val isSingleSim = uiState.isMultiSim == false
                 AppSettingsScreen(
                     appSettings = uiState.appSettings,
-                    screenModel = screenModel,
+                    onAction = onAction,
                     isTopLevel = isSingleSim,
                     onAdvancedClick = advancedClickHandler(
                         uiState = uiState,
@@ -162,7 +163,7 @@ private fun SettingsNavHost(
                     SubscriptionSettingsScreen(
                         subscriptionSettings = sub,
                         title = route.title,
-                        screenModel = screenModel,
+                        onAction = onAction,
                         onNavigateBack = navigateUp,
                     )
                 }
@@ -192,8 +193,8 @@ private fun LeaveOpenedSubscriptionIfRemoved(
 @Composable
 private fun rememberDisplayedSubscription(
     route: SettingsNavRoute.SubscriptionSettings,
-    subscriptions: ImmutableList<SubscriptionSettingsUiState>,
-): SubscriptionSettingsUiState? {
+    subscriptions: ImmutableList<SubscriptionUiState>,
+): SubscriptionUiState? {
     val current = subscriptions.find { it.subId == route.subId }
     var cached by remember(route.subId) { mutableStateOf(current) }
     SideEffect {
@@ -212,7 +213,9 @@ private fun buildNavigateUp(
     onRouteChange: (SettingsNavRoute) -> Unit,
 ): () -> Unit = {
     when {
-        isRootRoute -> onNavigateBack()
+        isRootRoute -> {
+            onNavigateBack()
+        }
 
         effectiveRoute is SettingsNavRoute.AppSettings -> {
             onRouteChange(SettingsNavRoute.Main)

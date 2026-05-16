@@ -1,21 +1,15 @@
 package com.android.messaging.ui.appsettings.general.delegate
 
-import android.content.Context
-import com.android.messaging.R
-import com.android.messaging.di.core.DefaultDispatcher
+import com.android.messaging.data.appsettings.repository.AppSettingsRepository
 import com.android.messaging.ui.appsettings.common.SettingsScreenDelegate
 import com.android.messaging.ui.appsettings.general.mapper.AppSettingsUiStateMapper
 import com.android.messaging.ui.appsettings.general.model.AppSettingsUiState
-import com.android.messaging.util.BuglePrefs
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -28,9 +22,8 @@ internal interface AppSettingsDelegate : SettingsScreenDelegate<AppSettingsUiSta
 }
 
 internal class AppSettingsDelegateImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
+    private val repository: AppSettingsRepository,
     private val mapper: AppSettingsUiStateMapper,
-    @param:DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : AppSettingsDelegate {
 
     private val _state = MutableStateFlow(AppSettingsUiState())
@@ -38,17 +31,22 @@ internal class AppSettingsDelegateImpl @Inject constructor(
 
     private val refreshTriggers: Channel<Unit> = Channel(Channel.CONFLATED)
 
-    private var isBound = false
+    private var boundScope: CoroutineScope? = null
 
     override fun bind(scope: CoroutineScope) {
-        if (isBound) return
-        isBound = true
+        if (boundScope != null) {
+            return
+        }
+
+        boundScope = scope
 
         scope.launch {
             refreshTriggers.receiveAsFlow()
                 .onStart { emit(Unit) }
-                .map { mapper.map() }
-                .flowOn(defaultDispatcher)
+                .map {
+                    val data = repository.getAppSettings()
+                    mapper.map(data)
+                }
                 .collect { _state.value = it }
         }
     }
@@ -58,20 +56,23 @@ internal class AppSettingsDelegateImpl @Inject constructor(
     }
 
     override fun onSendSoundChanged(enabled: Boolean) {
-        val key = context.getString(R.string.send_sound_pref_key)
-        BuglePrefs.getApplicationPrefs().putBoolean(key, enabled)
-        refresh()
+        boundScope?.launch {
+            repository.setSendSoundEnabled(enabled)
+            refresh()
+        }
     }
 
     override fun onDumpSmsChanged(enabled: Boolean) {
-        val key = context.getString(R.string.dump_sms_pref_key)
-        BuglePrefs.getApplicationPrefs().putBoolean(key, enabled)
-        refresh()
+        boundScope?.launch {
+            repository.setDumpSmsEnabled(enabled)
+            refresh()
+        }
     }
 
     override fun onDumpMmsChanged(enabled: Boolean) {
-        val key = context.getString(R.string.dump_mms_pref_key)
-        BuglePrefs.getApplicationPrefs().putBoolean(key, enabled)
-        refresh()
+        boundScope?.launch {
+            repository.setDumpMmsEnabled(enabled)
+            refresh()
+        }
     }
 }
