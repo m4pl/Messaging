@@ -1,4 +1,4 @@
-package com.android.messaging.ui.conversation.recipientpicker.model
+package com.android.messaging.ui.conversation.recipientpicker.model.picker
 
 import androidx.compose.runtime.Immutable
 import kotlinx.collections.immutable.ImmutableList

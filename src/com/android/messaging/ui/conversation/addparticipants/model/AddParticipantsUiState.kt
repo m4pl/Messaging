@@ -2,7 +2,8 @@ package com.android.messaging.ui.conversation.addparticipants.model
 
 import androidx.compose.runtime.Immutable
 import com.android.messaging.data.conversation.model.recipient.ConversationRecipient
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.SelectedRecipient
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -12,5 +13,5 @@ internal data class AddParticipantsUiState(
     val isLoadingConversationParticipants: Boolean = true,
     val isResolvingConversation: Boolean = false,
     val recipientPickerUiState: RecipientPickerUiState = RecipientPickerUiState(),
-    val selectedRecipientDestinations: ImmutableList<String> = persistentListOf(),
+    val selectedRecipients: ImmutableList<SelectedRecipient> = persistentListOf(),
 )

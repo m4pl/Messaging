@@ -1,7 +1,6 @@
 package com.android.messaging.ui.conversation.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -22,13 +21,11 @@ import com.android.messaging.ui.conversation.addparticipants.AddParticipantsScre
 import com.android.messaging.ui.conversation.entry.ConversationEntryScreenModel
 import com.android.messaging.ui.conversation.entry.ConversationEntryViewModel
 import com.android.messaging.ui.conversation.entry.NewChatScreen
-import com.android.messaging.ui.conversation.entry.model.ConversationEntryEffect
 import com.android.messaging.ui.conversation.entry.model.ConversationEntryLaunchRequest
 import com.android.messaging.ui.conversation.entry.model.ConversationEntryStartupAttachment
 import com.android.messaging.ui.conversation.entry.model.ConversationEntryUiState
 import com.android.messaging.ui.conversation.recipientpicker.RecipientPickerScreen
 import com.android.messaging.ui.conversation.screen.ConversationScreen
-import com.android.messaging.util.UiUtils
 
 @Composable
 internal fun ConversationNavGraph(
@@ -61,13 +58,17 @@ internal fun ConversationNavGraph(
     val entryProvider = remember(backStack) {
         conversationNavEntryProvider(routeState = routeState)
     }
-    val effectState = remember(backStack, entryModel) {
-        conversationNavEffectState(routeState = routeState, entryModel = entryModel)
-    }
 
     ConversationNavGraphEffects(
         launchRequest = launchRequest,
-        effectState = effectState,
+        onLaunchRequest = entryModel::onLaunchRequest,
+        onLaunchBackStackUpdate = { currentLaunchRequest ->
+            updateBackStackForLaunch(
+                backStack = backStack,
+                launchRequest = currentLaunchRequest,
+                navigationReducer = navigationReducer,
+            )
+        },
     )
 
     NavDisplay(
@@ -76,8 +77,6 @@ internal fun ConversationNavGraph(
         onBack = {
             handleNavBack(
                 backStack = backStack,
-                entryModel = entryModel,
-                entryUiState = entryUiState,
                 navigationReducer = navigationReducer,
                 onFinish = onFinish,
             )
@@ -164,31 +163,25 @@ private fun newChatRouteContent(
 ): @Composable (NewChatNavKey) -> Unit {
     return {
         val entryModel = routeState.entryModel.value
-        val entryUiState = routeState.entryUiState.value
 
         NewChatScreen(
-            isCreatingGroup = entryUiState.isCreatingGroup,
-            isResolvingConversation = entryUiState.isResolvingConversation,
-            isResolvingConversationIndicatorVisible = entryUiState
-                .isResolvingConversationIndicatorVisible,
-            onContactClick = entryModel::onNewChatRecipientSelected,
-            onContactLongClick = entryModel::onNewChatRecipientLongPressed,
-            onCreateGroupClick = entryModel::onCreateGroupRequested,
-            onCreateGroupConfirmed = entryModel::onCreateGroupConfirmed,
-            onCreateGroupRecipientClick = entryModel::onCreateGroupRecipientClicked,
             onNavigateBack = {
-                handleNewChatBack(
-                    entryModel = entryModel,
-                    entryUiState = entryUiState,
+                popBackStackOrFinish(
                     backStack = routeState.backStack,
                     navigationReducer = routeState.navigationReducer.value,
                     onFinish = routeState.onFinish.value,
                 )
             },
-            onSimSelected = entryModel::onSimSelected,
-            resolvingRecipientDestination = entryUiState.resolvingRecipientDestination,
-            selectedGroupRecipientDestinations = entryUiState.selectedGroupRecipientDestinations,
-            simSelectorUiState = entryUiState.simSelectorState,
+            onNavigateToConversation = { conversationId, selfParticipantId ->
+                entryModel.onConversationNavigationRequested(
+                    conversationId = conversationId,
+                    pendingSelfParticipantId = selfParticipantId,
+                )
+                routeState.navigationReducer.value.navigateToConversation(
+                    backStack = routeState.backStack,
+                    conversationId = conversationId,
+                )
+            },
         )
     }
 }
@@ -219,19 +212,17 @@ private fun addParticipantsRouteContent(
 @Composable
 private fun ConversationNavGraphEffects(
     launchRequest: ConversationEntryLaunchRequest?,
-    effectState: ConversationNavEffectState,
+    onLaunchRequest: (ConversationEntryLaunchRequest) -> Unit,
+    onLaunchBackStackUpdate: (ConversationEntryLaunchRequest?) -> Unit,
 ) {
-    val latestEffectState = rememberUpdatedState(newValue = effectState)
+    val latestOnLaunchRequest = rememberUpdatedState(newValue = onLaunchRequest)
+    val latestOnLaunchBackStackUpdate = rememberUpdatedState(
+        newValue = onLaunchBackStackUpdate,
+    )
 
     LaunchedEffect(launchRequest) {
-        launchRequest?.let(latestEffectState.value.onLaunchRequest)
-        latestEffectState.value.onLaunchBackStackUpdate(launchRequest)
-    }
-
-    LaunchedEffect(effectState.collectEntryEffects) {
-        effectState.collectEntryEffects { effect ->
-            latestEffectState.value.onEntryEffect(effect)
-        }
+        launchRequest?.let(latestOnLaunchRequest.value)
+        latestOnLaunchBackStackUpdate.value(launchRequest)
     }
 }
 
@@ -268,35 +259,9 @@ private fun popBackStackOrFinish(
 
 private fun handleNavBack(
     backStack: MutableList<NavKey>,
-    entryModel: ConversationEntryScreenModel,
-    entryUiState: ConversationEntryUiState,
     navigationReducer: ConversationNavigationReducer,
     onFinish: () -> Unit,
 ) {
-    if (backStack.lastOrNull() == NewChatNavKey && entryUiState.isCreatingGroup) {
-        entryModel.onCreateGroupCanceled()
-        return
-    }
-
-    popBackStackOrFinish(
-        backStack = backStack,
-        navigationReducer = navigationReducer,
-        onFinish = onFinish,
-    )
-}
-
-private fun handleNewChatBack(
-    entryModel: ConversationEntryScreenModel,
-    entryUiState: ConversationEntryUiState,
-    backStack: MutableList<NavKey>,
-    navigationReducer: ConversationNavigationReducer,
-    onFinish: () -> Unit,
-) {
-    if (entryUiState.isCreatingGroup) {
-        entryModel.onCreateGroupCanceled()
-        return
-    }
-
     popBackStackOrFinish(
         backStack = backStack,
         navigationReducer = navigationReducer,
@@ -330,87 +295,12 @@ private class ConversationNavRouteState(
     val onFinish: State<() -> Unit>,
 )
 
-private typealias ConversationEntryEffectCollector =
-    suspend ((ConversationEntryEffect) -> Unit) -> Unit
-
-@Immutable
-private data class ConversationNavEffectState(
-    val onLaunchRequest: (ConversationEntryLaunchRequest) -> Unit,
-    val onLaunchBackStackUpdate: (ConversationEntryLaunchRequest?) -> Unit,
-    val collectEntryEffects: ConversationEntryEffectCollector,
-    val onEntryEffect: (ConversationEntryEffect) -> Unit,
-)
-
 private data class ConversationPendingLaunchPayload(
     val draft: ConversationDraft? = null,
     val scrollPosition: Int? = null,
     val selfParticipantId: String? = null,
     val startupAttachment: ConversationEntryStartupAttachment? = null,
 )
-
-private fun conversationNavEffectState(
-    routeState: ConversationNavRouteState,
-    entryModel: ConversationEntryScreenModel,
-): ConversationNavEffectState {
-    return ConversationNavEffectState(
-        onLaunchRequest = entryModel::onLaunchRequest,
-        onLaunchBackStackUpdate = { launchRequest ->
-            updateBackStackForLaunch(
-                backStack = routeState.backStack,
-                launchRequest = launchRequest,
-                navigationReducer = routeState.navigationReducer.value,
-            )
-        },
-        collectEntryEffects = { onEffect ->
-            entryModel.effects.collect { effect ->
-                onEffect(effect)
-            }
-        },
-        onEntryEffect = { effect ->
-            handleEntryEffect(
-                backStack = routeState.backStack,
-                effect = effect,
-                navigationReducer = routeState.navigationReducer.value,
-                onFinish = routeState.onFinish.value,
-            )
-        },
-    )
-}
-
-private fun handleEntryEffect(
-    backStack: MutableList<NavKey>,
-    effect: ConversationEntryEffect,
-    navigationReducer: ConversationNavigationReducer,
-    onFinish: () -> Unit,
-) {
-    when (effect) {
-        is ConversationEntryEffect.NavigateBack -> {
-            popBackStackOrFinish(
-                backStack = backStack,
-                navigationReducer = navigationReducer,
-                onFinish = onFinish,
-            )
-        }
-
-        is ConversationEntryEffect.NavigateToConversation -> {
-            navigationReducer.navigateToConversation(
-                backStack = backStack,
-                conversationId = effect.conversationId,
-            )
-        }
-
-        is ConversationEntryEffect.NavigateToRecipientPicker -> {
-            navigationReducer.navigateToRecipientPicker(
-                backStack = backStack,
-                mode = effect.mode,
-            )
-        }
-
-        is ConversationEntryEffect.ShowMessage -> {
-            UiUtils.showToastAtBottom(effect.messageResId)
-        }
-    }
-}
 
 private val defaultConversationNavReducer: ConversationNavigationReducer =
     ConversationNavigationReducerImpl()

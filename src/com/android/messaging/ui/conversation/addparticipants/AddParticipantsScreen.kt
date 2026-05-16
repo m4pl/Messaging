@@ -30,12 +30,14 @@ import com.android.messaging.ui.conversation.addParticipantsContactRowTestTag
 import com.android.messaging.ui.conversation.addparticipants.model.AddParticipantsEffect
 import com.android.messaging.ui.conversation.addparticipants.model.AddParticipantsUiState
 import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionContent
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionContentUiState
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionPrimaryActionUiState
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionRowDecorators
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionStrings
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.SelectedRecipient
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.toSelectedRecipient
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionContentUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionPrimaryActionUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionRowDecorators
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionStrings
 import com.android.messaging.util.UiUtils
-import kotlinx.collections.immutable.toImmutableSet
 
 @Composable
 internal fun AddParticipantsScreen(
@@ -43,7 +45,7 @@ internal fun AddParticipantsScreen(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToConversation: (String) -> Unit = {},
-    screenModel: AddParticipantsModel = hiltViewModel<AddParticipantsViewModel>(),
+    screenModel: AddParticipantsScreenModel = hiltViewModel<AddParticipantsViewModel>(),
 ) {
     val uiState by screenModel.uiState.collectAsStateWithLifecycle()
 
@@ -110,38 +112,19 @@ private fun AddParticipantsRecipientSelectionContent(
     onConfirmClick: () -> Unit,
     onLoadMore: () -> Unit,
     onQueryChanged: (String) -> Unit,
-    onRecipientClick: (String) -> Unit,
+    onRecipientClick: (SelectedRecipient) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val primaryAction = when {
-        uiState.selectedRecipientDestinations.isNotEmpty() -> {
-            RecipientSelectionPrimaryActionUiState(
-                text = stringResource(id = R.string.conversation_add_people),
-                isEnabled = !uiState.isLoadingConversationParticipants &&
-                    !uiState.recipientPickerUiState.isLoading &&
-                    !uiState.isResolvingConversation,
-                isLoading = uiState.isResolvingConversation,
-                testTag = ADD_PARTICIPANTS_CONFIRM_BUTTON_TEST_TAG,
-            )
-        }
-
-        else -> null
-    }
-
     RecipientSelectionContent(
-        uiState = RecipientSelectionContentUiState(
-            picker = uiState.recipientPickerUiState.copy(
-                isLoading = uiState.isLoadingConversationParticipants ||
-                    uiState.recipientPickerUiState.isLoading,
-            ),
-            primaryAction = primaryAction,
-            selectedRecipientDestinations = uiState.selectedRecipientDestinations.toImmutableSet(),
-            isQueryEnabled = !uiState.isResolvingConversation &&
-                !uiState.isLoadingConversationParticipants,
+        uiState = addParticipantsRecipientSelectionContentUiState(
+            uiState = uiState,
+            primaryActionText = stringResource(id = R.string.conversation_add_people),
         ),
         strings = RecipientSelectionStrings(
             queryPrefixText = stringResource(id = R.string.to_address_label),
-            queryPlaceholderText = stringResource(id = R.string.new_chat_query_hint),
+            queryPlaceholderText = addParticipantsQueryHint(
+                hasSelectedRecipients = uiState.selectedRecipients.isNotEmpty(),
+            ),
         ),
         rowDecorators = RecipientSelectionRowDecorators(
             recipientRowTestTag = { item ->
@@ -154,12 +137,76 @@ private fun AddParticipantsRecipientSelectionContent(
                 )
             },
         ),
-        onRecipientDestinationClick = { _, destination ->
-            onRecipientClick(destination)
+        onRecipientDestinationClick = { item, destination ->
+            onAddParticipantsRecipientDestinationClick(
+                item = item,
+                destination = destination,
+                onRecipientClick = onRecipientClick,
+            )
         },
         modifier = modifier,
         onLoadMore = onLoadMore,
         onPrimaryActionClick = onConfirmClick,
         onQueryChanged = onQueryChanged,
+        onSelectedRecipientClick = onRecipientClick,
     )
+}
+
+private fun addParticipantsRecipientSelectionContentUiState(
+    uiState: AddParticipantsUiState,
+    primaryActionText: String,
+): RecipientSelectionContentUiState {
+    return RecipientSelectionContentUiState(
+        picker = uiState.recipientPickerUiState.copy(
+            isLoading = uiState.isLoadingConversationParticipants ||
+                uiState.recipientPickerUiState.isLoading,
+        ),
+        primaryAction = addParticipantsPrimaryActionUiState(
+            uiState = uiState,
+            text = primaryActionText,
+        ),
+        selectedRecipients = uiState.selectedRecipients,
+        isQueryEnabled = !uiState.isResolvingConversation &&
+            !uiState.isLoadingConversationParticipants,
+    )
+}
+
+private fun addParticipantsPrimaryActionUiState(
+    uiState: AddParticipantsUiState,
+    text: String,
+): RecipientSelectionPrimaryActionUiState? {
+    return when {
+        uiState.selectedRecipients.isNotEmpty() -> {
+            RecipientSelectionPrimaryActionUiState(
+                text = text,
+                isEnabled = !uiState.isLoadingConversationParticipants &&
+                    !uiState.recipientPickerUiState.isLoading &&
+                    !uiState.isResolvingConversation,
+                isLoading = uiState.isResolvingConversation,
+                testTag = ADD_PARTICIPANTS_CONFIRM_BUTTON_TEST_TAG,
+            )
+        }
+
+        else -> null
+    }
+}
+
+private fun onAddParticipantsRecipientDestinationClick(
+    item: RecipientPickerListItem,
+    destination: String,
+    onRecipientClick: (SelectedRecipient) -> Unit,
+) {
+    item.toSelectedRecipient(destination = destination)?.let { selectedRecipient ->
+        onRecipientClick(selectedRecipient)
+    }
+}
+
+@Composable
+private fun addParticipantsQueryHint(
+    hasSelectedRecipients: Boolean,
+): String {
+    return when {
+        hasSelectedRecipients -> stringResource(R.string.recipient_selection_query_hint_more)
+        else -> stringResource(R.string.new_chat_query_hint)
+    }
 }

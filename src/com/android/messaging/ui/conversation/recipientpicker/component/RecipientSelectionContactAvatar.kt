@@ -32,7 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.android.messaging.R
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
 
 @Composable
 internal fun RecipientSelectionContactAvatar(
@@ -181,16 +181,6 @@ private fun recipientSelectionAvatarSourceText(item: RecipientPickerListItem): S
 
         is RecipientPickerListItem.SyntheticPhone -> item.destination
     }
-}
-
-private fun recipientSelectionAvatarLabel(
-    displayName: String,
-    destination: String,
-): String {
-    val labelSource = displayName.ifBlank { destination }
-    val firstCharacter = labelSource.firstOrNull() ?: '?'
-
-    return firstCharacter.uppercaseChar().toString()
 }
 
 @Composable

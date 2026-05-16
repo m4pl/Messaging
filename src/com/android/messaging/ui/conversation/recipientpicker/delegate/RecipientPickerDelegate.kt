@@ -8,8 +8,8 @@ import com.android.messaging.data.contact.model.ContactsPage
 import com.android.messaging.data.contact.repository.ContactsRepository
 import com.android.messaging.di.core.DefaultDispatcher
 import com.android.messaging.domain.contacts.usecase.IsReadContactsPermissionGranted
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerListItem
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
 import com.android.messaging.util.PhoneUtils
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
@@ -41,6 +41,8 @@ internal interface RecipientPickerDelegate {
     fun onExcludedDestinationsChanged(destinations: Set<String>)
 
     fun onQueryChanged(query: String)
+
+    fun clearQuery()
 }
 
 internal class RecipientPickerDelegateImpl @Inject constructor(
@@ -123,6 +125,12 @@ internal class RecipientPickerDelegateImpl @Inject constructor(
         if (query != queryFlow.value) {
             queryFlow.value = query
             savedStateHandle[SEARCH_QUERY_KEY] = query
+        }
+    }
+
+    override fun clearQuery() {
+        if (queryFlow.value.isNotEmpty()) {
+            onQueryChanged(query = "")
         }
     }
 

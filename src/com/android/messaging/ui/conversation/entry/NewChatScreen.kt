@@ -4,33 +4,13 @@
 
 package com.android.messaging.ui.conversation.entry
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Group
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,158 +19,255 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.messaging.R
 import com.android.messaging.ui.conversation.NEW_CHAT_CONTACT_RESOLVING_INDICATOR_TEST_TAG
 import com.android.messaging.ui.conversation.NEW_CHAT_CREATE_GROUP_NEXT_BUTTON_TEST_TAG
 import com.android.messaging.ui.conversation.composer.model.ConversationSimSelectorUiState
+import com.android.messaging.ui.conversation.entry.model.NewChatEffect
+import com.android.messaging.ui.conversation.entry.model.NewChatUiState
 import com.android.messaging.ui.conversation.newChatContactDestinationRowTestTag
 import com.android.messaging.ui.conversation.newChatContactRowTestTag
-import com.android.messaging.ui.conversation.recipientpicker.RecipientPickerModel
-import com.android.messaging.ui.conversation.recipientpicker.RecipientPickerViewModel
 import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionContent
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionContentUiState
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionPrimaryActionUiState
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionRowDecorators
-import com.android.messaging.ui.conversation.recipientpicker.component.RecipientSelectionStrings
 import com.android.messaging.ui.conversation.recipientpicker.component.simselector.NewChatSimSelectorRow
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.SelectedRecipient
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.toSelectedRecipient
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.OnRecipientDestinationAction
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionContentUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionPrimaryActionUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionRowDecorators
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionStrings
+import com.android.messaging.util.UiUtils
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.collections.immutable.toImmutableSet
+
+private typealias NewChatNavigateToConversation = (
+    conversationId: String,
+    selfParticipantId: String?,
+) -> Unit
 
 @Composable
 internal fun NewChatScreen(
+    modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit = {},
+    onNavigateToConversation: NewChatNavigateToConversation = { _, _ -> },
+    screenModel: NewChatScreenModel = hiltViewModel<NewChatViewModel>(),
+) {
+    val uiState by screenModel.uiState.collectAsStateWithLifecycle()
+
+    NewChatScreenEffects(
+        uiState = uiState,
+        screenModel = screenModel,
+        onNavigateBack = onNavigateBack,
+        onNavigateToConversation = onNavigateToConversation,
+    )
+
+    NewChatScreenContent(
+        modifier = modifier,
+        isCreatingGroup = uiState.isCreatingGroup,
+        isResolvingConversation = uiState.isResolvingConversation,
+        isResolvingConversationIndicatorVisible = uiState
+            .isResolvingConversationIndicatorVisible,
+        onContactClick = screenModel::onContactClicked,
+        onContactLongClick = screenModel::onContactLongClicked,
+        onCreateGroupClick = screenModel::onCreateGroupRequested,
+        onCreateGroupConfirmed = screenModel::onCreateGroupConfirmed,
+        onCreateGroupRecipientClick = screenModel::onCreateGroupRecipientClicked,
+        onLoadMore = screenModel::onLoadMore,
+        onNavigateBack = screenModel::onNavigateBack,
+        onQueryChanged = screenModel::onQueryChanged,
+        onSimSelected = screenModel::onSimSelected,
+        pickerUiState = uiState.recipientPickerUiState,
+        resolvingRecipientDestination = uiState.resolvingRecipientDestination,
+        selectedGroupRecipients = uiState.selectedGroupRecipients,
+        simSelectorUiState = uiState.simSelectorState,
+    )
+}
+
+@Composable
+private fun NewChatScreenEffects(
+    uiState: NewChatUiState,
+    screenModel: NewChatScreenModel,
+    onNavigateBack: () -> Unit,
+    onNavigateToConversation: NewChatNavigateToConversation,
+) {
+    val latestOnNavigateBack = rememberUpdatedState(newValue = onNavigateBack)
+    val latestOnNavigateToConversation = rememberUpdatedState(
+        newValue = onNavigateToConversation,
+    )
+
+    BackHandler(enabled = uiState.isCreatingGroup || uiState.isResolvingConversation) {
+        screenModel.onNavigateBack()
+    }
+
+    LaunchedEffect(screenModel) {
+        screenModel.effects.collect { effect ->
+            when (effect) {
+                NewChatEffect.NavigateBack -> {
+                    latestOnNavigateBack.value()
+                }
+
+                is NewChatEffect.NavigateToConversation -> {
+                    latestOnNavigateToConversation.value(
+                        effect.conversationId,
+                        effect.selfParticipantId,
+                    )
+                }
+
+                is NewChatEffect.ShowMessage -> {
+                    UiUtils.showToastAtBottom(effect.messageResId)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NewChatScreenContent(
     modifier: Modifier = Modifier,
     isCreatingGroup: Boolean = false,
     isResolvingConversation: Boolean = false,
     isResolvingConversationIndicatorVisible: Boolean = false,
     onContactClick: (String) -> Unit = {},
-    onContactLongClick: (String) -> Unit = {},
+    onContactLongClick: (SelectedRecipient) -> Unit = {},
     onCreateGroupClick: () -> Unit = {},
     onCreateGroupConfirmed: () -> Unit = {},
-    onCreateGroupRecipientClick: (String) -> Unit = {},
+    onCreateGroupRecipientClick: (SelectedRecipient) -> Unit = {},
+    onLoadMore: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
+    onQueryChanged: (String) -> Unit = {},
     onSimSelected: (String) -> Unit = {},
-    pickerModel: RecipientPickerModel = hiltViewModel<RecipientPickerViewModel>(),
+    pickerUiState: RecipientPickerUiState = RecipientPickerUiState(),
     resolvingRecipientDestination: String? = null,
-    selectedGroupRecipientDestinations: ImmutableList<String> = persistentListOf(),
+    selectedGroupRecipients: ImmutableList<SelectedRecipient> = persistentListOf(),
     simSelectorUiState: ConversationSimSelectorUiState = ConversationSimSelectorUiState(),
 ) {
-    val uiState by pickerModel.uiState.collectAsStateWithLifecycle()
     val screenContainerColor = MaterialTheme.colorScheme.surfaceVariant
 
     Scaffold(
         modifier = modifier,
         containerColor = screenContainerColor,
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = screenContainerColor,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-                navigationIcon = {
-                    IconButton(
-                        onClick = onNavigateBack,
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(id = R.string.back),
-                        )
-                    }
-                },
-                title = {
-                    Text(text = newChatTitle(isCreatingGroup = isCreatingGroup))
-                },
+            NewChatTopAppBar(
+                containerColor = screenContainerColor,
+                isCreatingGroup = isCreatingGroup,
+                onNavigateBack = onNavigateBack,
             )
         },
     ) { contentPadding ->
         NewChatRecipientSelectionContent(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues = contentPadding),
-            pickerUiState = uiState,
-            simSelectorUiState = simSelectorUiState,
+            contentPadding = contentPadding,
             isCreatingGroup = isCreatingGroup,
             isResolvingConversation = isResolvingConversation,
             isResolvingConversationIndicatorVisible = isResolvingConversationIndicatorVisible,
-            resolvingRecipientDestination = resolvingRecipientDestination,
-            selectedGroupRecipientDestinations = selectedGroupRecipientDestinations,
-            onLoadMore = pickerModel::onLoadMore,
-            onQueryChanged = pickerModel::onQueryChanged,
             onContactClick = onContactClick,
             onContactLongClick = onContactLongClick,
             onCreateGroupClick = onCreateGroupClick,
             onCreateGroupConfirmed = onCreateGroupConfirmed,
             onCreateGroupRecipientClick = onCreateGroupRecipientClick,
+            onLoadMore = onLoadMore,
+            onQueryChanged = onQueryChanged,
             onSimSelected = onSimSelected,
+            pickerUiState = pickerUiState,
+            resolvingRecipientDestination = resolvingRecipientDestination,
+            selectedGroupRecipients = selectedGroupRecipients,
+            simSelectorUiState = simSelectorUiState,
         )
     }
 }
 
 @Composable
+private fun NewChatTopAppBar(
+    containerColor: Color,
+    isCreatingGroup: Boolean,
+    onNavigateBack: () -> Unit,
+) {
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = containerColor,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+        navigationIcon = {
+            IconButton(
+                onClick = onNavigateBack,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(id = R.string.back),
+                )
+            }
+        },
+        title = {
+            Text(text = newChatTitle(isCreatingGroup = isCreatingGroup))
+        },
+    )
+}
+
+@Composable
 private fun NewChatRecipientSelectionContent(
-    pickerUiState: RecipientPickerUiState,
-    simSelectorUiState: ConversationSimSelectorUiState,
+    contentPadding: PaddingValues,
     isCreatingGroup: Boolean,
     isResolvingConversation: Boolean,
     isResolvingConversationIndicatorVisible: Boolean,
-    resolvingRecipientDestination: String?,
-    selectedGroupRecipientDestinations: ImmutableList<String>,
-    onLoadMore: () -> Unit,
-    onQueryChanged: (String) -> Unit,
     onContactClick: (String) -> Unit,
-    onContactLongClick: (String) -> Unit,
+    onContactLongClick: (SelectedRecipient) -> Unit,
     onCreateGroupClick: () -> Unit,
     onCreateGroupConfirmed: () -> Unit,
-    onCreateGroupRecipientClick: (String) -> Unit,
+    onCreateGroupRecipientClick: (SelectedRecipient) -> Unit,
+    onLoadMore: () -> Unit,
+    onQueryChanged: (String) -> Unit,
     onSimSelected: (String) -> Unit,
-    modifier: Modifier = Modifier,
+    pickerUiState: RecipientPickerUiState,
+    resolvingRecipientDestination: String?,
+    selectedGroupRecipients: ImmutableList<SelectedRecipient>,
+    simSelectorUiState: ConversationSimSelectorUiState,
 ) {
     RecipientSelectionContent(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues = contentPadding),
         uiState = newChatRecipientSelectionContentUiState(
             pickerUiState = pickerUiState,
             isCreatingGroup = isCreatingGroup,
             isResolvingConversation = isResolvingConversation,
             isResolvingConversationIndicatorVisible = isResolvingConversationIndicatorVisible,
-            selectedGroupRecipientDestinations = selectedGroupRecipientDestinations,
+            selectedGroupRecipients = selectedGroupRecipients,
         ),
-        strings = RecipientSelectionStrings(
-            queryPrefixText = stringResource(id = R.string.new_chat_recipient_prefix),
-            queryPlaceholderText = stringResource(id = R.string.new_chat_query_hint),
+        strings = newChatRecipientSelectionStrings(
+            hasSelectedRecipients = selectedGroupRecipients.isNotEmpty(),
         ),
         rowDecorators = newChatRecipientSelectionRowDecorators(
             isCreatingGroup = isCreatingGroup,
             isResolvingConversationIndicatorVisible = isResolvingConversationIndicatorVisible,
             resolvingRecipientDestination = resolvingRecipientDestination,
         ),
-        onRecipientDestinationClick = { _, destination ->
-            when {
-                isCreatingGroup -> onCreateGroupRecipientClick(destination)
-                else -> onContactClick(destination)
-            }
-        },
-        modifier = modifier,
+        onRecipientDestinationClick = newChatRecipientDestinationAction(
+            isCreatingGroup = isCreatingGroup,
+            onCreateGroupRecipientClick = onCreateGroupRecipientClick,
+            onContactRecipientClick = { selectedRecipient ->
+                onContactClick(selectedRecipient.destination)
+            },
+        ),
         autoFocusQuery = true,
         onLoadMore = onLoadMore,
         onPrimaryActionClick = onCreateGroupConfirmed,
         onQueryChanged = onQueryChanged,
-        onRecipientDestinationLongClick = { _, destination ->
-            when {
-                isCreatingGroup -> onCreateGroupRecipientClick(destination)
-                else -> onContactLongClick(destination)
-            }
-        },
+        onRecipientDestinationLongClick = newChatRecipientDestinationAction(
+            isCreatingGroup = isCreatingGroup,
+            onCreateGroupRecipientClick = onCreateGroupRecipientClick,
+            onContactRecipientClick = onContactLongClick,
+        ),
+        onSelectedRecipientClick = onCreateGroupRecipientClick,
         simSelectorSlot = {
             NewChatSimSelectorRow(
                 uiState = simSelectorUiState,
@@ -204,6 +281,26 @@ private fun NewChatRecipientSelectionContent(
             )
         },
     )
+}
+
+private fun newChatRecipientDestinationAction(
+    isCreatingGroup: Boolean,
+    onCreateGroupRecipientClick: (SelectedRecipient) -> Unit,
+    onContactRecipientClick: (SelectedRecipient) -> Unit,
+): OnRecipientDestinationAction {
+    return { item, destination ->
+        item.toSelectedRecipient(destination = destination)?.let { selectedRecipient ->
+            when {
+                isCreatingGroup -> {
+                    onCreateGroupRecipientClick(selectedRecipient)
+                }
+
+                else -> {
+                    onContactRecipientClick(selectedRecipient)
+                }
+            }
+        }
+    }
 }
 
 private fun newChatRecipientSelectionRowDecorators(
@@ -236,10 +333,10 @@ private fun newChatRecipientSelectionContentUiState(
     isCreatingGroup: Boolean,
     isResolvingConversation: Boolean,
     isResolvingConversationIndicatorVisible: Boolean,
-    selectedGroupRecipientDestinations: ImmutableList<String>,
+    selectedGroupRecipients: ImmutableList<SelectedRecipient>,
 ): RecipientSelectionContentUiState {
     val primaryAction = when {
-        isCreatingGroup && selectedGroupRecipientDestinations.isNotEmpty() -> {
+        isCreatingGroup && selectedGroupRecipients.isNotEmpty() -> {
             RecipientSelectionPrimaryActionUiState(
                 text = stringResource(id = R.string.next),
                 isEnabled = !pickerUiState.isLoading && !isResolvingConversation,
@@ -254,33 +351,33 @@ private fun newChatRecipientSelectionContentUiState(
     return RecipientSelectionContentUiState(
         picker = pickerUiState,
         primaryAction = primaryAction,
-        selectedRecipientDestinations = when {
-            isCreatingGroup -> selectedGroupRecipientDestinations.toImmutableSet()
-            else -> persistentSetOf()
+        selectedRecipients = when {
+            isCreatingGroup -> selectedGroupRecipients
+            else -> persistentListOf()
         },
         isQueryEnabled = !isResolvingConversation,
     )
 }
 
 @Composable
-private fun NewChatRecipientSelectionTopListContent(
-    isCreatingGroup: Boolean,
-    onCreateGroupClick: () -> Unit,
-) {
-    AnimatedVisibility(
-        visible = !isCreatingGroup,
-        enter = newGroupButtonEnterTransition(),
-        exit = newGroupButtonExitTransition(),
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(space = 12.dp),
-        ) {
-            NewGroupButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onCreateGroupClick,
-            )
-            Spacer(modifier = Modifier.height(height = 12.dp))
-        }
+private fun newChatRecipientSelectionStrings(
+    hasSelectedRecipients: Boolean,
+): RecipientSelectionStrings {
+    return RecipientSelectionStrings(
+        queryPrefixText = stringResource(id = R.string.new_chat_recipient_prefix),
+        queryPlaceholderText = newChatQueryHint(
+            hasSelectedRecipients = hasSelectedRecipients,
+        ),
+    )
+}
+
+@Composable
+private fun newChatQueryHint(
+    hasSelectedRecipients: Boolean,
+): String {
+    return when {
+        hasSelectedRecipients -> stringResource(R.string.recipient_selection_query_hint_more)
+        else -> stringResource(R.string.new_chat_query_hint)
     }
 }
 
@@ -289,82 +386,7 @@ private fun newChatTitle(
     isCreatingGroup: Boolean,
 ): String {
     return when {
-        isCreatingGroup -> stringResource(id = R.string.conversation_new_group)
-        else -> stringResource(id = R.string.start_new_conversation)
+        isCreatingGroup -> stringResource(R.string.conversation_new_group)
+        else -> stringResource(R.string.start_new_conversation)
     }
-}
-
-@Composable
-private fun NewGroupButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    val hapticFeedback = LocalHapticFeedback.current
-
-    FilledTonalButton(
-        modifier = modifier,
-        onClick = {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
-            onClick()
-        },
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(size = 18.dp),
-        colors = ButtonDefaults.filledTonalButtonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(
-                alpha = 0.5f,
-            ),
-            disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                alpha = 0.5f,
-            ),
-        ),
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Group,
-            contentDescription = null,
-        )
-        Spacer(modifier = Modifier.size(size = 8.dp))
-        Text(text = stringResource(id = R.string.conversation_new_group))
-    }
-}
-
-private fun newGroupButtonEnterTransition(): EnterTransition {
-    return fadeIn(
-        animationSpec = newChatDefaultEffectsAnimationSpec(),
-    ) + slideInVertically(
-        animationSpec = newChatSpatialAnimationSpec(),
-        initialOffsetY = { fullHeight ->
-            -fullHeight / 4
-        },
-    )
-}
-
-private fun newGroupButtonExitTransition(): ExitTransition {
-    return fadeOut(
-        animationSpec = newChatFastEffectsAnimationSpec(),
-    ) + shrinkVertically(
-        animationSpec = newChatSpatialAnimationSpec(),
-        shrinkTowards = androidx.compose.ui.Alignment.Top,
-    )
-}
-
-private fun <T> newChatDefaultEffectsAnimationSpec(): FiniteAnimationSpec<T> {
-    return tween(
-        durationMillis = 200,
-        easing = LinearOutSlowInEasing,
-    )
-}
-
-private fun <T> newChatFastEffectsAnimationSpec(): FiniteAnimationSpec<T> {
-    return tween(
-        durationMillis = 150,
-        easing = FastOutSlowInEasing,
-    )
-}
-
-private fun <T> newChatSpatialAnimationSpec(): FiniteAnimationSpec<T> {
-    return spring(
-        dampingRatio = Spring.DampingRatioNoBouncy,
-        stiffness = Spring.StiffnessMediumLow,
-    )
 }

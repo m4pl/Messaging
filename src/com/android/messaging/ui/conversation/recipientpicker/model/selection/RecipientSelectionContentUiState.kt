@@ -1,10 +1,11 @@
-package com.android.messaging.ui.conversation.recipientpicker.component
+package com.android.messaging.ui.conversation.recipientpicker.model.selection
 
 import androidx.compose.runtime.Immutable
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerListItem
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerUiState
-import kotlinx.collections.immutable.ImmutableSet
-import kotlinx.collections.immutable.persistentSetOf
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.SelectedRecipient
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 internal typealias OnRecipientDestinationAction =
     (item: RecipientPickerListItem, destination: String) -> Unit
@@ -22,7 +23,7 @@ internal typealias ShouldShowRecipientTrailingIndicator =
 internal data class RecipientSelectionContentUiState(
     val picker: RecipientPickerUiState = RecipientPickerUiState(),
     val primaryAction: RecipientSelectionPrimaryActionUiState? = null,
-    val selectedRecipientDestinations: ImmutableSet<String> = persistentSetOf(),
+    val selectedRecipients: ImmutableList<SelectedRecipient> = persistentListOf(),
     val isQueryEnabled: Boolean = true,
 )
 

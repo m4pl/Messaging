@@ -43,7 +43,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.android.messaging.data.contact.model.ContactDestination
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionRowDecorators
 import kotlinx.collections.immutable.ImmutableSet
 
 private val contactCornerRadius = 18.dp

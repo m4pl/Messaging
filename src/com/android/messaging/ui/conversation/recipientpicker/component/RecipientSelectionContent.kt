@@ -1,32 +1,30 @@
-@file:OptIn(
-    ExperimentalMaterial3Api::class,
-)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.android.messaging.ui.conversation.recipientpicker.component
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-
-private val searchCardShape = RoundedCornerShape(size = 22.dp)
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.SelectedRecipient
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.OnRecipientDestinationAction
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionContentUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionRowDecorators
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionStrings
 
 @Composable
 internal fun RecipientSelectionContent(
@@ -40,17 +38,57 @@ internal fun RecipientSelectionContent(
     onPrimaryActionClick: () -> Unit = {},
     onQueryChanged: (String) -> Unit = {},
     onRecipientDestinationLongClick: OnRecipientDestinationAction? = null,
+    onSelectedRecipientClick: (SelectedRecipient) -> Unit = {},
     simSelectorSlot: (@Composable () -> Unit)? = null,
     topListContent: (@Composable () -> Unit)? = null,
 ) {
     val queryFocusRequester = remember { FocusRequester() }
+    val armedDestination = rememberSaveable { mutableStateOf<String?>(null) }
 
-    if (autoFocusQuery) {
-        LaunchedEffect(Unit) {
-            queryFocusRequester.requestFocus()
-        }
-    }
+    RecipientSelectionArmedRecipientResetEffect(
+        selectedRecipients = uiState.selectedRecipients,
+        armedDestination = armedDestination,
+    )
+    RecipientSelectionAutoFocusEffect(
+        autoFocusQuery = autoFocusQuery,
+        focusRequester = queryFocusRequester,
+    )
 
+    RecipientSelectionContentLayout(
+        modifier = modifier,
+        queryArea = {
+            RecipientSelectionArmedQueryArea(
+                uiState = uiState,
+                strings = strings,
+                armedDestination = armedDestination,
+                queryFocusRequester = queryFocusRequester,
+                simSelectorSlot = simSelectorSlot,
+                onQueryChanged = onQueryChanged,
+                onSelectedRecipientClick = onSelectedRecipientClick,
+            )
+        },
+        contactsArea = {
+            RecipientSelectionArmedContactsArea(
+                modifier = Modifier.fillMaxSize(),
+                uiState = uiState,
+                rowDecorators = rowDecorators,
+                armedDestination = armedDestination,
+                topListContent = topListContent,
+                onLoadMore = onLoadMore,
+                onPrimaryActionClick = onPrimaryActionClick,
+                onRecipientDestinationClick = onRecipientDestinationClick,
+                onRecipientDestinationLongClick = onRecipientDestinationLongClick,
+            )
+        },
+    )
+}
+
+@Composable
+private fun RecipientSelectionContentLayout(
+    queryArea: @Composable () -> Unit,
+    contactsArea: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -60,107 +98,141 @@ internal fun RecipientSelectionContent(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
         ) {
-            Spacer(modifier = Modifier.height(height = 16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            queryArea()
 
-            RecipientSelectionQueryCard(
-                query = uiState.picker.query,
-                enabled = uiState.isQueryEnabled,
-                prefixText = strings.queryPrefixText,
-                placeholderText = strings.queryPlaceholderText,
-                onQueryChanged = onQueryChanged,
-                focusRequester = queryFocusRequester,
-                simSelectorSlot = simSelectorSlot,
-            )
-
-            Spacer(modifier = Modifier.height(height = 12.dp))
-
-            RecipientSelectionContactsContent(
-                modifier = Modifier.fillMaxSize(),
-                uiState = uiState,
-                rowDecorators = rowDecorators,
-                onLoadMore = onLoadMore,
-                onPrimaryActionClick = onPrimaryActionClick,
-                onRecipientDestinationClick = onRecipientDestinationClick,
-                onRecipientDestinationLongClick = onRecipientDestinationLongClick,
-                topListContent = topListContent,
-            )
+            Spacer(modifier = Modifier.height(12.dp))
+            contactsArea()
         }
     }
 }
 
 @Composable
-private fun RecipientSelectionQueryCard(
-    query: String,
-    enabled: Boolean,
-    prefixText: String,
-    placeholderText: String,
-    onQueryChanged: (String) -> Unit,
-    focusRequester: FocusRequester,
+private fun RecipientSelectionArmedQueryArea(
+    uiState: RecipientSelectionContentUiState,
+    strings: RecipientSelectionStrings,
+    armedDestination: MutableState<String?>,
+    queryFocusRequester: FocusRequester,
     simSelectorSlot: (@Composable () -> Unit)?,
+    onQueryChanged: (String) -> Unit,
+    onSelectedRecipientClick: (SelectedRecipient) -> Unit,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = searchCardShape,
-        color = MaterialTheme.colorScheme.surface,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            RecipientSelectionQueryField(
-                query = query,
-                enabled = enabled,
-                prefixText = prefixText,
-                placeholderText = placeholderText,
-                onQueryChanged = onQueryChanged,
-                focusRequester = focusRequester,
-            )
-
-            simSelectorSlot?.invoke()
+    val currentOnQueryChanged = rememberUpdatedState(onQueryChanged)
+    val currentOnSelectedRecipientClick = rememberUpdatedState(onSelectedRecipientClick)
+    val onQueryChangedWrapped: (String) -> Unit = remember(armedDestination) {
+        { query ->
+            armedDestination.value = null
+            currentOnQueryChanged.value(query)
         }
     }
+
+    val onQueryFocusedWrapped: () -> Unit = remember(armedDestination) {
+        { armedDestination.value = null }
+    }
+
+    val onSelectedRecipientClickWrapped: (SelectedRecipient) -> Unit = remember(
+        armedDestination,
+    ) {
+        { recipient ->
+            when {
+                armedDestination.value == recipient.destination -> {
+                    armedDestination.value = null
+                    currentOnSelectedRecipientClick.value(recipient)
+                }
+
+                else -> {
+                    armedDestination.value = recipient.destination
+                }
+            }
+        }
+    }
+
+    val onSelectedRecipientBackspace: (SelectedRecipient) -> Unit = remember(armedDestination) {
+        { recipient ->
+            armedDestination.value = null
+            currentOnSelectedRecipientClick.value(recipient)
+        }
+    }
+
+    RecipientSelectionQueryCard(
+        uiState = recipientSelectionQueryCardUiState(
+            uiState = uiState,
+            strings = strings,
+            armedRecipientDestination = armedDestination.value,
+        ),
+        onQueryChanged = onQueryChangedWrapped,
+        onQueryFocused = onQueryFocusedWrapped,
+        onSelectedRecipientClick = onSelectedRecipientClickWrapped,
+        onSelectedRecipientBackspace = onSelectedRecipientBackspace,
+        focusRequester = queryFocusRequester,
+        simSelectorSlot = simSelectorSlot,
+    )
 }
 
 @Composable
-private fun RecipientSelectionQueryField(
-    query: String,
-    enabled: Boolean,
-    prefixText: String,
-    placeholderText: String,
-    onQueryChanged: (String) -> Unit,
+private fun RecipientSelectionArmedContactsArea(
+    uiState: RecipientSelectionContentUiState,
+    rowDecorators: RecipientSelectionRowDecorators,
+    armedDestination: MutableState<String?>,
+    onRecipientDestinationClick: OnRecipientDestinationAction,
+    onRecipientDestinationLongClick: OnRecipientDestinationAction?,
+    onLoadMore: () -> Unit,
+    onPrimaryActionClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    topListContent: (@Composable () -> Unit)? = null,
+) {
+    val currentOnPrimaryActionClick = rememberUpdatedState(onPrimaryActionClick)
+    val currentOnRecipientDestinationClick = rememberUpdatedState(onRecipientDestinationClick)
+    val currentOnRecipientDestinationLongClick = rememberUpdatedState(
+        newValue = onRecipientDestinationLongClick,
+
+    )
+    val onPrimaryActionClickWrapped: () -> Unit = remember(armedDestination) {
+        {
+            armedDestination.value = null
+            currentOnPrimaryActionClick.value()
+        }
+    }
+
+    val onRecipientDestinationClickWrapped: OnRecipientDestinationAction = remember(
+        armedDestination,
+    ) {
+        { item, destination ->
+            armedDestination.value = null
+            currentOnRecipientDestinationClick.value(item, destination)
+        }
+    }
+
+    val onRecipientDestinationLongClickWrapped: OnRecipientDestinationAction = remember(
+        armedDestination,
+    ) {
+        { item, destination ->
+            armedDestination.value = null
+            currentOnRecipientDestinationLongClick.value?.invoke(item, destination)
+        }
+    }
+
+    RecipientSelectionContactsContent(
+        modifier = modifier,
+        uiState = uiState,
+        rowDecorators = rowDecorators,
+        onLoadMore = onLoadMore,
+        onPrimaryActionClick = onPrimaryActionClickWrapped,
+        onRecipientDestinationClick = onRecipientDestinationClickWrapped,
+        onRecipientDestinationLongClick = onRecipientDestinationLongClickWrapped
+            .takeIf { onRecipientDestinationLongClick != null },
+        topListContent = topListContent,
+    )
+}
+
+@Composable
+private fun RecipientSelectionAutoFocusEffect(
+    autoFocusQuery: Boolean,
     focusRequester: FocusRequester,
 ) {
-    TextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester = focusRequester),
-        value = query,
-        onValueChange = onQueryChanged,
-        enabled = enabled,
-        singleLine = true,
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            focusedPrefixColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            unfocusedPrefixColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledPrefixColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-        prefix = {
-            Text(
-                modifier = Modifier.padding(end = 12.dp),
-                text = prefixText,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        },
-        placeholder = {
-            Text(text = placeholderText)
-        },
-    )
+    if (autoFocusQuery) {
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+    }
 }

@@ -310,6 +310,12 @@
     <string name="new_chat_recipient_prefix">To:</string>
     <!-- Placeholder text shown in the new chat recipient search field. -->
     <string name="new_chat_query_hint">Type name or phone number</string>
+    <!-- Placeholder text shown after at least one recipient has been selected. -->
+    <string name="recipient_selection_query_hint_more">Anyone else?</string>
+    <!-- Accessibility description for a selected recipient chip. -->
+    <string name="recipient_selection_selected_recipient_content_description"><xliff:g id="recipient">%1$s</xliff:g> selected recipient</string>
+    <!-- Accessibility description for an armed selected recipient chip that will remove the recipient when tapped. -->
+    <string name="recipient_selection_remove_selected_recipient_content_description">Remove <xliff:g id="recipient">%1$s</xliff:g></string>
     <!-- Prefix label shown before the SIM selector on the new chat screen. -->
     <string name="new_chat_sim_selector_prefix">With:</string>
     <!-- Content description for the SIM selector chip on the new chat screen. -->

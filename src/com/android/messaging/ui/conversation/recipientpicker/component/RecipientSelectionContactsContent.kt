@@ -31,14 +31,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerListItem
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.OnRecipientDestinationAction
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionContentUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionRowDecorators
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.toImmutableSet
 
 private const val CONTACTS_LOAD_MORE_THRESHOLD = 10
 private const val RECIPIENT_CONTACT_CONTENT_TYPE = "recipient_contact"
@@ -97,6 +103,13 @@ private fun RecipientSelectionContactsList(
 ) {
     val pickerUiState = uiState.picker
     val listState = rememberLazyListState()
+
+    val selectedDestinations = remember(uiState.selectedRecipients) {
+        uiState.selectedRecipients
+            .map { recipient -> recipient.destination }
+            .toImmutableSet()
+    }
+
     val animatedListBottomPadding by animateDpAsState(
         targetValue = when {
             uiState.primaryAction != null -> 100.dp
@@ -128,6 +141,7 @@ private fun RecipientSelectionContactsList(
 
         recipientSelectionContactItems(
             uiState = uiState,
+            selectedDestinations = selectedDestinations,
             rowDecorators = rowDecorators,
             onRecipientDestinationClick = onRecipientDestinationClick,
             onRecipientDestinationLongClick = onRecipientDestinationLongClick,
@@ -137,6 +151,7 @@ private fun RecipientSelectionContactsList(
 
 private fun LazyListScope.recipientSelectionContactItems(
     uiState: RecipientSelectionContentUiState,
+    selectedDestinations: ImmutableSet<String>,
     rowDecorators: RecipientSelectionRowDecorators,
     onRecipientDestinationClick: OnRecipientDestinationAction,
     onRecipientDestinationLongClick: OnRecipientDestinationAction?,
@@ -166,6 +181,7 @@ private fun LazyListScope.recipientSelectionContactItems(
                     item = item,
                     index = index,
                     uiState = uiState,
+                    selectedDestinations = selectedDestinations,
                     rowDecorators = rowDecorators,
                     onRecipientDestinationClick = onRecipientDestinationClick,
                     onRecipientDestinationLongClick = onRecipientDestinationLongClick,
@@ -186,6 +202,7 @@ private fun RecipientSelectionContactItem(
     item: RecipientPickerListItem,
     index: Int,
     uiState: RecipientSelectionContentUiState,
+    selectedDestinations: ImmutableSet<String>,
     rowDecorators: RecipientSelectionRowDecorators,
     onRecipientDestinationClick: OnRecipientDestinationAction,
     onRecipientDestinationLongClick: OnRecipientDestinationAction?,
@@ -200,7 +217,7 @@ private fun RecipientSelectionContactItem(
         modifier = Modifier.padding(bottom = bottomPadding),
         item = item,
         enabled = uiState.primaryAction?.isLoading != true,
-        selectedDestinations = uiState.selectedRecipientDestinations,
+        selectedDestinations = selectedDestinations,
         onDestinationClick = { destination ->
             onRecipientDestinationClick(item, destination)
         },
