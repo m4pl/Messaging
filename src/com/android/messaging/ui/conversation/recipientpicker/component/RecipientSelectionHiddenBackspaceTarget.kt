@@ -1,86 +1,36 @@
 package com.android.messaging.ui.conversation.recipientpicker.component
 
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.OutputTransformation
+import androidx.compose.foundation.text.input.TextFieldBuffer
+import androidx.compose.foundation.text.input.delete
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionQueryFieldUiState
 
 // Some soft keyboards do not emit key events for Backspace on a visually empty field
-private const val RECIPIENT_SELECTION_BACKSPACE_SENTINEL = "\u2060"
+private const val BACKSPACE_SENTINEL_CHAR = '⁠'
+private const val BACKSPACE_SENTINEL = BACKSPACE_SENTINEL_CHAR.toString()
 
-internal object RecipientSelectionHiddenBackspaceTargetVisualTransformation : VisualTransformation {
+internal object RecipientSelectionHiddenBackspaceTargetOutputTransformation : OutputTransformation {
 
-    override fun filter(text: AnnotatedString): TransformedText {
-        val visibleText = recipientSelectionVisibleQueryText(fieldText = text.text)
-
-        return when {
-            visibleText == text.text -> {
-                TransformedText(
-                    text = text,
-                    offsetMapping = OffsetMapping.Identity,
-                )
-            }
-
-            else -> {
-                TransformedText(
-                    text = AnnotatedString(text = visibleText),
-                    offsetMapping = RecipientSelectionHiddenBackspaceTargetOffsetMapping,
-                )
-            }
+    override fun TextFieldBuffer.transformOutput() {
+        if (length > 0 && asCharSequence()[0] == BACKSPACE_SENTINEL_CHAR) {
+            delete(0, 1)
         }
     }
 }
 
-private object RecipientSelectionHiddenBackspaceTargetOffsetMapping : OffsetMapping {
+internal object RecipientSelectionHiddenBackspaceTargetInputTransformation : InputTransformation {
 
-    override fun originalToTransformed(offset: Int): Int {
-        return offset.withoutHiddenBackspaceTargetOffset()
-    }
-
-    override fun transformedToOriginal(offset: Int): Int {
-        return offset + RECIPIENT_SELECTION_BACKSPACE_SENTINEL.length
-    }
-}
-
-internal fun recipientSelectionVisibleQueryText(fieldText: String): String {
-    return fieldText.removePrefix(RECIPIENT_SELECTION_BACKSPACE_SENTINEL)
-}
-
-internal fun TextFieldValue.withoutHiddenBackspaceTarget(): TextFieldValue {
-    val nextText = recipientSelectionVisibleQueryText(fieldText = text)
-
-    return when {
-        nextText == text -> this
-
-        else -> {
-            copy(
-                text = nextText,
-                selection = selection.withoutHiddenBackspaceTarget(),
-                composition = composition?.withoutHiddenBackspaceTarget(),
-            )
+    override fun TextFieldBuffer.transformInput() {
+        if (length > 1 && asCharSequence()[0] == BACKSPACE_SENTINEL_CHAR) {
+            delete(0, 1)
         }
-    }
-}
-
-private fun TextRange.withoutHiddenBackspaceTarget(): TextRange {
-    return TextRange(
-        start = start.withoutHiddenBackspaceTargetOffset(),
-        end = end.withoutHiddenBackspaceTargetOffset(),
-    )
-}
-
-private fun Int.withoutHiddenBackspaceTargetOffset(): Int {
-    return when {
-        this <= RECIPIENT_SELECTION_BACKSPACE_SENTINEL.length -> 0
-        else -> this - RECIPIENT_SELECTION_BACKSPACE_SENTINEL.length
     }
 }
 
@@ -88,19 +38,13 @@ internal fun recipientSelectionQueryFieldEditableText(
     uiState: RecipientSelectionQueryFieldUiState,
 ): String {
     return when {
-        shouldUseHiddenBackspaceTarget(uiState = uiState) -> {
-            RECIPIENT_SELECTION_BACKSPACE_SENTINEL
-        }
-
+        shouldUseHiddenBackspaceTarget(uiState = uiState) -> BACKSPACE_SENTINEL
         else -> uiState.query
     }
 }
 
-internal fun recipientSelectionTextFieldValue(text: String): TextFieldValue {
-    return TextFieldValue(
-        text = text,
-        selection = TextRange(index = text.length),
-    )
+internal fun recipientSelectionVisibleQueryText(fieldText: String): String {
+    return fieldText.removePrefix(BACKSPACE_SENTINEL)
 }
 
 private fun shouldUseHiddenBackspaceTarget(
@@ -111,28 +55,34 @@ private fun shouldUseHiddenBackspaceTarget(
 
 internal fun shouldRemoveLastRecipientFromHardwareBackspace(
     keyEvent: KeyEvent,
-    fieldValue: TextFieldValue,
+    text: CharSequence,
+    selection: TextRange,
     uiState: RecipientSelectionQueryFieldUiState,
 ): Boolean {
     return keyEvent.key == Key.Backspace &&
         keyEvent.type == KeyEventType.KeyDown &&
         shouldRemoveLastRecipientFromVisibleEmptyQueryBackspace(
-            fieldValue = fieldValue,
+            text = text,
+            selection = selection,
             uiState = uiState,
         )
 }
 
 private fun shouldRemoveLastRecipientFromVisibleEmptyQueryBackspace(
-    fieldValue: TextFieldValue,
+    text: CharSequence,
+    selection: TextRange,
     uiState: RecipientSelectionQueryFieldUiState,
 ): Boolean {
-    val visibleFieldValue = fieldValue.withoutHiddenBackspaceTarget()
+    val sentinelLength = BACKSPACE_SENTINEL.length
+    val visibleText = recipientSelectionVisibleQueryText(fieldText = text.toString())
+    val visibleSelectionStart = (selection.start - sentinelLength).coerceAtLeast(minimumValue = 0)
+    val visibleSelectionEnd = (selection.end - sentinelLength).coerceAtLeast(minimumValue = 0)
 
     return uiState.enabled &&
         shouldUseHiddenBackspaceTarget(uiState = uiState) &&
-        visibleFieldValue.text.isEmpty() &&
-        visibleFieldValue.selection.start == visibleFieldValue.selection.end &&
-        visibleFieldValue.selection.start == 0
+        visibleText.isEmpty() &&
+        visibleSelectionStart == visibleSelectionEnd &&
+        visibleSelectionStart == 0
 }
 
 internal fun shouldRemoveLastRecipientAfterHiddenBackspaceTargetDeleted(
@@ -140,7 +90,7 @@ internal fun shouldRemoveLastRecipientAfterHiddenBackspaceTargetDeleted(
     nextText: String,
     uiState: RecipientSelectionQueryFieldUiState,
 ): Boolean {
-    return previousText == RECIPIENT_SELECTION_BACKSPACE_SENTINEL &&
+    return previousText == BACKSPACE_SENTINEL &&
         nextText.isEmpty() &&
         shouldUseHiddenBackspaceTarget(uiState = uiState)
 }

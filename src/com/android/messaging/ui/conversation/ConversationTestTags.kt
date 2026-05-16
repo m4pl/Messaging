@@ -41,6 +41,7 @@ internal const val NEW_CHAT_CONTACT_RESOLVING_INDICATOR_TEST_TAG =
     "new_chat_contact_resolving_indicator"
 internal const val NEW_CHAT_SIM_SELECTOR_CHIP_TEST_TAG = "new_chat_sim_selector_chip"
 internal const val NEW_CHAT_SIM_SELECTOR_DROPDOWN_TEST_TAG = "new_chat_sim_selector_dropdown"
+internal const val RECIPIENT_SELECTION_QUERY_FIELD_TEST_TAG = "recipient_selection_query_field"
 internal const val CONVERSATION_SEND_BUTTON_SHAPE_CIRCLE = "circle"
 internal const val CONVERSATION_SEND_BUTTON_TEST_TAG = "conversation_send_button"
 internal const val CONVERSATION_TEXT_FIELD_TEST_TAG = "conversation_text_field"
