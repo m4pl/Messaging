@@ -15,16 +15,16 @@ import androidx.compose.ui.res.stringResource
 import com.android.messaging.R
 import com.android.messaging.ui.appsettings.common.SettingsClickableItem
 import com.android.messaging.ui.appsettings.common.SettingsTopAppBar
-import com.android.messaging.ui.appsettings.subscription.model.SubscriptionSettingsUiState
+import com.android.messaging.ui.appsettings.subscription.model.SubscriptionUiState
 import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsMainScreen(
-    subscriptions: ImmutableList<SubscriptionSettingsUiState>,
-    onNavigateBack: (() -> Unit),
-    onGeneralSettingsClick: (() -> Unit),
-    onSubscriptionClick: ((subId: Int, title: String) -> Unit),
+    subscriptions: ImmutableList<SubscriptionUiState>,
+    onNavigateBack: () -> Unit,
+    onGeneralSettingsClick: () -> Unit,
+    onSubscriptionClick: (subId: Int, title: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()

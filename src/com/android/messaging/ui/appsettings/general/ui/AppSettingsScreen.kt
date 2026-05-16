@@ -18,14 +18,13 @@ import com.android.messaging.ui.appsettings.common.SettingsClickableItem
 import com.android.messaging.ui.appsettings.common.SettingsSwitchItem
 import com.android.messaging.ui.appsettings.common.SettingsTopAppBar
 import com.android.messaging.ui.appsettings.general.model.AppSettingsUiState
-import com.android.messaging.ui.appsettings.screen.SettingsScreenModel
 import com.android.messaging.ui.appsettings.screen.model.SettingsAction as Action
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AppSettingsScreen(
     appSettings: AppSettingsUiState,
-    screenModel: SettingsScreenModel,
+    onAction: (Action) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     isTopLevel: Boolean = false,
@@ -52,26 +51,35 @@ internal fun AppSettingsScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = contentPadding,
         ) {
-            coreSettingsItems(appSettings, screenModel)
+            coreSettingsItems(
+                appSettings = appSettings,
+                onAction = onAction,
+            )
+
             if (isTopLevel && onAdvancedClick != null) {
                 advancedSettingsItem(onAdvancedClick)
             }
-            debugSettingsItems(appSettings, screenModel)
-            licenseSettingsItems(screenModel)
+
+            debugSettingsItems(
+                appSettings = appSettings,
+                onAction = onAction,
+            )
+
+            licenseSettingsItems(onAction)
         }
     }
 }
 
 private fun LazyListScope.coreSettingsItems(
     appSettings: AppSettingsUiState,
-    screenModel: SettingsScreenModel,
+    onAction: (Action) -> Unit,
 ) {
     item(key = "default_sms_app") {
         SettingsClickableItem(
             title = stringResource(R.string.sms_disabled_pref_title),
             summary = appSettings.defaultSmsAppLabel,
             onClick = {
-                screenModel.onAction(Action.DefaultSmsAppClicked(appSettings.isDefaultSmsApp))
+                onAction(Action.DefaultSmsAppClicked(appSettings.isDefaultSmsApp))
             },
         )
     }
@@ -80,7 +88,7 @@ private fun LazyListScope.coreSettingsItems(
         SettingsClickableItem(
             title = stringResource(R.string.notifications_enabled_conversation_pref_title),
             onClick = {
-                screenModel.onAction(Action.NotificationsClicked)
+                onAction(Action.NotificationsClicked)
             },
         )
     }
@@ -90,7 +98,7 @@ private fun LazyListScope.coreSettingsItems(
             title = stringResource(R.string.send_sound_pref_title),
             checked = appSettings.sendSoundEnabled,
             onCheckedChange = {
-                screenModel.onAction(Action.SendSoundChanged(it))
+                onAction(Action.SendSoundChanged(it))
             },
         )
     }
@@ -107,7 +115,7 @@ private fun LazyListScope.advancedSettingsItem(onAdvancedClick: () -> Unit) {
 
 private fun LazyListScope.debugSettingsItems(
     appSettings: AppSettingsUiState,
-    screenModel: SettingsScreenModel,
+    onAction: (Action) -> Unit,
 ) {
     if (!appSettings.isDebugEnabled) return
 
@@ -125,7 +133,7 @@ private fun LazyListScope.debugSettingsItems(
             summary = stringResource(R.string.dump_sms_pref_summary),
             checked = appSettings.dumpSmsEnabled,
             onCheckedChange = {
-                screenModel.onAction(Action.DumpSmsChanged(it))
+                onAction(Action.DumpSmsChanged(it))
             },
         )
     }
@@ -135,13 +143,15 @@ private fun LazyListScope.debugSettingsItems(
             summary = stringResource(R.string.dump_mms_pref_summary),
             checked = appSettings.dumpMmsEnabled,
             onCheckedChange = {
-                screenModel.onAction(Action.DumpMmsChanged(it))
+                onAction(Action.DumpMmsChanged(it))
             },
         )
     }
 }
 
-private fun LazyListScope.licenseSettingsItems(screenModel: SettingsScreenModel) {
+private fun LazyListScope.licenseSettingsItems(
+    onAction: (Action) -> Unit,
+) {
     item(key = "licenses_divider") {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
@@ -149,7 +159,7 @@ private fun LazyListScope.licenseSettingsItems(screenModel: SettingsScreenModel)
         SettingsClickableItem(
             title = stringResource(R.string.menu_license),
             onClick = {
-                screenModel.onAction(Action.LicensesClicked)
+                onAction(Action.LicensesClicked)
             },
         )
     }

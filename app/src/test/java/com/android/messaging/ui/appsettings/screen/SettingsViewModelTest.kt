@@ -8,13 +8,14 @@ import com.android.messaging.ui.appsettings.screen.model.SettingsAction as Actio
 import com.android.messaging.ui.appsettings.screen.model.SettingsScreenEffect
 import com.android.messaging.ui.appsettings.screen.model.SettingsUiState
 import com.android.messaging.ui.appsettings.subscription.delegate.SubscriptionSettingsDelegate
-import com.android.messaging.ui.appsettings.subscription.delegate.SubscriptionSettingsState
 import com.android.messaging.ui.appsettings.subscription.model.SubscriptionSettingsUiState
+import com.android.messaging.ui.appsettings.subscription.model.SubscriptionUiState
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -33,8 +34,8 @@ class SettingsViewModelTest {
     @Test
     fun init_bindsAllDelegates() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val appDelegate = FakeAppSettingsDelegate()
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val appDelegate = mockAppSettingsDelegate()
+            val subDelegate = mockSubscriptionSettingsDelegate()
 
             createViewModel(
                 appSettingsDelegate = appDelegate,
@@ -42,16 +43,22 @@ class SettingsViewModelTest {
             )
             advanceUntilIdle()
 
-            assertEquals(1, appDelegate.bindCalls)
-            assertEquals(1, subDelegate.bindCalls)
+            verify(exactly = 1) {
+                appDelegate.bind(any())
+            }
+            verify(exactly = 1) {
+                subDelegate.bind(any())
+            }
         }
     }
 
     @Test
     fun uiState_combinesDelegateStates() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val appDelegate = FakeAppSettingsDelegate()
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val appStateFlow = MutableStateFlow(AppSettingsUiState())
+            val subStateFlow = MutableStateFlow(SubscriptionSettingsUiState())
+            val appDelegate = mockAppSettingsDelegate(appStateFlow)
+            val subDelegate = mockSubscriptionSettingsDelegate(subStateFlow)
             val viewModel = createViewModel(
                 appSettingsDelegate = appDelegate,
                 subscriptionSettingsDelegate = subDelegate,
@@ -62,12 +69,13 @@ class SettingsViewModelTest {
                 defaultSmsAppLabel = "Messaging",
                 sendSoundEnabled = false,
             )
-            val subscription = SubscriptionSettingsUiState(
+            val subscription = SubscriptionUiState(
                 subId = 1,
                 displayName = "SIM 1",
             )
-            appDelegate.stateFlow.value = appState
-            subDelegate.stateFlow.value = SubscriptionSettingsState(
+
+            appStateFlow.value = appState
+            subStateFlow.value = SubscriptionSettingsUiState(
                 subscriptions = persistentListOf(subscription),
                 isMultiSim = false,
             )
@@ -87,8 +95,8 @@ class SettingsViewModelTest {
     @Test
     fun refreshState_refreshesBothDelegates() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val appDelegate = FakeAppSettingsDelegate()
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val appDelegate = mockAppSettingsDelegate()
+            val subDelegate = mockSubscriptionSettingsDelegate()
             val viewModel = createViewModel(
                 appSettingsDelegate = appDelegate,
                 subscriptionSettingsDelegate = subDelegate,
@@ -96,104 +104,124 @@ class SettingsViewModelTest {
 
             viewModel.refreshState()
 
-            assertEquals(1, appDelegate.refreshCalls)
-            assertEquals(1, subDelegate.refreshCalls)
+            verify(exactly = 1) {
+                appDelegate.refresh()
+            }
+            verify(exactly = 1) {
+                subDelegate.refresh()
+            }
         }
     }
 
     @Test
     fun onSendSoundChanged_delegatesToAppSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val appDelegate = FakeAppSettingsDelegate()
+            val appDelegate = mockAppSettingsDelegate()
             val viewModel = createViewModel(appSettingsDelegate = appDelegate)
 
             viewModel.onAction(Action.SendSoundChanged(enabled = false))
 
-            assertEquals(listOf(false), appDelegate.sendSoundChanges)
+            verify(exactly = 1) {
+                appDelegate.onSendSoundChanged(enabled = false)
+            }
         }
     }
 
     @Test
     fun onDumpSmsChanged_delegatesToAppSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val appDelegate = FakeAppSettingsDelegate()
+            val appDelegate = mockAppSettingsDelegate()
             val viewModel = createViewModel(appSettingsDelegate = appDelegate)
 
             viewModel.onAction(Action.DumpSmsChanged(enabled = true))
 
-            assertEquals(listOf(true), appDelegate.dumpSmsChanges)
+            verify(exactly = 1) {
+                appDelegate.onDumpSmsChanged(enabled = true)
+            }
         }
     }
 
     @Test
     fun onDumpMmsChanged_delegatesToAppSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val appDelegate = FakeAppSettingsDelegate()
+            val appDelegate = mockAppSettingsDelegate()
             val viewModel = createViewModel(appSettingsDelegate = appDelegate)
 
             viewModel.onAction(Action.DumpMmsChanged(enabled = true))
 
-            assertEquals(listOf(true), appDelegate.dumpMmsChanges)
+            verify(exactly = 1) {
+                appDelegate.onDumpMmsChanged(enabled = true)
+            }
         }
     }
 
     @Test
     fun onGroupMmsChanged_delegatesToSubscriptionSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val subDelegate = mockSubscriptionSettingsDelegate()
             val viewModel = createViewModel(subscriptionSettingsDelegate = subDelegate)
 
             viewModel.onAction(Action.GroupMmsChanged(subId = 1, enabled = false))
 
-            assertEquals(listOf(1 to false), subDelegate.groupMmsChanges)
+            verify(exactly = 1) {
+                subDelegate.onGroupMmsChanged(subId = 1, enabled = false)
+            }
         }
     }
 
     @Test
     fun onPhoneNumberChanged_delegatesToSubscriptionSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val subDelegate = mockSubscriptionSettingsDelegate()
             val viewModel = createViewModel(subscriptionSettingsDelegate = subDelegate)
 
             viewModel.onAction(Action.PhoneNumberChanged(subId = 1, phoneNumber = "+1555000111"))
 
-            assertEquals(listOf(1 to "+1555000111"), subDelegate.phoneNumberChanges)
+            verify(exactly = 1) {
+                subDelegate.onPhoneNumberChanged(subId = 1, phoneNumber = "+1555000111")
+            }
         }
     }
 
     @Test
     fun onAutoRetrieveMmsChanged_delegatesToSubscriptionSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val subDelegate = mockSubscriptionSettingsDelegate()
             val viewModel = createViewModel(subscriptionSettingsDelegate = subDelegate)
 
             viewModel.onAction(Action.AutoRetrieveMmsChanged(subId = 2, enabled = true))
 
-            assertEquals(listOf(2 to true), subDelegate.autoRetrieveMmsChanges)
+            verify(exactly = 1) {
+                subDelegate.onAutoRetrieveMmsChanged(subId = 2, enabled = true)
+            }
         }
     }
 
     @Test
     fun onAutoRetrieveMmsWhenRoamingChanged_delegatesToSubscriptionSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val subDelegate = mockSubscriptionSettingsDelegate()
             val viewModel = createViewModel(subscriptionSettingsDelegate = subDelegate)
 
             viewModel.onAction(Action.AutoRetrieveMmsWhenRoamingChanged(subId = 1, enabled = true))
 
-            assertEquals(listOf(1 to true), subDelegate.autoRetrieveMmsWhenRoamingChanges)
+            verify(exactly = 1) {
+                subDelegate.onAutoRetrieveMmsWhenRoamingChanged(subId = 1, enabled = true)
+            }
         }
     }
 
     @Test
     fun onDeliveryReportsChanged_delegatesToSubscriptionSettings() {
         runTest(context = mainDispatcherRule.testDispatcher) {
-            val subDelegate = FakeSubscriptionSettingsDelegate()
+            val subDelegate = mockSubscriptionSettingsDelegate()
             val viewModel = createViewModel(subscriptionSettingsDelegate = subDelegate)
 
             viewModel.onAction(Action.DeliveryReportsChanged(subId = 1, enabled = true))
 
-            assertEquals(listOf(1 to true), subDelegate.deliveryReportsChanges)
+            verify(exactly = 1) {
+                subDelegate.onDeliveryReportsChanged(subId = 1, enabled = true)
+            }
         }
     }
 
@@ -273,9 +301,9 @@ class SettingsViewModelTest {
     }
 
     private fun createViewModel(
-        appSettingsDelegate: AppSettingsDelegate = FakeAppSettingsDelegate(),
+        appSettingsDelegate: AppSettingsDelegate = mockAppSettingsDelegate(),
         subscriptionSettingsDelegate: SubscriptionSettingsDelegate =
-            FakeSubscriptionSettingsDelegate(),
+            mockSubscriptionSettingsDelegate(),
     ): SettingsViewModel {
         return SettingsViewModel(
             appSettingsDelegate = appSettingsDelegate,
@@ -283,75 +311,20 @@ class SettingsViewModelTest {
         )
     }
 
-    private class FakeAppSettingsDelegate : AppSettingsDelegate {
-        val stateFlow = MutableStateFlow(AppSettingsUiState())
-        override val state: StateFlow<AppSettingsUiState> = stateFlow
-
-        var bindCalls = 0
-        var refreshCalls = 0
-        val sendSoundChanges = mutableListOf<Boolean>()
-        val dumpSmsChanges = mutableListOf<Boolean>()
-        val dumpMmsChanges = mutableListOf<Boolean>()
-
-        override fun bind(scope: CoroutineScope) {
-            bindCalls += 1
-        }
-
-        override fun refresh() {
-            refreshCalls += 1
-        }
-
-        override fun onSendSoundChanged(enabled: Boolean) {
-            sendSoundChanges += enabled
-        }
-
-        override fun onDumpSmsChanged(enabled: Boolean) {
-            dumpSmsChanges += enabled
-        }
-
-        override fun onDumpMmsChanged(enabled: Boolean) {
-            dumpMmsChanges += enabled
-        }
+    private fun mockAppSettingsDelegate(
+        stateFlow: MutableStateFlow<AppSettingsUiState> = MutableStateFlow(AppSettingsUiState()),
+    ): AppSettingsDelegate {
+        val delegate = mockk<AppSettingsDelegate>(relaxed = true)
+        every { delegate.state } returns stateFlow
+        return delegate
     }
 
-    private class FakeSubscriptionSettingsDelegate : SubscriptionSettingsDelegate {
-        val stateFlow = MutableStateFlow(SubscriptionSettingsState())
-        override val state: StateFlow<SubscriptionSettingsState> = stateFlow
-
-        var bindCalls = 0
-        var refreshCalls = 0
-        val groupMmsChanges = mutableListOf<Pair<Int, Boolean>>()
-        val phoneNumberChanges = mutableListOf<Pair<Int, String>>()
-        val autoRetrieveMmsChanges = mutableListOf<Pair<Int, Boolean>>()
-        val autoRetrieveMmsWhenRoamingChanges = mutableListOf<Pair<Int, Boolean>>()
-        val deliveryReportsChanges = mutableListOf<Pair<Int, Boolean>>()
-
-        override fun bind(scope: CoroutineScope) {
-            bindCalls += 1
-        }
-
-        override fun refresh() {
-            refreshCalls += 1
-        }
-
-        override fun onGroupMmsChanged(subId: Int, enabled: Boolean) {
-            groupMmsChanges += subId to enabled
-        }
-
-        override fun onPhoneNumberChanged(subId: Int, phoneNumber: String) {
-            phoneNumberChanges += subId to phoneNumber
-        }
-
-        override fun onAutoRetrieveMmsChanged(subId: Int, enabled: Boolean) {
-            autoRetrieveMmsChanges += subId to enabled
-        }
-
-        override fun onAutoRetrieveMmsWhenRoamingChanged(subId: Int, enabled: Boolean) {
-            autoRetrieveMmsWhenRoamingChanges += subId to enabled
-        }
-
-        override fun onDeliveryReportsChanged(subId: Int, enabled: Boolean) {
-            deliveryReportsChanges += subId to enabled
-        }
+    private fun mockSubscriptionSettingsDelegate(
+        stateFlow: MutableStateFlow<SubscriptionSettingsUiState> =
+            MutableStateFlow(SubscriptionSettingsUiState()),
+    ): SubscriptionSettingsDelegate {
+        val delegate = mockk<SubscriptionSettingsDelegate>(relaxed = true)
+        every { delegate.state } returns stateFlow
+        return delegate
     }
 }

@@ -42,15 +42,15 @@ import com.android.messaging.ui.appsettings.common.SettingsSwitchItem
 import com.android.messaging.ui.appsettings.common.SettingsTopAppBar
 import com.android.messaging.ui.appsettings.screen.SettingsScreenModel
 import com.android.messaging.ui.appsettings.screen.model.SettingsAction as Action
-import com.android.messaging.ui.appsettings.subscription.model.SubscriptionSettingsUiState
+import com.android.messaging.ui.appsettings.subscription.model.SubscriptionUiState
 import com.android.messaging.ui.core.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SubscriptionSettingsScreen(
-    subscriptionSettings: SubscriptionSettingsUiState,
+    subscriptionSettings: SubscriptionUiState,
     title: String,
-    screenModel: SettingsScreenModel,
+    onAction: (Action) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -74,17 +74,20 @@ internal fun SubscriptionSettingsScreen(
         ) {
             mmsSettingsItems(
                 subscriptionSettings = subscriptionSettings,
-                screenModel = screenModel,
+                onAction = onAction,
                 onGroupMmsClick = { showGroupMmsDialog = true },
                 onPhoneNumberClick = { showPhoneNumberDialog = true },
             )
-            advancedSettingsItems(subscriptionSettings, screenModel)
+            advancedSettingsItems(
+                subscriptionSettings = subscriptionSettings,
+                onAction = onAction
+            )
         }
     }
 
     SubscriptionDialogs(
         subscriptionSettings = subscriptionSettings,
-        screenModel = screenModel,
+        onAction = onAction,
         showGroupMmsDialog = showGroupMmsDialog,
         onDismissGroupMms = { showGroupMmsDialog = false },
         showPhoneNumberDialog = showPhoneNumberDialog,
@@ -94,8 +97,8 @@ internal fun SubscriptionSettingsScreen(
 
 @Composable
 private fun SubscriptionDialogs(
-    subscriptionSettings: SubscriptionSettingsUiState,
-    screenModel: SettingsScreenModel,
+    subscriptionSettings: SubscriptionUiState,
+    onAction: (Action) -> Unit,
     showGroupMmsDialog: Boolean,
     onDismissGroupMms: () -> Unit,
     showPhoneNumberDialog: Boolean,
@@ -106,7 +109,7 @@ private fun SubscriptionDialogs(
             isEnabled = subscriptionSettings.isGroupMmsEnabled,
             onDismiss = onDismissGroupMms,
             onConfirm = { enabled ->
-                screenModel.onAction(
+                onAction(
                     Action.GroupMmsChanged(subscriptionSettings.subId, enabled),
                 )
                 onDismissGroupMms()
@@ -121,7 +124,7 @@ private fun SubscriptionDialogs(
             },
             onDismiss = onDismissPhoneNumber,
             onConfirm = { phoneNumber ->
-                screenModel.onAction(
+                onAction(
                     Action.PhoneNumberChanged(subscriptionSettings.subId, phoneNumber),
                 )
                 onDismissPhoneNumber()
@@ -131,8 +134,8 @@ private fun SubscriptionDialogs(
 }
 
 private fun LazyListScope.mmsSettingsItems(
-    subscriptionSettings: SubscriptionSettingsUiState,
-    screenModel: SettingsScreenModel,
+    subscriptionSettings: SubscriptionUiState,
+    onAction: (Action) -> Unit,
     onGroupMmsClick: () -> Unit,
     onPhoneNumberClick: () -> Unit,
 ) {
@@ -172,7 +175,7 @@ private fun LazyListScope.mmsSettingsItems(
             checked = subscriptionSettings.autoRetrieveMms,
             enabled = subscriptionSettings.isDefaultSmsApp,
             onCheckedChange = { enabled ->
-                screenModel.onAction(
+                onAction(
                     Action.AutoRetrieveMmsChanged(subscriptionSettings.subId, enabled),
                 )
             },
@@ -186,7 +189,7 @@ private fun LazyListScope.mmsSettingsItems(
             checked = subscriptionSettings.autoRetrieveMmsWhenRoaming,
             enabled = subscriptionSettings.isDefaultSmsApp && subscriptionSettings.autoRetrieveMms,
             onCheckedChange = { enabled ->
-                screenModel.onAction(
+                onAction(
                     Action.AutoRetrieveMmsWhenRoamingChanged(subscriptionSettings.subId, enabled),
                 )
             },
@@ -195,8 +198,8 @@ private fun LazyListScope.mmsSettingsItems(
 }
 
 private fun LazyListScope.advancedSettingsItems(
-    subscriptionSettings: SubscriptionSettingsUiState,
-    screenModel: SettingsScreenModel,
+    subscriptionSettings: SubscriptionUiState,
+    onAction: (Action) -> Unit,
 ) {
     val hasAdvanced = subscriptionSettings.isDeliveryReportsSupported ||
         subscriptionSettings.isWirelessAlertsSupported
@@ -219,7 +222,7 @@ private fun LazyListScope.advancedSettingsItems(
                 checked = subscriptionSettings.deliveryReportsEnabled,
                 enabled = subscriptionSettings.isDefaultSmsApp,
                 onCheckedChange = { enabled ->
-                    screenModel.onAction(
+                    onAction(
                         Action.DeliveryReportsChanged(subscriptionSettings.subId, enabled),
                     )
                 },
@@ -232,7 +235,7 @@ private fun LazyListScope.advancedSettingsItems(
             SettingsClickableItem(
                 title = stringResource(R.string.wireless_alerts_title),
                 onClick = {
-                    screenModel.onAction(
+                    onAction(
                         Action.WirelessAlertsClicked(subscriptionSettings.subId),
                     )
                 },

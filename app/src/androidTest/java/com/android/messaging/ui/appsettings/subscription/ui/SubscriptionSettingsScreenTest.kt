@@ -10,7 +10,7 @@ import androidx.compose.ui.test.performClick
 import com.android.messaging.R
 import com.android.messaging.ui.appsettings.screen.SettingsScreenModel
 import com.android.messaging.ui.appsettings.screen.model.SettingsAction as Action
-import com.android.messaging.ui.appsettings.subscription.model.SubscriptionSettingsUiState
+import com.android.messaging.ui.appsettings.subscription.model.SubscriptionUiState
 import com.android.messaging.ui.core.AppTheme
 import io.mockk.mockk
 import io.mockk.verify
@@ -259,14 +259,14 @@ class SubscriptionSettingsScreenTest {
     }
 
     private fun setContent(
-        subscriptionSettings: SubscriptionSettingsUiState = createDefaultSubscription(),
+        subscriptionSettings: SubscriptionUiState = createDefaultSubscription(),
     ) {
         composeTestRule.setContent {
             AppTheme {
                 SubscriptionSettingsScreen(
                     subscriptionSettings = subscriptionSettings,
                     title = "Advanced Settings",
-                    screenModel = screenModel,
+                    onAction = screenModel::onAction,
                     onNavigateBack = {},
                 )
             }
@@ -286,8 +286,8 @@ class SubscriptionSettingsScreenTest {
         deliveryReportsEnabled: Boolean = false,
         isWirelessAlertsSupported: Boolean = false,
         isDefaultSmsApp: Boolean = true,
-    ): SubscriptionSettingsUiState {
-        return SubscriptionSettingsUiState(
+    ): SubscriptionUiState {
+        return SubscriptionUiState(
             subId = subId,
             displayName = "SIM 1",
             displayDetail = displayDetail,

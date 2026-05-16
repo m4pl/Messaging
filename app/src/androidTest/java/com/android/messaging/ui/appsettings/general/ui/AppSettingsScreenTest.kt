@@ -173,7 +173,7 @@ class AppSettingsScreenTest {
             AppTheme {
                 AppSettingsScreen(
                     appSettings = AppSettingsUiState(),
-                    screenModel = screenModel,
+                    onAction = screenModel::onAction,
                     onNavigateBack = {},
                     isTopLevel = true,
                     onAdvancedClick = { advancedClicks += 1 },
@@ -196,7 +196,7 @@ class AppSettingsScreenTest {
             AppTheme {
                 AppSettingsScreen(
                     appSettings = AppSettingsUiState(),
-                    screenModel = screenModel,
+                    onAction = screenModel::onAction,
                     onNavigateBack = {},
                     isTopLevel = false,
                     onAdvancedClick = null,
@@ -215,7 +215,7 @@ class AppSettingsScreenTest {
             AppTheme {
                 AppSettingsScreen(
                     appSettings = appSettings,
-                    screenModel = screenModel,
+                    onAction = screenModel::onAction,
                     onNavigateBack = {},
                 )
             }
