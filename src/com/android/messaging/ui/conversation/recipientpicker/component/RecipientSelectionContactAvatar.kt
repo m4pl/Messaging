@@ -91,7 +91,7 @@ internal fun RecipientSelectionContactAvatar(
                             .size(size = 40.dp)
                             .clip(shape = CircleShape),
                         model = recipientSelectionPhotoUri(item = item),
-                        contentDescription = recipientSelectionItemDisplayName(item = item),
+                        contentDescription = recipientSelectionItemPrimaryText(item = item),
                     )
                 }
             }
@@ -125,7 +125,7 @@ private fun RecipientSelectionTextAvatar(
     item: RecipientPickerListItem,
     modifier: Modifier = Modifier,
 ) {
-    val displayName = recipientSelectionItemDisplayName(item = item)
+    val displayName = recipientSelectionItemPrimaryText(item = item)
     val avatarSourceText = recipientSelectionAvatarSourceText(item = item)
     val label = remember(displayName, avatarSourceText) {
         recipientSelectionAvatarLabel(
@@ -152,7 +152,7 @@ private fun RecipientSelectionTextAvatar(
 }
 
 @Composable
-internal fun recipientSelectionItemDisplayName(
+internal fun recipientSelectionItemPrimaryText(
     item: RecipientPickerListItem,
 ): String {
     return when (item) {
@@ -160,7 +160,7 @@ internal fun recipientSelectionItemDisplayName(
         is RecipientPickerListItem.SyntheticPhone -> {
             stringResource(
                 id = R.string.contact_list_send_to_text,
-                item.rawQuery,
+                item.displayName,
             )
         }
     }

@@ -789,23 +789,77 @@ public class PhoneUtils {
      * @return formatted number
      */
     public String formatForDisplay(final String phoneText) {
+        return formatForDisplayInternal(phoneText, getLocaleCountry());
+    }
+
+    /**
+     * Format a phone number for displaying, preferring the SIM country and falling back to system
+     * locale country when the SIM country is unavailable. Emits NATIONAL format when the SIM
+     * country matches the parsed number's country, INTERNATIONAL otherwise. Used by the recipient
+     * picker synthetic row as the primary "Send to ..." display name, mirroring Google Messages.
+     *
+     * @param phoneText The original phone text
+     * @return formatted number
+     */
+    @Nullable
+    public String formatForDisplayUsingSimCountry(@Nullable final String phoneText) {
+        return formatForDisplayInternal(phoneText, getSimOrDefaultLocaleCountry());
+    }
+
+    /**
+     * Format a phone number as a normalized destination, preferring the SIM country and falling
+     * back to system locale country when unavailable. Emits E164 (e.g. {@code +37212345678}) when
+     * the number is valid; INTERNATIONAL (e.g. {@code +372 1234 5678}) otherwise so the user can
+     * still see country grouping. Used by the recipient picker synthetic row subtitle, mirroring
+     * the {@code getNormalizedDestination()} path in Google Messages.
+     *
+     * @param phoneText The original phone text
+     * @return formatted number
+     */
+    @Nullable
+    public String formatNormalizedDestinationUsingSimCountry(@Nullable final String phoneText) {
+        if (TextUtils.isEmpty(phoneText) ||
+                phoneText.replaceAll("\\D", "").length() < MINIMUM_PHONE_NUMBER_LENGTH_TO_FORMAT) {
+            return phoneText;
+        }
+        final String country = getSimOrDefaultLocaleCountry();
+        final PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
+        try {
+            final PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneText, country);
+            final PhoneNumberFormat phoneNumberFormat = phoneNumberUtil.isValidNumber(parsedNumber)
+                    ? PhoneNumberFormat.E164
+                    : PhoneNumberFormat.INTERNATIONAL;
+            return phoneNumberUtil.format(parsedNumber, phoneNumberFormat);
+        } catch (NumberParseException e) {
+            LogUtil.e(TAG, "PhoneUtils.formatNormalizedDestinationUsingSimCountry: invalid phone "
+                    + "number " + LogUtil.sanitizePII(phoneText) + " with country " + country);
+            return phoneText;
+        }
+    }
+
+    @Nullable
+    private static String formatForDisplayInternal(
+            @Nullable
+            final String phoneText,
+            @Nullable
+            final String country
+    ) {
         // Only format a valid number which length >=6
         if (TextUtils.isEmpty(phoneText) ||
                 phoneText.replaceAll("\\D", "").length() < MINIMUM_PHONE_NUMBER_LENGTH_TO_FORMAT) {
             return phoneText;
         }
         final PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
-        final String systemCountry = getLocaleCountry();
-        final int systemCountryCode = phoneNumberUtil.getCountryCodeForRegion(systemCountry);
+        final int countryCode = phoneNumberUtil.getCountryCodeForRegion(country);
         try {
-            final PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneText, systemCountry);
+            final PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneText, country);
             final PhoneNumberFormat phoneNumberFormat =
-                    (systemCountryCode > 0 && parsedNumber.getCountryCode() == systemCountryCode) ?
+                    (countryCode > 0 && parsedNumber.getCountryCode() == countryCode) ?
                             PhoneNumberFormat.NATIONAL : PhoneNumberFormat.INTERNATIONAL;
             return phoneNumberUtil.format(parsedNumber, phoneNumberFormat);
         } catch (NumberParseException e) {
             LogUtil.e(TAG, "PhoneUtils.formatForDisplay: invalid phone number "
-                    + LogUtil.sanitizePII(phoneText) + " with country " + systemCountry);
+                    + LogUtil.sanitizePII(phoneText) + " with country " + country);
             return phoneText;
         }
     }

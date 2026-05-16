@@ -24,6 +24,7 @@ internal sealed interface RecipientPickerListItem {
         val rawQuery: String,
         val destination: String,
         val normalizedDestination: String,
+        val displayName: String = rawQuery,
         val secondaryText: String = normalizedDestination,
     ) : RecipientPickerListItem
 }

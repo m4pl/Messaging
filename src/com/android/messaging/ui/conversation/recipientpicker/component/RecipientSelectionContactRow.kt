@@ -280,7 +280,7 @@ private fun SyntheticPhoneRow(
         )
 
         ContactPrimaryAndSecondaryText(
-            primaryText = recipientSelectionItemDisplayName(item = item),
+            primaryText = recipientSelectionItemPrimaryText(item = item),
             secondaryText = item.secondaryText,
             primaryTextColor = primaryTextColor,
             secondaryTextColor = secondaryTextColor,
