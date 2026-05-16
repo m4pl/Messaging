@@ -8,8 +8,8 @@ import com.android.messaging.data.contact.model.ContactsPage
 import com.android.messaging.data.contact.repository.ContactsRepository
 import com.android.messaging.domain.contacts.usecase.IsReadContactsPermissionGranted
 import com.android.messaging.sms.MmsSmsUtils
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerListItem
-import com.android.messaging.ui.conversation.recipientpicker.model.RecipientPickerUiState
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
+import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
 import com.android.messaging.util.PhoneUtils
 import io.mockk.every
 import io.mockk.mockk
@@ -304,6 +304,67 @@ internal class RecipientPickerDelegateImplTest {
             .filterIsInstance<RecipientPickerListItem.SyntheticPhone>()
         assertTrue(syntheticItems.isEmpty())
         assertEquals(1, finalState.items.size)
+    }
+
+    @Test
+    fun syntheticPhoneDisplayNameComesFromSimCountryFormatter() = runTest {
+        every {
+            phoneUtilsInstance.formatForDisplayUsingSimCountry("5550123")
+        } returns "(555) 012-3"
+
+        val delegate = createDelegate(
+            initialQuery = "5550123",
+            pages = mapOf(searchKey(query = "5550123", offset = 0) to emptyPage()),
+        )
+
+        val finalState = bindAndAwait(delegate = delegate)
+
+        val syntheticItem = finalState.items
+            .filterIsInstance<RecipientPickerListItem.SyntheticPhone>()
+            .single()
+        assertEquals("(555) 012-3", syntheticItem.displayName)
+    }
+
+    @Test
+    fun syntheticPhoneSecondaryTextComesFromNormalizedDestinationFormatter() = runTest {
+        every {
+            phoneUtilsInstance.formatNormalizedDestinationUsingSimCountry("5550456")
+        } returns "+15550456"
+
+        val delegate = createDelegate(
+            initialQuery = "5550456",
+            pages = mapOf(searchKey(query = "5550456", offset = 0) to emptyPage()),
+        )
+
+        val finalState = bindAndAwait(delegate = delegate)
+
+        val syntheticItem = finalState.items
+            .filterIsInstance<RecipientPickerListItem.SyntheticPhone>()
+            .single()
+        assertEquals("+15550456", syntheticItem.secondaryText)
+    }
+
+    @Test
+    fun syntheticPhoneTextFieldsFallBackToEmptyWhenFormatterReturnsNull() = runTest {
+        every {
+            phoneUtilsInstance.formatForDisplayUsingSimCountry(any())
+        } returns null
+        every {
+            phoneUtilsInstance.formatNormalizedDestinationUsingSimCountry(any())
+        } returns null
+
+        val delegate = createDelegate(
+            initialQuery = "5550789",
+            pages = mapOf(searchKey(query = "5550789", offset = 0) to emptyPage()),
+        )
+
+        val finalState = bindAndAwait(delegate = delegate)
+
+        val syntheticItem = finalState.items
+            .filterIsInstance<RecipientPickerListItem.SyntheticPhone>()
+            .single()
+        assertEquals("", syntheticItem.displayName)
+        assertEquals("", syntheticItem.secondaryText)
     }
 
     private fun TestScope.bindAndAwait(
