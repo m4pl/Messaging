@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,10 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -228,15 +229,6 @@ internal fun ConversationComposeInputContent(
         isRecordActionEnabled = isRecordActionEnabled,
         isSendActionEnabled = isSendActionEnabled,
     )
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    LaunchedEffect(inputState.isActiveRecording) {
-        if (inputState.isActiveRecording) {
-            focusManager.clearFocus(force = true)
-            keyboardController?.hide()
-        }
-    }
 
     Row(
         modifier = Modifier
@@ -397,7 +389,6 @@ private fun ConversationComposeMessageRecordingContent(
     onSubjectChipClick: () -> Unit,
     onSubjectChipClear: () -> Unit,
 ) {
-    val isTextEntryEnabled = isMessageFieldEnabled && !inputState.isActiveRecording
     val isInputActionEnabled = !inputState.isActiveRecording
 
     Surface(
@@ -423,7 +414,7 @@ private fun ConversationComposeMessageRecordingContent(
                             onMessageTextChange(updatedMessageText)
                         }
                     },
-                    enabled = isTextEntryEnabled,
+                    enabled = isMessageFieldEnabled,
                     sendProtocol = sendProtocol,
                     isVisuallyHidden = inputState.isActiveRecording,
                     messageFieldFocusRequester = messageFieldFocusRequester,
@@ -436,7 +427,11 @@ private fun ConversationComposeMessageRecordingContent(
                 )
 
                 ConversationAudioRecordingContentOverlay(
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier
+                        .matchParentSize()
+                        .consumeRecordingInputTouches(
+                            isActiveRecording = inputState.isActiveRecording,
+                        ),
                     isActiveRecording = inputState.isActiveRecording,
                     durationMillis = durationMillis,
                     cancelProgress = inputState.cancelProgress,
@@ -444,6 +439,35 @@ private fun ConversationComposeMessageRecordingContent(
                 )
             }
         }
+    }
+}
+
+private fun Modifier.consumeRecordingInputTouches(isActiveRecording: Boolean): Modifier {
+    return when {
+        isActiveRecording -> {
+            pointerInput(Unit) {
+                awaitEachGesture {
+                    val downChange = awaitFirstDown(requireUnconsumed = false)
+                    downChange.consume()
+
+                    var isAnyPointerPressed: Boolean
+
+                    do {
+                        val event = awaitPointerEvent()
+
+                        event.changes.forEach { change ->
+                            change.consume()
+                        }
+
+                        isAnyPointerPressed = event.changes.any { change ->
+                            change.pressed
+                        }
+                    } while (isAnyPointerPressed)
+                }
+            }
+        }
+
+        else -> this
     }
 }
 
