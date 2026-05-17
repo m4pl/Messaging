@@ -3,11 +3,11 @@ package com.android.messaging.ui.conversation.messages.ui.attachment
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import com.android.messaging.ui.conversation.attachment.ui.ConversationVCardAttachmentCardContent
 import com.android.messaging.ui.conversation.messages.model.attachment.ConversationInlineAttachment
@@ -62,7 +62,7 @@ internal fun ConversationVCardInlineAttachmentRowContent(
             .fillMaxWidth()
             .then(other = modifier),
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        shape = RoundedCornerShape(size = MESSAGE_ATTACHMENT_CORNER_RADIUS),
+        shape = RectangleShape,
     ) {
         ConversationVCardAttachmentCardContent(
             modifier = Modifier

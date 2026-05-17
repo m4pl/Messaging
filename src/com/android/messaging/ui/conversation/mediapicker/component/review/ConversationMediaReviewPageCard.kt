@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -219,7 +218,7 @@ private fun ConversationMediaReviewPreview(
     modifier: Modifier = Modifier,
     previewSize: IntSize,
 ) {
-    val previewShape = RoundedCornerShape(28.dp)
+    val previewShape = MaterialTheme.shapes.large
 
     Surface(
         modifier = modifier

@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Description
@@ -48,7 +48,6 @@ import com.android.messaging.ui.conversation.conversationAttachmentPreviewItemTe
 import com.android.messaging.ui.conversation.conversationAttachmentPreviewRemoveButtonTestTag
 import kotlinx.collections.immutable.ImmutableList
 
-private val ATTACHMENT_PREVIEW_CORNER_RADIUS = 20.dp
 private val ATTACHMENT_PREVIEW_CARD_HEIGHT = 88.dp
 private val ATTACHMENT_PREVIEW_CARD_WIDTH = 220.dp
 private val ATTACHMENT_PREVIEW_AUDIO_REMOVE_BUTTON_MARGIN = 4.dp
@@ -171,7 +170,7 @@ private fun PendingAudioAttachmentPreviewItem(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(shape = RoundedCornerShape(size = 20.dp))
+                    .clip(shape = CircleShape)
                     .background(color = MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
@@ -311,7 +310,7 @@ private fun ConversationAudioAttachmentPreviewItem(
                 contentDescription = null,
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(shape = RoundedCornerShape(size = 20.dp))
+                    .clip(shape = CircleShape)
                     .background(color = MaterialTheme.colorScheme.primary)
                     .padding(8.dp),
                 tint = MaterialTheme.colorScheme.onPrimary,
@@ -393,14 +392,14 @@ private fun AttachmentPreviewItemContainer(
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(ATTACHMENT_PREVIEW_CORNER_RADIUS))
+            .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
             .testTag(
                 conversationAttachmentPreviewItemTestTag(
                     attachmentKey = attachmentKey,
                 ),
             ),
-        shape = RoundedCornerShape(ATTACHMENT_PREVIEW_CORNER_RADIUS),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Box(content = content)

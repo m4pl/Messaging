@@ -50,7 +50,7 @@ import com.android.messaging.ui.conversation.screen.model.ConversationScreenScaf
 import kotlinx.collections.immutable.ImmutableList
 
 private const val SMOOTH_SCROLL_JUMP_THRESHOLD = 15
-private val CONVERSATION_CONTENT_SHAPE = RoundedCornerShape(
+private val conversationCornerShape = RoundedCornerShape(
     topStart = 28.dp,
     topEnd = 28.dp,
     bottomStart = 0.dp,
@@ -417,7 +417,7 @@ private fun Modifier.conversationScreenContentModifier(
     return this
         .padding(paddingValues = contentPadding)
         .background(color = backdropColor)
-        .clip(shape = CONVERSATION_CONTENT_SHAPE)
+        .clip(shape = conversationCornerShape)
         .background(color = MaterialTheme.colorScheme.background)
 }
 

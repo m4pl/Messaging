@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Image
@@ -31,6 +30,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -55,10 +55,11 @@ import com.android.messaging.ui.conversation.CONVERSATION_TEXT_FIELD_TEST_TAG
 @Composable
 internal fun rememberConversationComposeBarPresentation(): ConversationComposeBarPresentation {
     val fieldColors = conversationComposeBarTextFieldColors()
+    val fieldShape = MaterialTheme.shapes.large
 
-    return remember(fieldColors) {
+    return remember(fieldColors, fieldShape) {
         ConversationComposeBarPresentation(
-            fieldShape = RoundedCornerShape(size = 28.dp),
+            fieldShape = fieldShape,
             fieldColors = fieldColors,
         )
     }
@@ -231,7 +232,7 @@ private fun ConversationComposeAttachmentMenu(
             onDismissRequest = {
                 isExpanded = false
             },
-            shape = RoundedCornerShape(size = 24.dp),
+            shape = MaterialTheme.shapes.large,
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 3.dp,
             shadowElevation = 6.dp,
@@ -316,6 +317,6 @@ private fun ConversationComposeAttachmentMenuItem(
 }
 
 internal data class ConversationComposeBarPresentation(
-    val fieldShape: RoundedCornerShape,
+    val fieldShape: Shape,
     val fieldColors: TextFieldColors,
 )

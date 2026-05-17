@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.placeCursorAtEnd
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -38,7 +37,6 @@ import com.android.messaging.ui.conversation.recipientpicker.model.selection.Rec
 import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionStrings
 import kotlinx.collections.immutable.ImmutableList
 
-private val searchCardShape = RoundedCornerShape(size = 22.dp)
 private val recipientSelectionInputRowMinHeight = 32.dp
 
 internal fun recipientSelectionQueryCardUiState(
@@ -73,7 +71,7 @@ internal fun RecipientSelectionQueryCard(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = searchCardShape,
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {

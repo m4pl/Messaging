@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material3.ButtonDefaults
@@ -71,7 +70,7 @@ private fun NewGroupButton(
             hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
             onClick()
         },
-        shape = RoundedCornerShape(size = 18.dp),
+        shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,

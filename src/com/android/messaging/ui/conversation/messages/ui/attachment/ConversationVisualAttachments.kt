@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Description
@@ -332,7 +333,7 @@ private fun roundedAttachmentCornerSize(shouldRoundCorner: Boolean): Dp {
 private fun BoxScope.CenterPlayAffordance() {
     Surface(
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-        shape = RoundedCornerShape(size = 999.dp),
+        shape = CircleShape,
         modifier = Modifier.align(alignment = Alignment.Center),
     ) {
         Icon(

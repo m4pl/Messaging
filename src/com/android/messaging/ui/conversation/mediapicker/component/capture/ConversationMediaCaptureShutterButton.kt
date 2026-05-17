@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -342,7 +341,7 @@ private fun ConversationMediaCaptureRecordingStopGlyph(
             }
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(size = 10.dp),
+                shape = MaterialTheme.shapes.extraSmall,
             ),
     )
 }

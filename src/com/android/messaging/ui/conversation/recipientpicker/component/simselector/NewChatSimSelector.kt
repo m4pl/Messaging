@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Check
@@ -42,7 +41,6 @@ import com.android.messaging.ui.conversation.newChatSimSelectorItemTestTag
 import com.android.messaging.ui.conversation.resolveDisplayName
 import kotlinx.collections.immutable.ImmutableList
 
-private val ChipShape = RoundedCornerShape(size = 16.dp)
 private val ChipAvatarSize = 24.dp
 private val DropdownAvatarSize = 32.dp
 
@@ -109,7 +107,7 @@ private fun NewChatSimSelectorChip(
 
     Row(
         modifier = modifier
-            .clip(shape = ChipShape)
+            .clip(shape = MaterialTheme.shapes.small)
             .background(color = MaterialTheme.colorScheme.surfaceVariant)
             .clickable(role = Role.Button, onClick = onClick)
             .testTag(tag = NEW_CHAT_SIM_SELECTOR_CHIP_TEST_TAG)

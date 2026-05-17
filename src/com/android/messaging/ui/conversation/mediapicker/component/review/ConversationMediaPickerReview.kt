@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddAPhoto
 import androidx.compose.material.icons.rounded.Close
@@ -411,7 +410,7 @@ private fun ReviewCaptionTextField(
                 onCaptionChange(updatedFieldValue.text)
             }
         },
-        shape = RoundedCornerShape(28.dp),
+        shape = MaterialTheme.shapes.large,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = containerColor,
             unfocusedContainerColor = containerColor,

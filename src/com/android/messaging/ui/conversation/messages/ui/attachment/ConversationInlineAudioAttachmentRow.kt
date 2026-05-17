@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -112,7 +113,7 @@ internal fun ConversationInlineAudioAttachmentRowContent(
             .height(height = AUDIO_ATTACHMENT_HEIGHT)
             .then(modifier),
         color = colors.container,
-        shape = RoundedCornerShape(size = MESSAGE_ATTACHMENT_CORNER_RADIUS),
+        shape = RectangleShape,
     ) {
         Row(
             modifier = Modifier
@@ -147,7 +148,7 @@ private fun ConversationInlineAudioAttachmentPlayButton(
             .size(size = 40.dp)
             .testTag(tag = CONVERSATION_INLINE_AUDIO_ATTACHMENT_PLAY_BUTTON_TEST_TAG),
         color = colors.playButton,
-        shape = RoundedCornerShape(size = 20.dp),
+        shape = CircleShape,
     ) {
         Box(
             contentAlignment = Alignment.Center,

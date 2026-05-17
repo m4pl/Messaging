@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -77,7 +76,7 @@ internal fun ConversationAudioRecordingBar(
                 .height(height = 56.dp)
                 .background(
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(size = 28.dp),
+                    shape = MaterialTheme.shapes.large,
                 )
                 .padding(
                     horizontal = 12.dp,
@@ -292,7 +291,7 @@ private fun RecordingIndicatorDot() {
             }
             .background(
                 color = MaterialTheme.colorScheme.error,
-                shape = RoundedCornerShape(size = 100.dp),
+                shape = CircleShape,
             ),
     )
 }
@@ -315,11 +314,11 @@ internal fun ConversationAudioRecordingLockAffordance(
             }
             .shadow(
                 elevation = 8.dp,
-                shape = RoundedCornerShape(size = 24.dp),
+                shape = MaterialTheme.shapes.large,
             )
             .background(
                 color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(size = 24.dp),
+                shape = MaterialTheme.shapes.large,
             )
             .padding(
                 paddingValues = PaddingValues(
