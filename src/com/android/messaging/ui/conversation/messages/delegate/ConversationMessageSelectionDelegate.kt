@@ -81,7 +81,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
     override val state = _state.asStateFlow()
 
     private var boundScope: CoroutineScope? = null
-    private var pendingDefaultSmsRoleResendMessageId: String? = null
+    private var pendingDefaultSmsRoleMessageAction: MessageActionRequiringReadiness? = null
 
     override fun bind(
         scope: CoroutineScope,
@@ -107,7 +107,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
     }
 
     override fun onMessageDownloadClick(messageId: String) {
-        conversationsRepository.downloadMessage(messageId = messageId)
+        downloadMessageWhenActionRequirementsSatisfied(messageId = messageId)
     }
 
     override fun onMessageLongClick(messageId: String) {
@@ -169,18 +169,17 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
     override fun confirmDeleteSelectedMessages() {
         val deleteConfirmation = state.value.deleteConfirmation ?: return
 
-        clearMessageSelection()
-        conversationsRepository.deleteMessages(
+        deleteMessagesWhenActionRequirementsSatisfied(
             messageIds = deleteConfirmation.messageIds,
         )
     }
 
     override fun onDefaultSmsRoleRequestResult(resultCode: Int): Boolean {
-        val messageId = pendingDefaultSmsRoleResendMessageId ?: return false
-        pendingDefaultSmsRoleResendMessageId = null
+        val pendingMessageAction = pendingDefaultSmsRoleMessageAction ?: return false
+        pendingDefaultSmsRoleMessageAction = null
 
         if (resultCode == Activity.RESULT_OK) {
-            resendMessageWhenActionRequirementsSatisfied(messageId = messageId)
+            runMessageActionWhenRequirementsSatisfied(messageAction = pendingMessageAction)
         }
 
         return true
@@ -235,7 +234,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
         val selectedMessage = singleSelectedMessageOrNull() ?: return
 
         clearMessageSelection()
-        conversationsRepository.downloadMessage(selectedMessage.messageId)
+        downloadMessageWhenActionRequirementsSatisfied(messageId = selectedMessage.messageId)
     }
 
     private fun emitEffect(effect: ConversationScreenEffect) {
@@ -292,11 +291,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
             return
         }
 
-        messageSelectionState.update { currentState ->
-            currentState.copy(
-                pendingDeleteMessageIds = selectedMessageIds,
-            )
-        }
+        requestDeleteMessagesWhenActionRequirementsSatisfied(messageIds = selectedMessageIds)
     }
 
     private fun resendSelectedMessage() {
@@ -307,15 +302,78 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
         resendMessageWhenActionRequirementsSatisfied(messageId = selectedMessage.messageId)
     }
 
+    private fun downloadMessageWhenActionRequirementsSatisfied(messageId: String) {
+        runMessageActionWhenRequirementsSatisfied(
+            messageAction = MessageActionRequiringReadiness.Download(
+                messageId = messageId,
+            ),
+        )
+    }
+
+    private fun requestDeleteMessagesWhenActionRequirementsSatisfied(
+        messageIds: ImmutableSet<String>,
+    ) {
+        runWhenConversationActionRequirementsSatisfied(
+            isSending = false,
+            onReady = {
+                messageSelectionState.update { currentState ->
+                    currentState.copy(
+                        pendingDeleteMessageIds = messageIds,
+                    )
+                }
+            },
+            onBlocked = ::clearBlockedDeleteActionState,
+        )
+    }
+
+    private fun deleteMessagesWhenActionRequirementsSatisfied(
+        messageIds: ImmutableSet<String>,
+    ) {
+        runWhenConversationActionRequirementsSatisfied(
+            isSending = false,
+            onReady = {
+                clearMessageSelection()
+                conversationsRepository.deleteMessages(messageIds = messageIds)
+            },
+            onBlocked = ::clearBlockedDeleteActionState,
+        )
+    }
+
     private fun resendMessageWhenActionRequirementsSatisfied(messageId: String) {
+        runMessageActionWhenRequirementsSatisfied(
+            messageAction = MessageActionRequiringReadiness.Resend(
+                messageId = messageId,
+            ),
+        )
+    }
+
+    private fun runMessageActionWhenRequirementsSatisfied(
+        messageAction: MessageActionRequiringReadiness,
+    ) {
+        runWhenConversationActionRequirementsSatisfied(
+            isSending = messageAction.isSending,
+            onReady = {
+                runMessageAction(messageAction = messageAction)
+            },
+            onMissingDefaultSmsRole = {
+                pendingDefaultSmsRoleMessageAction = messageAction
+            },
+        )
+    }
+
+    private fun runWhenConversationActionRequirementsSatisfied(
+        isSending: Boolean,
+        onReady: () -> Unit,
+        onBlocked: () -> Unit = {},
+        onMissingDefaultSmsRole: () -> Unit = {},
+    ) {
         when (checkConversationActionRequirements()) {
             ConversationActionRequirementsResult.Ready -> {
-                conversationsRepository.resendMessage(
-                    messageId = messageId,
-                )
+                onReady()
             }
 
             ConversationActionRequirementsResult.SmsNotCapable -> {
+                onBlocked()
                 emitEffect(
                     effect = ConversationScreenEffect.ShowMessage(
                         messageResId = R.string.sms_disabled,
@@ -324,6 +382,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
             }
 
             ConversationActionRequirementsResult.NoPreferredSmsSim -> {
+                onBlocked()
                 emitEffect(
                     effect = ConversationScreenEffect.ShowMessage(
                         messageResId = R.string.no_preferred_sim_selected,
@@ -332,15 +391,32 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
             }
 
             ConversationActionRequirementsResult.MissingDefaultSmsRole -> {
-                pendingDefaultSmsRoleResendMessageId = messageId
-
+                onBlocked()
+                onMissingDefaultSmsRole()
                 emitEffect(
                     effect = ConversationScreenEffect.RequestDefaultSmsRole(
-                        isSending = true,
+                        isSending = isSending,
                     ),
                 )
             }
         }
+    }
+
+    private fun runMessageAction(messageAction: MessageActionRequiringReadiness) {
+        when (messageAction) {
+            is MessageActionRequiringReadiness.Download -> {
+                conversationsRepository.downloadMessage(messageId = messageAction.messageId)
+            }
+
+            is MessageActionRequiringReadiness.Resend -> {
+                conversationsRepository.resendMessage(messageId = messageAction.messageId)
+            }
+        }
+    }
+
+    private fun clearBlockedDeleteActionState() {
+        pendingDefaultSmsRoleMessageAction = null
+        clearMessageSelection()
     }
 
     private fun singleSelectedMessageOrNull(): ConversationMessageUiModel? {
@@ -561,3 +637,20 @@ private data class ConversationMessageSelectionState(
     val selectedMessageIds: ImmutableSet<String> = persistentSetOf(),
     val pendingDeleteMessageIds: ImmutableSet<String> = persistentSetOf(),
 )
+
+private sealed interface MessageActionRequiringReadiness {
+    val messageId: String
+    val isSending: Boolean
+
+    data class Download(
+        override val messageId: String,
+    ) : MessageActionRequiringReadiness {
+        override val isSending: Boolean = false
+    }
+
+    data class Resend(
+        override val messageId: String,
+    ) : MessageActionRequiringReadiness {
+        override val isSending: Boolean = true
+    }
+}
