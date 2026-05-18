@@ -18,6 +18,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect as ComposeRect
 import androidx.compose.ui.platform.LocalContext
@@ -55,24 +56,25 @@ internal fun ConversationScreenEffects(
         screenModel.onDefaultSmsRoleRequestResult(resultCode = result.resultCode)
     }
     val draftSentTick = remember { mutableIntStateOf(0) }
+    val currentContext = rememberUpdatedState(context)
+    val currentView = rememberUpdatedState(view)
+    val currentSnackbarHostState = rememberUpdatedState(snackbarHostState)
+    val currentHostBoundsState = rememberUpdatedState(hostBoundsState)
+    val currentLaunchRoleRequest = rememberUpdatedState<(Intent) -> Unit>(
+        defaultSmsRoleLauncher::launch,
+    )
+    val currentOnNavigateBack = rememberUpdatedState(onNavigateBack)
 
-    LaunchedEffect(
-        screenModel,
-        context,
-        view,
-        snackbarHostState,
-        hostBoundsState,
-        onNavigateBack,
-    ) {
+    LaunchedEffect(screenModel) {
         screenModel.effects.collect { effect ->
             screenModel.handleConversationScreenEffect(
-                context = context,
-                view = view,
-                snackbarHostState = snackbarHostState,
-                hostBoundsState = hostBoundsState,
+                context = currentContext.value,
+                view = currentView.value,
+                snackbarHostState = currentSnackbarHostState.value,
+                hostBoundsState = currentHostBoundsState.value,
                 effect = effect,
-                launchRoleRequest = defaultSmsRoleLauncher::launch,
-                onNavigateBack = onNavigateBack,
+                launchRoleRequest = currentLaunchRoleRequest.value,
+                onNavigateBack = currentOnNavigateBack.value,
                 onDraftSent = { draftSentTick.intValue++ },
             )
         }
