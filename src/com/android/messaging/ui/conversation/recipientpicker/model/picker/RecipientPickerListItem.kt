@@ -1,7 +1,8 @@
 package com.android.messaging.ui.conversation.recipientpicker.model.picker
 
 import androidx.compose.runtime.Immutable
-import com.android.messaging.data.contact.model.ContactDestination
+import com.android.messaging.ui.contact.model.ContactDestinationUiModel
+import com.android.messaging.ui.contact.model.ContactUiModel
 import kotlinx.collections.immutable.ImmutableList
 
 @Immutable
@@ -10,11 +11,11 @@ internal sealed interface RecipientPickerListItem {
 
     @Immutable
     data class Contact(
-        val contact: com.android.messaging.data.contact.model.Contact,
+        val contact: ContactUiModel,
     ) : RecipientPickerListItem {
         override val id: String = "contact:${contact.id}"
 
-        val destinations: ImmutableList<ContactDestination>
+        val destinations: ImmutableList<ContactDestinationUiModel>
             get() = contact.destinations
     }
 

@@ -1,6 +1,9 @@
-package com.android.messaging.data.contact.model
+package com.android.messaging.ui.contact.model
 
-internal data class ContactDestination(
+import androidx.compose.runtime.Immutable
+
+@Immutable
+internal data class ContactDestinationUiModel(
     val dataId: Long,
     val contactId: Long,
     val value: String,

@@ -50,6 +50,8 @@ import com.android.messaging.domain.conversation.usecase.telephony.IsDeviceVoice
 import com.android.messaging.domain.conversation.usecase.telephony.IsDeviceVoiceCapableImpl
 import com.android.messaging.domain.conversation.usecase.telephony.IsEmergencyPhoneNumber
 import com.android.messaging.domain.conversation.usecase.telephony.IsEmergencyPhoneNumberImpl
+import com.android.messaging.ui.contact.mapper.ContactUiModelMapper
+import com.android.messaging.ui.contact.mapper.ContactUiModelMapperImpl
 import com.android.messaging.ui.conversation.attachment.mapper.ConversationVCardAttachmentUiModelMapper
 import com.android.messaging.ui.conversation.attachment.mapper.ConversationVCardAttachmentUiModelMapperImpl
 import com.android.messaging.ui.conversation.composer.mapper.ConversationComposerAttachmentUiModelMapper
@@ -119,6 +121,12 @@ internal abstract class ConversationBindsModule {
     abstract fun bindContactDestinationFormatter(
         impl: ContactDestinationFormatterImpl,
     ): ContactDestinationFormatter
+
+    @Binds
+    @Reusable
+    abstract fun bindContactUiModelMapper(
+        impl: ContactUiModelMapperImpl,
+    ): ContactUiModelMapper
 
     @Binds
     @Reusable

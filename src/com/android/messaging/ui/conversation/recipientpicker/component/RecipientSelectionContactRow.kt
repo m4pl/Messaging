@@ -38,7 +38,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.android.messaging.data.contact.model.ContactDestination
+import com.android.messaging.ui.contact.model.ContactDestinationUiModel
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
 import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionRowDecorators
 import kotlinx.collections.immutable.ImmutableSet
@@ -158,7 +158,7 @@ private fun ContactRow(
 @Composable
 private fun SingleDestinationContactRow(
     item: RecipientPickerListItem.Contact,
-    destination: ContactDestination,
+    destination: ContactDestinationUiModel,
     enabled: Boolean,
     isSelected: Boolean,
     onClick: () -> Unit,

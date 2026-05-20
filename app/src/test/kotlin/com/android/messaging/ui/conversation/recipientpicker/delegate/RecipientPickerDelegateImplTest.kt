@@ -8,6 +8,7 @@ import com.android.messaging.data.contact.model.ContactsPage
 import com.android.messaging.data.contact.repository.ContactsRepository
 import com.android.messaging.domain.contacts.usecase.IsReadContactsPermissionGranted
 import com.android.messaging.sms.MmsSmsUtils
+import com.android.messaging.ui.contact.mapper.ContactUiModelMapperImpl
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
 import com.android.messaging.util.PhoneUtils
@@ -383,6 +384,7 @@ internal class RecipientPickerDelegateImplTest {
     ): RecipientPickerDelegateImpl {
         return RecipientPickerDelegateImpl(
             contactDestinationFormatter = ContactDestinationFormatterImpl(),
+            contactUiModelMapper = ContactUiModelMapperImpl(),
             contactsRepository = mockContactsRepository(pages = pages),
             isReadContactsPermissionGranted = mockIsReadContactsPermissionGranted(
                 isPermissionGranted = isPermissionGranted,

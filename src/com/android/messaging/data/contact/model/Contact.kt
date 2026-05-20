@@ -1,9 +1,7 @@
 package com.android.messaging.data.contact.model
 
-import androidx.compose.runtime.Immutable
 import kotlinx.collections.immutable.ImmutableList
 
-@Immutable
 internal data class Contact(
     val id: Long,
     val lookupKey: String,

@@ -8,6 +8,9 @@ import com.android.messaging.data.contact.model.ContactsPage
 import com.android.messaging.data.contact.repository.ContactsRepository
 import com.android.messaging.di.core.DefaultDispatcher
 import com.android.messaging.domain.contacts.usecase.IsReadContactsPermissionGranted
+import com.android.messaging.ui.contact.mapper.ContactUiModelMapper
+import com.android.messaging.ui.contact.model.ContactDestinationUiModel
+import com.android.messaging.ui.contact.model.ContactUiModel
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerUiState
 import com.android.messaging.util.PhoneUtils
@@ -47,6 +50,7 @@ internal interface RecipientPickerDelegate {
 
 internal class RecipientPickerDelegateImpl @Inject constructor(
     private val contactDestinationFormatter: ContactDestinationFormatter,
+    private val contactUiModelMapper: ContactUiModelMapper,
     private val contactsRepository: ContactsRepository,
     private val isReadContactsPermissionGranted: IsReadContactsPermissionGranted,
     private val savedStateHandle: SavedStateHandle,
@@ -144,9 +148,9 @@ internal class RecipientPickerDelegateImpl @Inject constructor(
     }
 
     private fun mergeContacts(
-        existingContacts: List<Contact>,
-        additionalContacts: List<Contact>,
-    ): ImmutableList<Contact> {
+        existingContacts: List<ContactUiModel>,
+        additionalContacts: List<ContactUiModel>,
+    ): ImmutableList<ContactUiModel> {
         val seenContactIds = LinkedHashSet<Long>()
 
         return (existingContacts + additionalContacts)
@@ -295,7 +299,7 @@ internal class RecipientPickerDelegateImpl @Inject constructor(
             currentState.copy(
                 items = buildVisibleItems(
                     query = result.query,
-                    contacts = result.page.contacts,
+                    contacts = result.page.contacts.map(contactUiModelMapper::map),
                     excludedDestinations = excludedDestinationsFlow.value,
                 ),
                 canLoadMore = result.page.nextOffset != null,
@@ -384,7 +388,7 @@ internal class RecipientPickerDelegateImpl @Inject constructor(
                         is RecipientPickerListItem.SyntheticPhone -> null
                     }
                 },
-                additionalContacts = page.contacts,
+                additionalContacts = page.contacts.map(contactUiModelMapper::map),
             )
 
             val visibleItems = buildVisibleItems(
@@ -419,7 +423,7 @@ internal class RecipientPickerDelegateImpl @Inject constructor(
 
     private fun buildVisibleItems(
         query: String,
-        contacts: List<Contact>,
+        contacts: List<ContactUiModel>,
         excludedDestinations: Set<String>,
     ): ImmutableList<RecipientPickerListItem> {
         val syntheticItem = createSyntheticItemOrNull(
@@ -443,7 +447,7 @@ internal class RecipientPickerDelegateImpl @Inject constructor(
 
     private fun createSyntheticItemOrNull(
         query: String,
-        contacts: List<Contact>,
+        contacts: List<ContactUiModel>,
         excludedDestinations: Set<String>,
     ): RecipientPickerListItem.SyntheticPhone? {
         val candidate = createSyntheticCandidateOrNull(query = query) ?: return null
@@ -490,7 +494,7 @@ internal class RecipientPickerDelegateImpl @Inject constructor(
     }
 
     private fun SyntheticCandidate.matchesDestination(
-        destination: ContactDestination,
+        destination: ContactDestinationUiModel,
     ): Boolean {
         return destinationIdentity.matches(
             other = createDestinationIdentity(rawDestination = destination.value),

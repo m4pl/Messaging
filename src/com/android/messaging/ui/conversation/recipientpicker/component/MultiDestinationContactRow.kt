@@ -51,7 +51,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.android.messaging.data.contact.model.ContactDestination
+import com.android.messaging.ui.contact.model.ContactDestinationUiModel
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
 import com.android.messaging.ui.conversation.recipientpicker.model.selection.RecipientSelectionRowDecorators
 import kotlinx.collections.immutable.ImmutableSet
@@ -148,7 +148,7 @@ private fun MultiDestinationContactHeader(
 @Composable
 private fun MultiDestinationMiniRow(
     item: RecipientPickerListItem.Contact,
-    destination: ContactDestination,
+    destination: ContactDestinationUiModel,
     enabled: Boolean,
     isSelected: Boolean,
     isPrevSelected: Boolean,
@@ -218,7 +218,7 @@ private fun MultiDestinationMiniRow(
 @Composable
 private fun RowScope.MultiDestinationMiniRowContent(
     item: RecipientPickerListItem.Contact,
-    destination: ContactDestination,
+    destination: ContactDestinationUiModel,
     label: String,
     primaryTextColor: Color,
     secondaryTextColor: Color,
@@ -319,17 +319,17 @@ private fun DestinationCheckBadge() {
 
 @Composable
 private fun rememberDestinationLabel(
-    destination: ContactDestination,
+    destination: ContactDestinationUiModel,
 ): String {
     val resources = LocalResources.current
 
     return remember(destination.kind, destination.type, destination.customLabel) {
         val label = when (destination.kind) {
-            ContactDestination.Kind.PHONE -> {
+            ContactDestinationUiModel.Kind.PHONE -> {
                 Phone.getTypeLabel(resources, destination.type, destination.customLabel)
             }
 
-            ContactDestination.Kind.EMAIL -> {
+            ContactDestinationUiModel.Kind.EMAIL -> {
                 Email.getTypeLabel(resources, destination.type, destination.customLabel)
             }
         }
