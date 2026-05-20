@@ -797,6 +797,9 @@
     <!-- The message in a blocked contact item which indicates tapping will unblock -->
     <string name="tap_to_unblock_message">UNBLOCK</string>
 
+    <!-- Empty state message shown when no contacts are blocked -->
+    <string name="blocked_contacts_empty">No blocked contacts</string>
+
     <!-- Action menu title for viewing the list of blocked contacts -->
     <string name="view_blocked_contacts_title">Blocked contacts</string>
 
