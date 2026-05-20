@@ -1,6 +1,7 @@
 package com.android.messaging.ui.conversation.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +46,11 @@ private val conversationCornerShape = RoundedCornerShape(
     topEnd = 28.dp,
     bottomStart = 0.dp,
     bottomEnd = 0.dp,
+)
+
+private data class ConversationLatestScrollSnapshot(
+    val isScrolledToLatestMessage: Boolean,
+    val isListDragged: Boolean,
 )
 
 @Composable
@@ -259,34 +267,39 @@ private fun AutoScrollToLatestMessage(
         )
     }
 
-    LaunchedEffect(
-        conversationId,
-        listState,
-    ) {
-        snapshotFlow {
-            isScrolledToLatestMessage(listState = listState)
-        }.collect { isScrolledToLatestMessage ->
-            wasScrolledToLatestMessage = isScrolledToLatestMessage
-            if (isScrolledToLatestMessage) {
-                snackbarHostState.currentSnackbarData?.dismiss()
-            }
+    val isListDraggedState = listState.interactionSource.collectIsDraggedAsState()
+    val isListDragged = isListDraggedState.value
+
+    val autoScrollDecision = evaluateConversationAutoScroll(
+        input = ConversationAutoScrollInput(
+            previousLatestMessageId = previousLatestMessageId,
+            latestMessageId = latestMessageId,
+            hasLatestMessage = latestMessage != null,
+            isLatestMessageIncoming = latestMessage?.isIncoming ?: false,
+            wasScrolledToLatestMessage = wasScrolledToLatestMessage,
+        ),
+    )
+
+    SideEffect {
+        if (autoScrollDecision.shouldScrollToLatestMessage && !isListDragged) {
+            listState.requestScrollToItem(index = 0)
         }
     }
+
+    TrackLatestMessageScrollState(
+        conversationId = conversationId,
+        listState = listState,
+        isListDraggedState = isListDraggedState,
+        snackbarHostState = snackbarHostState,
+        onWasScrolledToLatestMessageChanged = { isScrolledToLatestMessage ->
+            wasScrolledToLatestMessage = isScrolledToLatestMessage
+        },
+    )
 
     LaunchedEffect(
         conversationId,
         latestMessageId,
     ) {
-        val autoScrollDecision = evaluateConversationAutoScroll(
-            input = ConversationAutoScrollInput(
-                previousLatestMessageId = previousLatestMessageId,
-                latestMessageId = latestMessageId,
-                hasLatestMessage = latestMessage != null,
-                isLatestMessageIncoming = latestMessage?.isIncoming ?: false,
-                wasScrolledToLatestMessage = wasScrolledToLatestMessage,
-            ),
-        )
-
         previousLatestMessageId = autoScrollDecision.updatedLatestMessageId
 
         if (autoScrollDecision.shouldShowNewMessageSnackbar) {
@@ -299,15 +312,39 @@ private fun AutoScrollToLatestMessage(
             if (snackbarResult == SnackbarResult.ActionPerformed) {
                 listState.animateScrollToItem(index = 0)
             }
-
-            return@LaunchedEffect
         }
+    }
+}
 
-        if (!autoScrollDecision.shouldScrollToLatestMessage) {
-            return@LaunchedEffect
+@Composable
+private fun TrackLatestMessageScrollState(
+    conversationId: String?,
+    listState: LazyListState,
+    isListDraggedState: State<Boolean>,
+    snackbarHostState: SnackbarHostState,
+    onWasScrolledToLatestMessageChanged: (Boolean) -> Unit,
+) {
+    LaunchedEffect(
+        conversationId,
+        listState,
+    ) {
+        snapshotFlow {
+            ConversationLatestScrollSnapshot(
+                isScrolledToLatestMessage = isScrolledToLatestMessage(listState = listState),
+                isListDragged = isListDraggedState.value,
+            )
+        }.collect { scrollSnapshot ->
+            when {
+                scrollSnapshot.isScrolledToLatestMessage -> {
+                    onWasScrolledToLatestMessageChanged(true)
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                }
+
+                scrollSnapshot.isListDragged -> {
+                    onWasScrolledToLatestMessageChanged(false)
+                }
+            }
         }
-
-        listState.animateScrollToItem(index = 0)
     }
 }
 

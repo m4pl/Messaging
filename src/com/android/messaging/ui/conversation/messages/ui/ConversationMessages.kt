@@ -2,7 +2,6 @@ package com.android.messaging.ui.conversation.messages.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,19 +56,17 @@ private val sendSimContentPadding = PaddingValues(
 
 private val MESSAGES_CLUSTER_TOP_PADDING = 2.dp
 private val MESSAGES_GROUP_TOP_PADDING = 12.dp
-private val MESSAGES_SEPARATOR_SPACING = 12.dp
-private val messagesSeparatorPadding = PaddingValues(
-    horizontal = 14.dp,
-    vertical = 6.dp,
-)
 private val sendSimPadding = PaddingValues(
     horizontal = 16.dp,
     vertical = 4.dp,
 )
 
+private const val SEND_SIM_INDICATOR_ITEM_KEY = "send_sim_indicator"
+
 private enum class ConversationMessagesItemContentType {
     Message,
     MessageWithDateSeparator,
+    SendSimIndicator,
 }
 
 @Composable
@@ -114,6 +111,13 @@ internal fun ConversationMessages(
             shouldShowSendSimIndicator = shouldShowSendSimIndicator,
         ),
     ) {
+        conversationSendSimIndicatorItem(
+            currentSendSimDisplayName = currentSendSimDisplayName,
+            shouldShowSendSimIndicator = shouldShowSendSimIndicator,
+            isSelectionMode = isSelectionMode,
+            onSimSelectorClick = onSimSelectorClick,
+        )
+
         conversationMessageItems(
             displayMessages = displayMessages,
             timeZone = timeZone,
@@ -121,8 +125,6 @@ internal fun ConversationMessages(
             isSelectionMode = isSelectionMode,
             showIncomingParticipantIdentity = showIncomingParticipantIdentity,
             simDisplayNameByParticipantId = simDisplayNameByParticipantId,
-            currentSendSimDisplayName = currentSendSimDisplayName,
-            shouldShowSendSimIndicator = shouldShowSendSimIndicator,
             onAttachmentClick = onAttachmentClick,
             onExternalUriClick = onExternalUriClick,
             onMessageClick = onMessageClick,
@@ -142,8 +144,6 @@ private fun LazyListScope.conversationMessageItems(
     isSelectionMode: Boolean,
     showIncomingParticipantIdentity: Boolean,
     simDisplayNameByParticipantId: ImmutableMap<String, String>,
-    currentSendSimDisplayName: String?,
-    shouldShowSendSimIndicator: Boolean,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
@@ -165,6 +165,8 @@ private fun LazyListScope.conversationMessageItems(
         },
     ) { index, message ->
         ConversationMessagesItem(
+            modifier = Modifier
+                .animateItem(),
             message = message,
             messageAbove = messageAboveCurrent(messages = displayMessages, index = index),
             messageBelow = messageBelowCurrent(messages = displayMessages, index = index),
@@ -172,10 +174,6 @@ private fun LazyListScope.conversationMessageItems(
             isSelected = selectedMessageIds.contains(message.messageId),
             showIncomingParticipantIdentity = showIncomingParticipantIdentity,
             simDisplayNameByParticipantId = simDisplayNameByParticipantId,
-            currentSendSimDisplayName = when {
-                index == 0 && shouldShowSendSimIndicator -> currentSendSimDisplayName
-                else -> null
-            },
             onAttachmentClick = onAttachmentClick,
             onExternalUriClick = onExternalUriClick,
             onMessageClick = onMessageClick,
@@ -183,6 +181,29 @@ private fun LazyListScope.conversationMessageItems(
             onMessageDownloadClick = onMessageDownloadClick,
             onMessageLongClick = onMessageLongClick,
             onMessageResendClick = onMessageResendClick,
+            onSimSelectorClick = onSimSelectorClick,
+        )
+    }
+}
+
+private fun LazyListScope.conversationSendSimIndicatorItem(
+    currentSendSimDisplayName: String?,
+    shouldShowSendSimIndicator: Boolean,
+    isSelectionMode: Boolean,
+    onSimSelectorClick: () -> Unit,
+) {
+    if (!shouldShowSendSimIndicator || currentSendSimDisplayName.isNullOrBlank()) {
+        return
+    }
+
+    item(
+        key = SEND_SIM_INDICATOR_ITEM_KEY,
+        contentType = ConversationMessagesItemContentType.SendSimIndicator,
+    ) {
+        ConversationSendSimIndicator(
+            modifier = Modifier.animateItem(),
+            simDisplayName = currentSendSimDisplayName,
+            isSimSelectorEnabled = !isSelectionMode,
             onSimSelectorClick = onSimSelectorClick,
         )
     }
@@ -257,6 +278,7 @@ private fun messageBelowCurrent(
 
 @Composable
 private fun ConversationMessagesItem(
+    modifier: Modifier,
     message: ConversationMessageUiModel,
     messageAbove: ConversationMessageUiModel?,
     messageBelow: ConversationMessageUiModel?,
@@ -264,7 +286,6 @@ private fun ConversationMessagesItem(
     isSelected: Boolean,
     showIncomingParticipantIdentity: Boolean,
     simDisplayNameByParticipantId: ImmutableMap<String, String>,
-    currentSendSimDisplayName: String?,
     onAttachmentClick: (contentType: String, contentUri: String) -> Unit,
     onExternalUriClick: (String) -> Unit,
     onMessageClick: (String) -> Unit,
@@ -288,6 +309,7 @@ private fun ConversationMessagesItem(
     }
 
     ColumnWithSeparator(
+        modifier = modifier,
         showDateSeparator = presentation.showDateSeparator,
         dateSeparatorText = presentation.dateSeparatorText,
     ) {
@@ -319,19 +341,12 @@ private fun ConversationMessagesItem(
             },
             onSimSelectorClick = onSimSelectorClick,
         )
-
-        if (!currentSendSimDisplayName.isNullOrBlank()) {
-            ConversationSendSimIndicator(
-                simDisplayName = currentSendSimDisplayName,
-                isSimSelectorEnabled = !isSelectionMode,
-                onSimSelectorClick = onSimSelectorClick,
-            )
-        }
     }
 }
 
 @Composable
 private fun ConversationSendSimIndicator(
+    modifier: Modifier,
     simDisplayName: String,
     isSimSelectorEnabled: Boolean,
     onSimSelectorClick: () -> Unit,
@@ -357,7 +372,7 @@ private fun ConversationSendSimIndicator(
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
     ) {
         Text(
@@ -442,47 +457,6 @@ private fun messageItemTopPadding(
         messageAbove == null || showDateSeparator -> 0.dp
         message.canClusterWithPrevious -> MESSAGES_CLUSTER_TOP_PADDING
         else -> MESSAGES_GROUP_TOP_PADDING
-    }
-}
-
-@Composable
-private fun ColumnWithSeparator(
-    showDateSeparator: Boolean,
-    dateSeparatorText: String?,
-    content: @Composable () -> Unit,
-) {
-    val verticalSpace = when {
-        showDateSeparator -> MESSAGES_SEPARATOR_SPACING
-        else -> 0.dp
-    }
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(space = verticalSpace),
-    ) {
-        if (showDateSeparator && dateSeparatorText != null) {
-            ConversationDateSeparator(
-                text = dateSeparatorText,
-            )
-        }
-
-        content()
-    }
-}
-
-@Composable
-private fun ConversationDateSeparator(
-    text: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(messagesSeparatorPadding),
-        )
     }
 }
 
