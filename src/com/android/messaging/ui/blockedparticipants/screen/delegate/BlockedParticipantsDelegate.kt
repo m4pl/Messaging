@@ -8,6 +8,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 internal interface BlockedParticipantsDelegate {
     val state: StateFlow<BlockedParticipantsUiState>
@@ -28,5 +30,12 @@ internal class BlockedParticipantsDelegateImpl @Inject constructor(
     override fun bind(scope: CoroutineScope) {
         if (isBound) return
         isBound = true
+
+        repository.observeBlockedParticipants()
+            .onEach { participants ->
+                val data = mapper.map(participants)
+                _state.value = data
+            }
+            .launchIn(scope)
     }
 }
