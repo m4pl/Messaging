@@ -111,4 +111,13 @@ internal class CoreProvidesModule {
     ): TelephonyManager {
         return context.getSystemService(TelephonyManager::class.java)
     }
+
+    @Provides
+    @Reusable
+    fun provideTelephonyManager(
+        @ApplicationContext
+        context: Context,
+    ): TelephonyManager {
+        return context.getSystemService(TelephonyManager::class.java)
+    }
 }
