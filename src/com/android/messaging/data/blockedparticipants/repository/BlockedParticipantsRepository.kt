@@ -34,6 +34,8 @@ internal class BlockedParticipantsRepositoryImpl @Inject constructor(
     @param:MessagingDbDispatcher private val messagingDbDispatcher: CoroutineDispatcher,
 ) : BlockedParticipantsRepository {
 
+    private val dataModel = DataModel.get()
+
     override fun observeBlockedParticipants(): Flow<ImmutableList<BlockedDirectChat>> {
         val uris = listOf(
             MessagingContentProvider.PARTICIPANTS_URI,
@@ -49,10 +51,9 @@ internal class BlockedParticipantsRepositoryImpl @Inject constructor(
         normalizedDestinations: List<String>,
     ): List<String> {
         return withContext(messagingDbDispatcher) {
-            val database = DataModel.get().database
             normalizedDestinations.mapNotNull { destination ->
                 BugleDatabaseOperations.getConversationFromOtherParticipantDestination(
-                    database,
+                    dataModel.database,
                     destination,
                 )
             }
@@ -88,18 +89,20 @@ internal class BlockedParticipantsRepositoryImpl @Inject constructor(
             }
         }
 
-        val database = DataModel.get().database
         return participants
             .mapNotNull { participant ->
                 val destination = participant.normalizedDestination?.takeIf(String::isNotEmpty)
                     ?: return@mapNotNull null
                 val conversationId = BugleDatabaseOperations
-                    .getConversationFromOtherParticipantDestination(database, destination)
+                    .getConversationFromOtherParticipantDestination(
+                        dataModel.database,
+                        destination,
+                    )
                     ?: return@mapNotNull null
 
                 BlockedDirectChat(
                     participant = participant,
-                    conversationId = conversationId
+                    conversationId = conversationId,
                 )
             }
             .toImmutableList()

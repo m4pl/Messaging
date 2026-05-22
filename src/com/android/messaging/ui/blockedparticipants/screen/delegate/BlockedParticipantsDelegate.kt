@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal interface BlockedParticipantsDelegate : BlockedParticipantsScreenDelegate<State> {
-
     fun toggleSelection(participantId: String)
     fun clearSelection()
     fun unblock(normalizedDestination: String)
@@ -72,7 +71,7 @@ internal class BlockedParticipantsDelegateImpl @Inject constructor(
     }
 
     override fun clearSelection() {
-        _state.update { current->
+        _state.update { current ->
             current.copy(selectedParticipantIds = persistentSetOf())
         }
     }
