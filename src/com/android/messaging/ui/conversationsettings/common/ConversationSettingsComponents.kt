@@ -156,25 +156,60 @@ internal fun ParticipantItem(
     val avatarUri = participant.avatarUri.takeUnless { isBlocked }
     val dismissPopup = { showQuickActions = false }
 
+    ParticipantRow(
+        participant = participant,
+        avatarUri = avatarUri,
+        fallbackIcon = fallbackIcon,
+        onRowClick = { showQuickActions = true },
+        onLongClick = onLongClick,
+        onAction = onAction,
+        onAvatarBoundsChanged = { avatarBoundsPx = it },
+        modifier = modifier,
+    )
+
+    ParticipantQuickActions(
+        visible = showQuickActions,
+        anchorBoundsPx = avatarBoundsPx,
+        participant = participant,
+        avatarUri = avatarUri,
+        fallbackIcon = fallbackIcon,
+        onDismiss = dismissPopup,
+        onMessageClick = onClick,
+        onCallClick = onCallClick,
+        onContactClick = onContactClick,
+    )
+}
+
+@Composable
+private fun ParticipantRow(
+    participant: ParticipantUiState,
+    avatarUri: String?,
+    fallbackIcon: ImageVector,
+    onRowClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onAction: (() -> Unit)?,
+    onAvatarBoundsChanged: (IntRect) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = { showQuickActions = true },
+                onClick = onRowClick,
                 onLongClick = onLongClick,
             )
             .padding(
                 start = 16.dp,
                 top = 8.dp,
                 end = 2.dp,
-                bottom = 8.dp
+                bottom = 8.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ParticipantAvatarSlot(
             avatarUri = avatarUri,
             fallbackIcon = fallbackIcon,
-            onBoundsChanged = { avatarBoundsPx = it },
+            onBoundsChanged = onAvatarBoundsChanged,
         )
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -189,26 +224,39 @@ internal fun ParticipantItem(
             ParticipantInfoButton(onClick = onAction)
         }
     }
+}
 
+@Composable
+private fun ParticipantQuickActions(
+    visible: Boolean,
+    anchorBoundsPx: IntRect,
+    participant: ParticipantUiState,
+    avatarUri: String?,
+    fallbackIcon: ImageVector,
+    onDismiss: () -> Unit,
+    onMessageClick: () -> Unit,
+    onCallClick: (() -> Unit)?,
+    onContactClick: (() -> Unit)?,
+) {
     ParticipantQuickActionsPopup(
-        visible = showQuickActions,
-        anchorBoundsPx = avatarBoundsPx,
+        visible = visible,
+        anchorBoundsPx = anchorBoundsPx,
         avatarUri = avatarUri,
         displayName = participant.displayName,
         subtitle = participant.details,
         fallbackIcon = fallbackIcon,
-        onDismiss = dismissPopup,
+        onDismiss = onDismiss,
         onMessageClick = {
-            onClick()
-            dismissPopup()
+            onMessageClick()
+            onDismiss()
         },
         onCallClick = {
             onCallClick?.invoke()
-            dismissPopup()
+            onDismiss()
         }.takeIf { onCallClick != null },
         onContactClick = {
             onContactClick?.invoke()
-            dismissPopup()
+            onDismiss()
         }.takeIf { onContactClick != null },
         isContactSaved = participant.isContactSaved,
     )
