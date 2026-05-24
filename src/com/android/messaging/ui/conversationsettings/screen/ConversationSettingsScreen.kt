@@ -602,21 +602,15 @@ private fun ParticipantsCard(
                             onAction(ParticipantAction.ParticipantLongPressed(details))
                         }
                     },
-                    onCallClick = if (participant.canCall) {
-                        { onAction(ParticipantAction.ParticipantCallClicked(destination)) }
-                    } else {
-                        null
-                    },
-                    onContactClick = if (hasDestination) {
-                        { onAction(ParticipantAction.ParticipantContactInfoClicked(participant)) }
-                    } else {
-                        null
-                    },
-                    onAction = if (hasDestination && isGroup) {
-                        { onAction(ParticipantAction.ParticipantActionPressed(destination)) }
-                    } else {
-                        null
-                    },
+                    onCallClick = {
+                        onAction(ParticipantAction.ParticipantCallClicked(destination))
+                    }.takeIf { participant.canCall },
+                    onContactClick = {
+                        onAction(ParticipantAction.ParticipantContactInfoClicked(participant))
+                    }.takeIf { hasDestination },
+                    onAction = {
+                        onAction(ParticipantAction.ParticipantActionPressed(destination))
+                    }.takeIf { hasDestination && isGroup },
                 )
             }
         }
