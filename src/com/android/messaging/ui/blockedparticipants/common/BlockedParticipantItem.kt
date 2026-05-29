@@ -3,11 +3,13 @@ package com.android.messaging.ui.blockedparticipants.common
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -27,12 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.blockedparticipants.screen.model.BlockedParticipantUiState
@@ -53,7 +52,6 @@ internal fun BlockedParticipantItem(
     modifier: Modifier = Modifier,
 ) {
     var showQuickActions by remember { mutableStateOf(false) }
-    var avatarBoundsPx by remember { mutableStateOf(IntRect.Zero) }
     val fallbackIcon = Icons.Default.Person
     val dismissPopup = { showQuickActions = false }
 
@@ -65,19 +63,12 @@ internal fun BlockedParticipantItem(
         onLongClick = onLongClick,
         onUnblockClick = onUnblockClick,
         onAvatarClick = { showQuickActions = true },
-        onAvatarBoundsChanged = { avatarBoundsPx = it },
-        modifier = modifier,
-    )
-
-    BlockedParticipantQuickActions(
-        visible = showQuickActions,
-        anchorBoundsPx = avatarBoundsPx,
-        participant = participant,
-        fallbackIcon = fallbackIcon,
-        onDismiss = dismissPopup,
+        quickActionsVisible = showQuickActions,
+        onDismissQuickActions = dismissPopup,
         onMessageClick = onMessageClick,
         onCallClick = onCallClick,
         onContactClick = onContactClick,
+        modifier = modifier,
     )
 }
 
@@ -91,7 +82,11 @@ private fun BlockedParticipantRow(
     onLongClick: () -> Unit,
     onUnblockClick: () -> Unit,
     onAvatarClick: () -> Unit,
-    onAvatarBoundsChanged: (IntRect) -> Unit,
+    quickActionsVisible: Boolean,
+    onDismissQuickActions: () -> Unit,
+    onMessageClick: () -> Unit,
+    onCallClick: (() -> Unit)?,
+    onContactClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val backgroundColor = when {
@@ -116,12 +111,16 @@ private fun BlockedParticipantRow(
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BlockedParticipantAvatarSlot(
-                avatarUri = participant.avatarUri,
+            BlockedParticipantAvatarWithQuickActions(
+                participant = participant,
                 fallbackIcon = fallbackIcon,
                 isSelected = isSelected,
-                onClick = onAvatarClick,
-                onBoundsChanged = onAvatarBoundsChanged,
+                onAvatarClick = onAvatarClick,
+                quickActionsVisible = quickActionsVisible,
+                onDismissQuickActions = onDismissQuickActions,
+                onMessageClick = onMessageClick,
+                onCallClick = onCallClick,
+                onContactClick = onContactClick,
             )
 
             Spacer(modifier = Modifier.width(ItemHorizontalPadding))
@@ -142,7 +141,6 @@ private fun BlockedParticipantRow(
 @Composable
 private fun BlockedParticipantQuickActions(
     visible: Boolean,
-    anchorBoundsPx: IntRect,
     participant: BlockedParticipantUiState,
     fallbackIcon: ImageVector,
     onDismiss: () -> Unit,
@@ -152,7 +150,6 @@ private fun BlockedParticipantQuickActions(
 ) {
     ParticipantQuickActionsPopup(
         visible = visible,
-        anchorBoundsPx = anchorBoundsPx,
         avatarUri = participant.avatarUri,
         displayName = participant.displayName,
         subtitle = participant.details,
@@ -175,36 +172,41 @@ private fun BlockedParticipantQuickActions(
 }
 
 @Composable
-private fun BlockedParticipantAvatarSlot(
-    avatarUri: String?,
+private fun BlockedParticipantAvatarWithQuickActions(
+    participant: BlockedParticipantUiState,
     fallbackIcon: ImageVector,
     isSelected: Boolean,
-    onClick: () -> Unit,
-    onBoundsChanged: (IntRect) -> Unit,
+    onAvatarClick: () -> Unit,
+    quickActionsVisible: Boolean,
+    onDismissQuickActions: () -> Unit,
+    onMessageClick: () -> Unit,
+    onCallClick: (() -> Unit)?,
+    onContactClick: (() -> Unit)?,
 ) {
-    ParticipantAvatar(
-        avatarUri = avatarUri,
-        size = 48.dp,
-        fallbackIcon = fallbackIcon,
-        isSelected = isSelected,
-        modifier = Modifier
-            .clip(CircleShape)
-            .clickable(
-                enabled = !isSelected,
-                onClick = onClick
-            )
-            .onGloballyPositioned { coords ->
-                val pos = coords.positionInWindow()
-                onBoundsChanged(
-                    IntRect(
-                        left = pos.x.toInt(),
-                        top = pos.y.toInt(),
-                        right = pos.x.toInt() + coords.size.width,
-                        bottom = pos.y.toInt() + coords.size.height,
-                    ),
-                )
-            },
-    )
+    Box(modifier = Modifier.size(48.dp)) {
+        ParticipantAvatar(
+            avatarUri = participant.avatarUri,
+            size = 48.dp,
+            fallbackIcon = fallbackIcon,
+            isSelected = isSelected,
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(
+                    enabled = !isSelected,
+                    onClick = onAvatarClick
+                ),
+        )
+
+        BlockedParticipantQuickActions(
+            visible = quickActionsVisible,
+            participant = participant,
+            fallbackIcon = fallbackIcon,
+            onDismiss = onDismissQuickActions,
+            onMessageClick = onMessageClick,
+            onCallClick = onCallClick,
+            onContactClick = onContactClick,
+        )
+    }
 }
 
 @Composable
