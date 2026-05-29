@@ -36,7 +36,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -45,7 +44,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -53,20 +51,20 @@ import com.android.messaging.R
 import com.android.messaging.ui.core.AppTheme
 
 private val PopupWidth = 192.dp
-private val CardCornerRadius = 20.dp
 private val ActionRowHeight = 40.dp
 private val ActionRowGap = 6.dp
 private val ActionRowPadding = 8.dp
+private val ContentTopPadding = 4.dp
 private val ContentBottomPadding = 10.dp
 private val AvatarSubtitleSpacing = 10.dp
 private val PopupAnchorGap = 16.dp
 private val AvatarFallbackIconSize = 60.dp
 private val IconInsidePadding = 2.dp
+private val ShadowPadding = 16.dp
 
 @Composable
 internal fun ParticipantQuickActionsPopup(
     visible: Boolean,
-    anchorBoundsPx: IntRect,
     avatarUri: String?,
     displayName: String,
     subtitle: String?,
@@ -82,14 +80,16 @@ internal fun ParticipantQuickActionsPopup(
 
     if (!transitionState.currentState && !transitionState.targetState) return
 
-    val gapPx = with(LocalDensity.current) { PopupAnchorGap.toPx().toInt() }
+    val density = LocalDensity.current
     val transformOriginState = remember { mutableStateOf(TransformOrigin(0f, 1f)) }
-    val positionProvider = remember(gapPx, anchorBoundsPx) {
-        AnchorRelativePositionProvider(
-            anchorBoundsPx = anchorBoundsPx,
-            gapPx = gapPx,
-            transformOriginState = transformOriginState,
-        )
+    val positionProvider = remember(density) {
+        with(density) {
+            AnchorRelativePositionProvider(
+                gapPx = PopupAnchorGap.roundToPx(),
+                contentPaddingPx = ShadowPadding.roundToPx(),
+                transformOriginState = transformOriginState,
+            )
+        }
     }
 
     Popup(
@@ -147,11 +147,13 @@ private fun QuickActionsCard(
     val cardColor = MaterialTheme.colorScheme.surfaceContainerHigh
 
     Surface(
-        modifier = Modifier.width(PopupWidth),
+        modifier = Modifier
+            .padding(ShadowPadding)
+            .width(PopupWidth),
         shape = cardShape,
         color = cardColor,
         tonalElevation = 6.dp,
-        shadowElevation = 12.dp,
+        shadowElevation = 4.dp,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             AvatarHeader(
@@ -159,6 +161,8 @@ private fun QuickActionsCard(
                 fallbackIcon = fallbackIcon,
                 fadeColor = cardColor,
             )
+
+            Spacer(modifier = Modifier.height(ContentTopPadding))
 
             MarqueeText(
                 text = displayName,
@@ -199,13 +203,7 @@ private fun AvatarHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
-            .clip(
-                RoundedCornerShape(
-                    topStart = CardCornerRadius,
-                    topEnd = CardCornerRadius,
-                ),
-            ),
+            .aspectRatio(1f),
     ) {
         ParticipantAvatar(
             avatarUri = avatarUri,
