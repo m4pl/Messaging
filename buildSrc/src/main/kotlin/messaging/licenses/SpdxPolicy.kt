@@ -62,7 +62,7 @@ internal object SpdxPolicy {
 
     fun resolve(
         name: String,
-        url: String
+        url: String,
     ): String? {
         val lowerName = name.lowercase()
         for ((needle, id) in NAME_MAP) {
@@ -88,31 +88,44 @@ internal object SpdxPolicy {
     }
 
     fun checkAllowed(record: LicenseRecord) {
-        val spdx = record.spdxId ?: return
+        for (spdx in policedSpdxIds(record)) {
+            val isStrongCopyleft = HARD_FAIL_PREFIXES.any(spdx::startsWith)
+            if (isStrongCopyleft) {
+                throw GradleException(
+                    "Strong copyleft ($spdx) detected in ${record.coordinates} — incompatible " +
+                        "with closed distribution. Remove this dependency.",
+                )
+            }
 
-        val isStrongCopyleft = HARD_FAIL_PREFIXES.any(spdx::startsWith)
-        if (isStrongCopyleft) {
-            throw GradleException(
-                "Strong copyleft ($spdx) detected in ${record.coordinates} — incompatible " +
-                    "with closed distribution. Remove this dependency."
+            val isWeakCopyleft = spdx in SOURCE_AVAILABILITY
+            if (isWeakCopyleft) {
+                throw GradleException(
+                    "Weak copyleft $spdx detected in ${record.coordinates} — source-availability " +
+                        "handling is not supported by this plugin. Add explicit handling.",
+                )
+            }
+        }
+    }
+
+    private fun policedSpdxIds(record: LicenseRecord): Set<String> {
+        val chosenId = listOfNotNull(record.spdxId)
+        val declaredIds = record.declared.mapNotNull {
+            resolve(
+                name = it.name,
+                url = it.url,
             )
         }
 
-        val isWeakCopyleft = spdx in SOURCE_AVAILABILITY
-        if (isWeakCopyleft) {
-            throw GradleException(
-                "Weak copyleft $spdx detected in ${record.coordinates} — source-availability " +
-                    "handling is not supported by this plugin. Add explicit handling."
-            )
-        }
+        return (chosenId + declaredIds).toSet()
     }
 
     fun checkOwner(record: LicenseRecord) {
         if (record.needsOwnerCheck && !record.overrideApplied) {
             throw GradleException(
                 "Short license ${record.spdxId} for ${record.coordinates} requires an " +
-                    "explicit copyright holder. Add it via copyrightOverrides.put(\"${record.coordinates.moduleId}\", \"Copyright ...\") " +
-                    "in the generateLicenses task configuration."
+                    "explicit copyright holder. Add it via copyrightOverrides.add(" +
+                    "CopyrightOverride(\"${record.coordinates.moduleId}\", \"Copyright ...\")) " +
+                    "in the generateLicenses task configuration.",
             )
         }
     }
