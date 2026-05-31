@@ -36,5 +36,14 @@ internal class ShareIntentViewModel @Inject constructor(
     }
 
     override fun onAction(action: Action) {
+        when (action) {
+            is Action.TargetClicked -> {
+                _effects.tryEmit(Effect.OpenConversation(action.conversationId))
+            }
+
+            Action.NewMessageClicked -> {
+                _effects.tryEmit(Effect.CreateNewConversation)
+            }
+        }
     }
 }
