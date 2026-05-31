@@ -5,14 +5,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.remember
+import com.android.messaging.domain.shareintent.usecase.BuildSharedDraftMessage
 import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.core.AppTheme
 import com.android.messaging.ui.shareintent.screen.ShareIntentEffectHandlerImpl
 import com.android.messaging.ui.shareintent.screen.ShareIntentScreen
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ShareIntentActivity : ComponentActivity() {
+
+    @Inject
+    internal lateinit var buildSharedDraftMessage: BuildSharedDraftMessage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,13 +27,18 @@ class ShareIntentActivity : ComponentActivity() {
             return
         }
 
+        val draft = buildSharedDraftMessage(intent)
+
         enableEdgeToEdge()
 
         setContent {
             AppTheme {
-                val effectHandler = ShareIntentEffectHandlerImpl(
-                    activity = this,
-                )
+                val effectHandler = remember(draft) {
+                    ShareIntentEffectHandlerImpl(
+                        activity = this,
+                        draft = draft,
+                    )
+                }
 
                 ShareIntentScreen(
                     effectHandler = effectHandler,

@@ -7,6 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.unit.dp
 
+internal val ScreenContentPadding = 8.dp
+
+internal val ItemDividerHorizontalInset = 40.dp
+
+internal val AvatarSize = 48.dp
+
+internal val FallbackIconSize = 20.dp
+
 private val ZeroCornerSize = CornerSize(0.dp)
 
 internal val MaterialTheme.contentSurfaceShape: CornerBasedShape
