@@ -2,8 +2,12 @@ package com.android.messaging.ui.shareintent.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -12,12 +16,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.shareintent.common.ItemDividerHorizontalInset
+import com.android.messaging.ui.shareintent.common.NewMessageItem
+import com.android.messaging.ui.shareintent.common.ScreenContentPadding
 import com.android.messaging.ui.shareintent.common.ShareIntentTopAppBar
+import com.android.messaging.ui.shareintent.common.ShareTargetItem
 import com.android.messaging.ui.shareintent.common.contentSurfaceShape
 import com.android.messaging.ui.shareintent.screen.model.ShareIntentAction as Action
 import com.android.messaging.ui.shareintent.screen.model.ShareIntentUiState as State
+import com.android.messaging.ui.shareintent.screen.model.ShareTargetUiState
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 internal fun ShareIntentScreen(
@@ -63,6 +77,101 @@ private fun ShareIntentContent(
                 .padding(top = contentPadding.calculateTopPadding())
                 .clip(MaterialTheme.contentSurfaceShape)
                 .background(MaterialTheme.colorScheme.background),
+        ) {
+            if (!uiState.isLoading) {
+                ShareTargetList(
+                    targets = uiState.targets,
+                    onAction = onAction,
+                    bottomPadding = contentPadding.calculateBottomPadding(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShareTargetList(
+    targets: List<ShareTargetUiState>,
+    onAction: (Action) -> Unit,
+    bottomPadding: Dp,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = ScreenContentPadding,
+            bottom = ScreenContentPadding + bottomPadding,
+            start = ScreenContentPadding,
+            end = ScreenContentPadding,
+        ),
+    ) {
+        item(key = "new_message") {
+            NewMessageItem(
+                onClick = { onAction(Action.NewMessageClicked) },
+            )
+        }
+
+        items(
+            items = targets,
+            key = { it.conversationId },
+        ) { target ->
+            ItemDivider()
+
+            ShareTargetItem(
+                target = target,
+                onClick = { onAction(Action.TargetClicked(target.conversationId)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ItemDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(
+            horizontal = ItemDividerHorizontalInset,
+            vertical = 1.dp,
+        ),
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    )
+}
+
+@Preview
+@Composable
+private fun ShareIntentContentPreview() {
+    AppTheme {
+        ShareIntentContent(
+            uiState = State(
+                isLoading = false,
+                targets = persistentListOf(
+                    ShareTargetUiState(
+                        conversationId = "1",
+                        displayName = "Jane Doe",
+                        details = "+31 6 1234 5678",
+                        avatarUri = null,
+                    ),
+                    ShareTargetUiState(
+                        conversationId = "2",
+                        displayName = "Project group",
+                        details = null,
+                        avatarUri = null,
+                    ),
+                ),
+            ),
+            onAction = {},
+            onNavigateBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ShareIntentEmptyPreview() {
+    AppTheme {
+        ShareIntentContent(
+            uiState = State(isLoading = false),
+            onAction = {},
+            onNavigateBack = {},
         )
     }
 }
