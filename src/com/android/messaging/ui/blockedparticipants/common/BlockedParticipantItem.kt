@@ -1,18 +1,8 @@
 package com.android.messaging.ui.blockedparticipants.common
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -20,26 +10,22 @@ import androidx.compose.material.icons.outlined.PersonRemove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.blockedparticipants.screen.model.BlockedParticipantUiState
 import com.android.messaging.ui.common.components.ParticipantAvatar
 import com.android.messaging.ui.common.components.ParticipantQuickActionsPopup
+import com.android.messaging.ui.common.components.TwoLineListItem
 import com.android.messaging.ui.core.AppTheme
 
 @Composable
@@ -83,7 +69,6 @@ internal fun BlockedParticipantItem(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BlockedParticipantRow(
     participant: BlockedParticipantUiState,
@@ -106,23 +91,14 @@ private fun BlockedParticipantRow(
         else -> MaterialTheme.colorScheme.background
     }
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.blockedParticipantItemShape,
+    TwoLineListItem(
+        title = participant.displayName,
+        subtitle = participant.details,
+        onClick = onClick,
+        modifier = modifier,
+        onLongClick = onLongClick,
         color = backgroundColor,
-    ) {
-        Row(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                )
-                .padding(
-                    horizontal = ItemHorizontalPadding,
-                    vertical = ItemVerticalPadding,
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        leadingContent = {
             BlockedParticipantAvatarWithQuickActions(
                 participant = participant,
                 fallbackIcon = fallbackIcon,
@@ -135,20 +111,11 @@ private fun BlockedParticipantRow(
                 onCallClick = onCallClick,
                 onContactClick = onContactClick,
             )
-
-            Spacer(modifier = Modifier.width(ItemHorizontalPadding))
-
-            BlockedParticipantInfo(
-                displayName = participant.displayName,
-                details = participant.details,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = ItemHorizontalPadding),
-            )
-
+        },
+        trailingContent = {
             UnblockButton(onClick = onUnblockClick)
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -220,41 +187,6 @@ private fun BlockedParticipantAvatarWithQuickActions(
             onCallClick = onCallClick,
             onContactClick = onContactClick,
         )
-    }
-}
-
-@Composable
-private fun BlockedParticipantInfo(
-    displayName: String,
-    details: String?,
-    modifier: Modifier = Modifier,
-) {
-    val twoLineHeight = with(LocalDensity.current) {
-        MaterialTheme.typography.bodyLarge.lineHeight.toDp() +
-            MaterialTheme.typography.bodySmall.lineHeight.toDp()
-    }
-
-    Column(
-        modifier = modifier.heightIn(min = twoLineHeight),
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = displayName,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-
-        if (!details.isNullOrBlank()) {
-            Text(
-                text = details,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
     }
 }
 
