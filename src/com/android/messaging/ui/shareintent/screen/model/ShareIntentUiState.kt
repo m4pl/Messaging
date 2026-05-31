@@ -13,4 +13,7 @@ internal data class ShareIntentUiState(
 @Immutable
 internal data class ShareTargetUiState(
     val conversationId: String,
+    val displayName: String,
+    val details: String?,
+    val avatarUri: String?,
 )
