@@ -47,17 +47,17 @@ import com.android.messaging.ui.core.AppTheme
 import com.android.messaging.ui.shareintent.common.ItemDividerHorizontalInset
 import com.android.messaging.ui.shareintent.common.NewMessageItem
 import com.android.messaging.ui.shareintent.common.ScreenContentPadding
+import com.android.messaging.ui.shareintent.common.SelectedTargetsBar
 import com.android.messaging.ui.shareintent.common.ShareAttachmentPreview
 import com.android.messaging.ui.shareintent.common.ShareConfirmTopAppBar
-import com.android.messaging.ui.shareintent.common.SelectedTargetsBar
 import com.android.messaging.ui.shareintent.common.ShareIntentTopAppBar
 import com.android.messaging.ui.shareintent.common.ShareTargetItem
 import com.android.messaging.ui.shareintent.common.contentSurfaceShape
+import com.android.messaging.ui.shareintent.screen.model.ShareIntentAction as Action
+import com.android.messaging.ui.shareintent.screen.model.ShareIntentUiState as State
 import com.android.messaging.ui.shareintent.screen.model.ShareTargetUiState
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import com.android.messaging.ui.shareintent.screen.model.ShareIntentAction as Action
-import com.android.messaging.ui.shareintent.screen.model.ShareIntentUiState as State
 
 @Composable
 internal fun ShareIntentScreen(
@@ -164,36 +164,13 @@ private fun ShareIntentPickerScaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
-            Column(
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
-            ) {
-                ShareIntentTopAppBar(
-                    isSearchActive = uiState.isSearchActive,
-                    inSelectionMode = inSelectionMode,
-                    selectedCount = uiState.selectedConversationIds.size,
-                    searchState = searchState,
-                    onNavigateBack = onNavigateBack,
-                    onSearchOpen = { onAction(Action.SearchOpened) },
-                    onSearchClose = {
-                        searchState.clearText()
-                        onAction(Action.SearchClosed)
-                    },
-                    onSelectionClear = { onAction(Action.SelectionCleared) },
-                )
-
-                AnimatedVisibility(
-                    visible = inSelectionMode,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
-                ) {
-                    SelectedTargetsBar(
-                        targets = uiState.selectedTargets,
-                        onRemove = { onAction(Action.SelectionToggled(it)) },
-                        onSend = { onAction(Action.SendToSelectedClicked) },
-                        showSendButton = true,
-                    )
-                }
-            }
+            ShareIntentPickerTopBar(
+                uiState = uiState,
+                searchState = searchState,
+                inSelectionMode = inSelectionMode,
+                onAction = onAction,
+                onNavigateBack = onNavigateBack,
+            )
         },
     ) { contentPadding ->
         Box(
@@ -221,6 +198,46 @@ private fun ShareIntentPickerScaffold(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ShareIntentPickerTopBar(
+    uiState: State,
+    searchState: TextFieldState,
+    inSelectionMode: Boolean,
+    onAction: (Action) -> Unit,
+    onNavigateBack: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
+    ) {
+        ShareIntentTopAppBar(
+            isSearchActive = uiState.isSearchActive,
+            inSelectionMode = inSelectionMode,
+            selectedCount = uiState.selectedConversationIds.size,
+            searchState = searchState,
+            onNavigateBack = onNavigateBack,
+            onSearchOpen = { onAction(Action.SearchOpened) },
+            onSearchClose = {
+                searchState.clearText()
+                onAction(Action.SearchClosed)
+            },
+            onSelectionClear = { onAction(Action.SelectionCleared) },
+        )
+
+        AnimatedVisibility(
+            visible = inSelectionMode,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            SelectedTargetsBar(
+                targets = uiState.selectedTargets,
+                onRemove = { onAction(Action.SelectionToggled(it)) },
+                onSend = { onAction(Action.SendToSelectedClicked) },
+                showSendButton = true,
+            )
         }
     }
 }

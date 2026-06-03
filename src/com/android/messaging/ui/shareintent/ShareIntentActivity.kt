@@ -73,7 +73,7 @@ class ShareIntentActivity : ComponentActivity() {
     }
 
     private fun redirectToSendToIfNeeded(): Boolean {
-        val hasNoDestination = intent.getStringExtra("address").isNullOrEmpty() &&
+        val hasNoDestination = intent.getStringExtra(EXTRA_ADDRESS).isNullOrEmpty() &&
             intent.getStringExtra(Intent.EXTRA_EMAIL).isNullOrEmpty()
 
         if (Intent.ACTION_SEND != intent.action || hasNoDestination) {
@@ -88,5 +88,9 @@ class ShareIntentActivity : ComponentActivity() {
         startActivity(convIntent)
         finish()
         return true
+    }
+
+    private companion object {
+        private const val EXTRA_ADDRESS = "address"
     }
 }

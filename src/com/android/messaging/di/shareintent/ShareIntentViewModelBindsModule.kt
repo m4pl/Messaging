@@ -1,7 +1,9 @@
 package com.android.messaging.di.shareintent
 
-import com.android.messaging.ui.shareintent.screen.delegate.ShareIntentScreenDelegate
-import com.android.messaging.ui.shareintent.screen.delegate.ShareIntentScreenDelegateImpl
+import com.android.messaging.ui.shareintent.screen.delegate.ShareDraftDelegate
+import com.android.messaging.ui.shareintent.screen.delegate.ShareDraftDelegateImpl
+import com.android.messaging.ui.shareintent.screen.delegate.ShareTargetsDelegate
+import com.android.messaging.ui.shareintent.screen.delegate.ShareTargetsDelegateImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -14,7 +16,13 @@ internal abstract class ShareIntentViewModelBindsModule {
 
     @Binds
     @ViewModelScoped
-    abstract fun bindShareIntentScreenDelegate(
-        impl: ShareIntentScreenDelegateImpl,
-    ): ShareIntentScreenDelegate
+    abstract fun bindShareTargetsDelegate(
+        impl: ShareTargetsDelegateImpl,
+    ): ShareTargetsDelegate
+
+    @Binds
+    @ViewModelScoped
+    abstract fun bindShareDraftDelegate(
+        impl: ShareDraftDelegateImpl,
+    ): ShareDraftDelegate
 }
