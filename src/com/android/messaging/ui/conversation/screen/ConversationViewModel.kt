@@ -8,6 +8,7 @@ import com.android.messaging.R
 import com.android.messaging.data.conversation.model.draft.ConversationDraft
 import com.android.messaging.data.media.model.ConversationCapturedMedia
 import com.android.messaging.data.subscription.model.Subscription
+import com.android.messaging.data.subscription.repository.ConversationSimSelectionRepository
 import com.android.messaging.data.subscription.repository.SubscriptionsRepository
 import com.android.messaging.datamodel.MessagingContentProvider
 import com.android.messaging.di.core.DefaultDispatcher
@@ -145,6 +146,7 @@ internal class ConversationViewModel @Inject constructor(
     private val conversationFocusDelegate: ConversationFocusDelegate,
     private val conversationComposerUiStateMapper: ConversationComposerUiStateMapper,
     private val subscriptionsRepository: SubscriptionsRepository,
+    private val simSelectionRepository: ConversationSimSelectionRepository,
     private val canAddMoreConversationParticipants: CanAddMoreConversationParticipants,
     private val createDefaultSmsRoleRequest: CreateDefaultSmsRoleRequest,
     private val isDeviceVoiceCapable: IsDeviceVoiceCapable,
@@ -554,9 +556,19 @@ internal class ConversationViewModel @Inject constructor(
     }
 
     override fun onSimSelected(selfParticipantId: String) {
+        if (selfParticipantId.isBlank()) return
+
         conversationDraftDelegate.onSelfParticipantIdChanged(
             selfParticipantId = selfParticipantId,
         )
+        conversationIdFlow.value
+            ?.takeIf(String::isNotBlank)
+            ?.let { conversationId ->
+                simSelectionRepository.setSelectedSelfId(
+                    conversationId = conversationId,
+                    selfId = selfParticipantId,
+                )
+            }
     }
 
     override fun onExternalUriClicked(uri: String) {
