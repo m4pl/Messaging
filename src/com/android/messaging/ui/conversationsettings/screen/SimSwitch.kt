@@ -27,7 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.data.conversation.model.metadata.ConversationSubscriptionLabel
@@ -37,7 +37,7 @@ import com.android.messaging.ui.conversationsettings.common.resolveDisplayName
 import com.android.messaging.ui.conversationsettings.common.settingsCardShape
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsAction as Action
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsUiState as State
-import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.core.MessagingPreviewColumn
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -212,7 +212,7 @@ private fun SimSelectorRow(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun SimSwitchItemPreview() {
     val subscription = Subscription(
@@ -223,7 +223,7 @@ private fun SimSwitchItemPreview() {
         displaySlotId = 1,
         color = 0,
     )
-    AppTheme {
+    MessagingPreviewColumn {
         SimSwitchItem(
             subscriptions = persistentListOf(subscription),
             selected = subscription,

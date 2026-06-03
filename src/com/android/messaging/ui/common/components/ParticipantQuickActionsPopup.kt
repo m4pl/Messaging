@@ -43,12 +43,12 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.android.messaging.R
-import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.core.MessagingPreviewColumn
 
 private val PopupWidth = 192.dp
 private val ActionRowHeight = 40.dp
@@ -303,10 +303,10 @@ private fun QuickActionButton(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun ParticipantQuickActionsPopupPreview() {
-    AppTheme {
+    MessagingPreviewColumn {
         QuickActionsCard(
             avatarUri = null,
             displayName = "This is my best friend with the longest name ever",

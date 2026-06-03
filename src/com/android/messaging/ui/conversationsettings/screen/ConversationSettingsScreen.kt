@@ -56,7 +56,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -84,7 +84,7 @@ import com.android.messaging.ui.conversationsettings.screen.model.ParticipantCon
 import com.android.messaging.ui.conversationsettings.screen.model.ParticipantUiState
 import com.android.messaging.ui.conversationsettings.screen.model.saveableKey
 import com.android.messaging.ui.conversationsettings.screen.model.targetConversationId
-import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.core.MessagingPreviewTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -619,10 +619,10 @@ private fun ParticipantsCard(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun ConversationSettingsContentPreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         ConversationSettingsContent(
             uiState = State(
                 conversationId = "1",
@@ -662,10 +662,10 @@ private fun ConversationSettingsContentPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun ContactButtonItemPreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         Row(horizontalArrangement = Arrangement.spacedBy(SectionSpacing)) {
             ContactButtonItem(
                 imageVector = Icons.Default.Call,

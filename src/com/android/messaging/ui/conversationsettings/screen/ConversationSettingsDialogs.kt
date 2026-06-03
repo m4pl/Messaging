@@ -32,13 +32,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.data.conversationsettings.model.SnoozeOption
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsAction as Action
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsUiState as State
-import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.core.MessagingPreviewTheme
 
 private val DialogHorizontalPadding = 24.dp
 
@@ -237,10 +237,10 @@ private fun SnoozeOptionRow(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun BlockConfirmationDialogPreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         BlockConfirmationDialog(
             displayName = "+31 6 1234 5678",
             onDismiss = {},
@@ -249,10 +249,10 @@ private fun BlockConfirmationDialogPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun SnoozeChatDialogPreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         SnoozeChatDialog(
             onDismiss = {},
             onConfirm = {},

@@ -35,13 +35,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.common.components.ParticipantAvatar
 import com.android.messaging.ui.common.components.ParticipantQuickActionsPopup
 import com.android.messaging.ui.conversationsettings.screen.model.ParticipantUiState
-import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.core.MessagingPreviewColumn
 
 @Composable
 internal fun ConversationHeader(
@@ -326,10 +326,10 @@ private fun ParticipantInfoButton(onClick: () -> Unit) {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun ConversationHeaderPreview() {
-    AppTheme {
+    MessagingPreviewColumn {
         ConversationHeader(
             title = "Mother",
             participant = ParticipantUiState(
@@ -349,10 +349,10 @@ private fun ConversationHeaderPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun ConversationSettingsItemPreview() {
-    AppTheme {
+    MessagingPreviewColumn {
         ConversationSettingsItem(
             icon = Icons.Default.Notifications,
             title = "Notifications",
@@ -361,10 +361,10 @@ private fun ConversationSettingsItemPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun ParticipantItemPreview() {
-    AppTheme {
+    MessagingPreviewColumn {
         ParticipantItem(
             participant = ParticipantUiState(
                 id = "preview",
