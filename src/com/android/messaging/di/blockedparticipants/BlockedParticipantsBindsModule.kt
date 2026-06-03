@@ -18,6 +18,8 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 internal abstract class BlockedParticipantsBindsModule {
 
+    @Binds
+    @Reusable
     abstract fun bindBlockedParticipantsRepository(
         impl: BlockedParticipantsRepositoryImpl,
     ): BlockedParticipantsRepository

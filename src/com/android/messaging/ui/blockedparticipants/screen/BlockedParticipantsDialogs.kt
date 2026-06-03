@@ -6,10 +6,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.android.messaging.R
 import com.android.messaging.ui.blockedparticipants.screen.model.BlockedParticipantsAction as Action
-import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.core.MessagingPreviewTheme
 
 @Composable
 internal fun BlockedParticipantsDialogs(
@@ -62,10 +62,10 @@ private fun DeleteSelectedConfirmationDialog(
     )
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun DeleteSelectedConfirmationDialogSinglePreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         DeleteSelectedConfirmationDialog(
             selectedCount = 1,
             onConfirm = {},
@@ -74,10 +74,10 @@ private fun DeleteSelectedConfirmationDialogSinglePreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun DeleteSelectedConfirmationDialogMultiplePreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         DeleteSelectedConfirmationDialog(
             selectedCount = 3,
             onConfirm = {},
