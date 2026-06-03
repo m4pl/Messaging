@@ -4,45 +4,49 @@ import com.android.messaging.data.conversation.model.draft.ConversationDraft
 
 internal sealed interface ShareIntentAction {
 
-    data class DraftResolved(
-        val draft: ConversationDraft?,
-    ) : ShareIntentAction
+    sealed interface TargetsAction : ShareIntentAction
 
-    data class DraftTextChanged(
-        val text: String,
-    ) : ShareIntentAction
-
-    data class DraftAttachmentRemoved(
-        val id: String,
-    ) : ShareIntentAction
-
-    data object ReviewDismissed : ShareIntentAction
-
-    data object ConfirmSendClicked : ShareIntentAction
+    sealed interface DraftAction : ShareIntentAction
 
     data class TargetClicked(
         val conversationId: String,
-    ) : ShareIntentAction
+    ) : TargetsAction
 
     data class TargetLongPressed(
         val conversationId: String,
-    ) : ShareIntentAction
+    ) : TargetsAction
 
     data class SelectionToggled(
         val conversationId: String,
-    ) : ShareIntentAction
+    ) : TargetsAction
 
-    data object SelectionCleared : ShareIntentAction
+    data object SelectionCleared : TargetsAction
 
-    data object SendToSelectedClicked : ShareIntentAction
+    data object SendToSelectedClicked : TargetsAction
 
-    data object NewMessageClicked : ShareIntentAction
+    data object NewMessageClicked : TargetsAction
 
-    data object SearchOpened : ShareIntentAction
+    data object SearchOpened : TargetsAction
 
-    data object SearchClosed : ShareIntentAction
+    data object SearchClosed : TargetsAction
 
     data class SearchQueryChanged(
         val query: String,
-    ) : ShareIntentAction
+    ) : TargetsAction
+
+    data class DraftResolved(
+        val draft: ConversationDraft?,
+    ) : DraftAction
+
+    data class DraftTextChanged(
+        val text: String,
+    ) : DraftAction
+
+    data class DraftAttachmentRemoved(
+        val id: String,
+    ) : DraftAction
+
+    data object ReviewDismissed : DraftAction
+
+    data object ConfirmSendClicked : DraftAction
 }
