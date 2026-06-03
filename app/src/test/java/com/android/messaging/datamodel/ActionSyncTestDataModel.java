@@ -6,7 +6,6 @@ import android.net.Uri;
 
 import com.android.messaging.datamodel.action.ActionService;
 import com.android.messaging.datamodel.action.BackgroundWorker;
-import com.android.messaging.datamodel.data.BlockedParticipantsData;
 import com.android.messaging.datamodel.data.ContactListItemData;
 import com.android.messaging.datamodel.data.ContactPickerData;
 import com.android.messaging.datamodel.data.ConversationData;
@@ -79,12 +78,6 @@ public class ActionSyncTestDataModel extends DataModel {
     @Override
     public VCardContactItemData createVCardContactItemData(final Context context,
             final Uri vCardUri) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public BlockedParticipantsData createBlockedParticipantsData(final Context context,
-            final BlockedParticipantsData.BlockedParticipantsDataListener listener) {
         throw new UnsupportedOperationException();
     }
 

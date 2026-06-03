@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,7 +46,7 @@ import com.android.messaging.ui.blockedparticipants.screen.model.BlockedParticip
 import com.android.messaging.ui.blockedparticipants.screen.model.BlockedParticipantsAction as Action
 import com.android.messaging.ui.blockedparticipants.screen.model.BlockedParticipantsNavEvent as NavEvent
 import com.android.messaging.ui.blockedparticipants.screen.model.BlockedParticipantsUiState as State
-import com.android.messaging.ui.core.AppTheme
+import com.android.messaging.ui.core.MessagingPreviewTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 
@@ -239,10 +239,10 @@ private fun BlockedParticipantsEmptyState(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun BlockedParticipantsContentPreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         BlockedParticipantsContent(
             uiState = State(
                 isLoading = false,
@@ -280,10 +280,10 @@ private fun BlockedParticipantsContentPreview() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun BlockedParticipantsEmptyPreview() {
-    AppTheme {
+    MessagingPreviewTheme {
         BlockedParticipantsContent(
             uiState = State(isLoading = false),
             onAction = {},
