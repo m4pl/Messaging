@@ -9,11 +9,12 @@ internal sealed interface ShareTargetUiState {
     val displayName: String
     val details: String?
     val avatarUri: String?
+    val normalizedDestination: String?
 
     @Immutable
     data class Conversation(
         val conversationId: String,
-        val normalizedDestination: String?,
+        override val normalizedDestination: String?,
         override val displayName: String,
         override val details: String?,
         override val avatarUri: String?,
@@ -31,7 +32,7 @@ internal sealed interface ShareTargetUiState {
     data class Contact(
         val contactId: Long,
         val destination: String,
-        val normalizedDestination: String,
+        override val normalizedDestination: String,
         override val displayName: String,
         override val details: String?,
         override val avatarUri: String?,
