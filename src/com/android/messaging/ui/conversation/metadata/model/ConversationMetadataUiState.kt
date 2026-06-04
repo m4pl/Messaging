@@ -16,6 +16,8 @@ internal sealed interface ConversationMetadataUiState {
         @Immutable
         data class Single(
             val photoUri: String?,
+            val normalizedDestination: String?,
+            val displayName: String?,
         ) : Avatar
     }
 

@@ -96,7 +96,11 @@ internal fun previewMetadata(
     return ConversationMetadataUiState.Present(
         title = title,
         selfParticipantId = "self-1",
-        avatar = ConversationMetadataUiState.Avatar.Single(photoUri = null),
+        avatar = ConversationMetadataUiState.Avatar.Single(
+            photoUri = null,
+            normalizedDestination = null,
+            displayName = null,
+        ),
         participantCount = participantCount,
         otherParticipantDisplayDestination = "+31 6 2222 3333",
         otherParticipantPhoneNumber = "+31622223333",

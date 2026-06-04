@@ -11,33 +11,25 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.android.messaging.R
+import com.android.messaging.ui.common.components.ParticipantAvatar
+import com.android.messaging.ui.common.components.participantAvatarLabel
+import com.android.messaging.ui.common.components.participantColorSeed
 import com.android.messaging.ui.conversation.preview.previewRecipientPickerUiState
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
 import com.android.messaging.ui.core.MessagingPreviewColumn
+
+private val RECIPIENT_SELECTION_AVATAR_SIZE = 40.dp
 
 @Composable
 internal fun RecipientSelectionContactAvatar(
@@ -47,6 +39,8 @@ internal fun RecipientSelectionContactAvatar(
     val avatarScale by rememberRecipientSelectionContactAvatarScale(
         isSelected = isSelected,
     )
+
+    val displayName = recipientSelectionItemPrimaryText(item = item)
 
     AnimatedContent(
         targetState = isSelected,
@@ -75,83 +69,18 @@ internal fun RecipientSelectionContactAvatar(
         },
         label = "recipientSelectionContactAvatar",
     ) { isSelectedState ->
-        Box(
+        ParticipantAvatar(
+            avatarUri = recipientSelectionPhotoUri(item = item),
+            size = RECIPIENT_SELECTION_AVATAR_SIZE,
+            fallbackLabel = participantAvatarLabel(source = displayName),
             modifier = Modifier.graphicsLayer {
                 scaleX = avatarScale
                 scaleY = avatarScale
             },
-        ) {
-            when {
-                isSelectedState -> {
-                    RecipientSelectionSelectedAvatar()
-                }
-
-                recipientSelectionPhotoUri(item = item) == null -> {
-                    RecipientSelectionTextAvatar(item = item)
-                }
-
-                else -> {
-                    AsyncImage(
-                        modifier = Modifier
-                            .size(size = 40.dp)
-                            .clip(shape = CircleShape),
-                        model = recipientSelectionPhotoUri(item = item),
-                        contentDescription = recipientSelectionItemPrimaryText(item = item),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecipientSelectionSelectedAvatar(
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .size(size = 40.dp)
-            .background(
-                color = MaterialTheme.colorScheme.primary,
-                shape = CircleShape,
+            colorSeedCode = participantColorSeed(
+                normalizedDestination = recipientSelectionNormalizedDestination(item = item),
             ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Check,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
-}
-
-@Composable
-private fun RecipientSelectionTextAvatar(
-    item: RecipientPickerListItem,
-    modifier: Modifier = Modifier,
-) {
-    val displayName = recipientSelectionItemPrimaryText(item = item)
-    val avatarSourceText = recipientSelectionAvatarSourceText(item = item)
-    val label = remember(displayName, avatarSourceText) {
-        recipientSelectionAvatarLabel(
-            displayName = displayName,
-            destination = avatarSourceText,
-        )
-    }
-
-    Box(
-        modifier = modifier
-            .size(size = 40.dp)
-            .background(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = CircleShape,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            isSelected = isSelectedState,
         )
     }
 }
@@ -178,13 +107,13 @@ private fun recipientSelectionPhotoUri(item: RecipientPickerListItem): String? {
     }
 }
 
-private fun recipientSelectionAvatarSourceText(item: RecipientPickerListItem): String {
+private fun recipientSelectionNormalizedDestination(item: RecipientPickerListItem): String? {
     return when (item) {
         is RecipientPickerListItem.Contact -> {
-            item.contact.destinations.firstOrNull()?.value.orEmpty()
+            item.contact.destinations.firstOrNull()?.normalizedValue
         }
 
-        is RecipientPickerListItem.SyntheticPhone -> item.destination
+        is RecipientPickerListItem.SyntheticPhone -> item.normalizedDestination
     }
 }
 

@@ -41,7 +41,11 @@ private fun conversationMetadata(): ConversationMetadataUiState {
     return ConversationMetadataUiState.Present(
         title = "+372 5440 0024",
         selfParticipantId = "self-participant-id",
-        avatar = ConversationMetadataUiState.Avatar.Single(photoUri = null),
+        avatar = ConversationMetadataUiState.Avatar.Single(
+            photoUri = null,
+            normalizedDestination = null,
+            displayName = null,
+        ),
         participantCount = 1,
         otherParticipantDisplayDestination = "+372 5440 0024",
         otherParticipantPhoneNumber = "+37254400024",

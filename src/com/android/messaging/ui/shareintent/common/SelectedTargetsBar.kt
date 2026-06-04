@@ -23,8 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -152,48 +150,10 @@ private fun SelectedTargetChip(
         modifier = modifier.width(SelectedChipAvatarSize),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(modifier = Modifier.size(SelectedChipAvatarSize)) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clip(CircleShape)
-                    .clickable(onClick = onRemove),
-            ) {
-                ParticipantAvatar(
-                    avatarUri = target.avatarUri,
-                    size = SelectedChipAvatarSize,
-                    fallbackIconSize = FallbackIconSize,
-                    fallbackIcon = when (target) {
-                        is ShareTargetUiState.Conversation -> when {
-                            target.isGroup -> Icons.Default.Group
-                            else -> Icons.Default.Person
-                        }
-
-                        is ShareTargetUiState.Contact -> Icons.Default.Person
-                    },
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(SelectedChipRemoveBadgeSize)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    .clickable(onClick = onRemove),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(
-                        R.string.share_selection_remove,
-                        target.displayName,
-                    ),
-                    modifier = Modifier.size(SelectedChipRemoveIconSize),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
+        SelectedTargetChipAvatar(
+            target = target,
+            onRemove = onRemove,
+        )
 
         Spacer(modifier = Modifier.height(SelectedChipLabelSpacing))
 
@@ -208,6 +168,52 @@ private fun SelectedTargetChip(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun SelectedTargetChipAvatar(
+    target: ShareTargetUiState,
+    onRemove: () -> Unit,
+) {
+    val avatarContent = target.avatarContent()
+
+    Box(modifier = Modifier.size(SelectedChipAvatarSize)) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(CircleShape)
+                .clickable(onClick = onRemove),
+        ) {
+            ParticipantAvatar(
+                avatarUri = target.avatarUri,
+                size = SelectedChipAvatarSize,
+                fallbackLabel = avatarContent.fallbackLabel,
+                colorSeedCode = avatarContent.colorSeedCode,
+                fallbackIconSize = FallbackIconSize,
+                fallbackIcon = avatarContent.fallbackIcon,
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(SelectedChipRemoveBadgeSize)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .clickable(onClick = onRemove),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = stringResource(
+                    R.string.share_selection_remove,
+                    target.displayName,
+                ),
+                modifier = Modifier.size(SelectedChipRemoveIconSize),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 

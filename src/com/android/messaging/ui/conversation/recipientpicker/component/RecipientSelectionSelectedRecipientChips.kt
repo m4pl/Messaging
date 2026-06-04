@@ -12,7 +12,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,9 +39,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -54,8 +50,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.android.messaging.R
+import com.android.messaging.ui.common.components.ParticipantAvatar
+import com.android.messaging.ui.common.components.participantAvatarLabel
+import com.android.messaging.ui.common.components.participantColorSeed
 import com.android.messaging.ui.conversation.preview.previewSelectedRecipient
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.SelectedRecipient
 import com.android.messaging.ui.core.MessagingPreviewColumn
@@ -299,56 +297,13 @@ private fun SelectedRecipientChipAvatar(
     recipient: SelectedRecipient,
     modifier: Modifier = Modifier,
 ) {
-    val photoUri = recipient.photoUri
-
-    when {
-        photoUri.isNullOrBlank() -> {
-            SelectedRecipientTextAvatar(
-                recipient = recipient,
-                modifier = modifier,
-            )
-        }
-
-        else -> {
-            AsyncImage(
-                modifier = modifier
-                    .size(size = selectedRecipientAvatarSize)
-                    .clip(shape = CircleShape),
-                model = photoUri,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SelectedRecipientTextAvatar(
-    recipient: SelectedRecipient,
-    modifier: Modifier = Modifier,
-) {
-    val avatarLabel = remember(recipient.label, recipient.displayDestination) {
-        recipientSelectionAvatarLabel(
-            displayName = recipient.label,
-            destination = recipient.displayDestination,
-        )
-    }
-
-    Box(
-        modifier = modifier
-            .size(size = selectedRecipientAvatarSize)
-            .background(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = CircleShape,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = avatarLabel,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
-    }
+    ParticipantAvatar(
+        avatarUri = recipient.photoUri,
+        size = selectedRecipientAvatarSize,
+        fallbackLabel = participantAvatarLabel(source = recipient.label),
+        modifier = modifier,
+        colorSeedCode = participantColorSeed(normalizedDestination = recipient.destination),
+    )
 }
 
 @Composable
