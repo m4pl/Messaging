@@ -2,14 +2,11 @@ package com.android.messaging.ui.conversation.metadata.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Subject
@@ -41,9 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -56,8 +51,10 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.core.text.BidiFormatter
 import androidx.core.text.TextDirectionHeuristicsCompat
-import coil3.compose.AsyncImage
 import com.android.messaging.R
+import com.android.messaging.ui.common.components.ParticipantAvatar
+import com.android.messaging.ui.common.components.participantAvatarLabel
+import com.android.messaging.ui.common.components.participantColorSeed
 import com.android.messaging.ui.conversation.CONVERSATION_ADD_CONTACT_BUTTON_TEST_TAG
 import com.android.messaging.ui.conversation.CONVERSATION_ADD_PEOPLE_BUTTON_TEST_TAG
 import com.android.messaging.ui.conversation.CONVERSATION_ARCHIVE_BUTTON_TEST_TAG
@@ -463,52 +460,28 @@ private fun ConversationAvatar(
 ) {
     when (avatar) {
         ConversationMetadataUiState.Avatar.Group -> {
-            ConversationAvatarFallback(
-                icon = Icons.Rounded.Group,
+            ParticipantAvatar(
+                avatarUri = null,
+                size = CONVERSATION_TOP_APP_BAR_AVATAR_SIZE,
+                fallbackLabel = null,
+                colorSeedCode = null,
+                fallbackIconSize = CONVERSATION_TOP_APP_BAR_AVATAR_ICON_SIZE,
+                fallbackIcon = Icons.Rounded.Group,
+                isSelected = false,
             )
         }
 
         is ConversationMetadataUiState.Avatar.Single -> {
-            when {
-                avatar.photoUri.isNullOrBlank() -> {
-                    ConversationAvatarFallback(
-                        icon = Icons.Rounded.Person,
-                    )
-                }
-
-                else -> {
-                    AsyncImage(
-                        model = avatar.photoUri,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(size = CONVERSATION_TOP_APP_BAR_AVATAR_SIZE)
-                            .clip(shape = CircleShape),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ConversationAvatarFallback(
-    icon: ImageVector,
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        shape = CircleShape,
-        modifier = Modifier.size(size = CONVERSATION_TOP_APP_BAR_AVATAR_SIZE),
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(size = CONVERSATION_TOP_APP_BAR_AVATAR_ICON_SIZE),
+            ParticipantAvatar(
+                avatarUri = avatar.photoUri,
+                size = CONVERSATION_TOP_APP_BAR_AVATAR_SIZE,
+                fallbackLabel = participantAvatarLabel(source = avatar.displayName),
+                colorSeedCode = participantColorSeed(
+                    normalizedDestination = avatar.normalizedDestination,
+                ),
+                fallbackIconSize = CONVERSATION_TOP_APP_BAR_AVATAR_ICON_SIZE,
+                fallbackIcon = Icons.Rounded.Person,
+                isSelected = false,
             )
         }
     }
@@ -521,12 +494,16 @@ private fun conversationAvatar(
         ConversationMetadataUiState.Loading -> {
             ConversationMetadataUiState.Avatar.Single(
                 photoUri = null,
+                normalizedDestination = null,
+                displayName = null,
             )
         }
 
         ConversationMetadataUiState.Unavailable -> {
             ConversationMetadataUiState.Avatar.Single(
                 photoUri = null,
+                normalizedDestination = null,
+                displayName = null,
             )
         }
 
