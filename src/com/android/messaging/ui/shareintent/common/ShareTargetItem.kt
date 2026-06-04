@@ -2,8 +2,6 @@ package com.android.messaging.ui.shareintent.common
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,7 +23,9 @@ internal fun NewMessageItem(
         title = stringResource(R.string.share_new_message),
         subtitle = null,
         avatarUri = null,
+        colorSeedCode = null,
         fallbackIcon = Icons.Default.Edit,
+        fallbackLabel = null,
         isSelected = false,
         onClick = onClick,
         onLongClick = null,
@@ -41,20 +41,15 @@ internal fun ShareTargetItem(
     onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val fallbackIcon = when (target) {
-        is ShareTargetUiState.Conversation -> when {
-            target.isGroup -> Icons.Default.Group
-            else -> Icons.Default.Person
-        }
-
-        is ShareTargetUiState.Contact -> Icons.Default.Person
-    }
+    val avatarContent = target.avatarContent()
 
     ShareTargetRow(
         title = target.displayName,
         subtitle = target.details,
         avatarUri = target.avatarUri,
-        fallbackIcon = fallbackIcon,
+        colorSeedCode = avatarContent.colorSeedCode,
+        fallbackIcon = avatarContent.fallbackIcon,
+        fallbackLabel = avatarContent.fallbackLabel,
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
@@ -67,7 +62,9 @@ private fun ShareTargetRow(
     title: String,
     subtitle: String?,
     avatarUri: String?,
+    colorSeedCode: String?,
     fallbackIcon: ImageVector,
+    fallbackLabel: String?,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)?,
@@ -89,6 +86,8 @@ private fun ShareTargetRow(
             ParticipantAvatar(
                 avatarUri = avatarUri,
                 size = AvatarSize,
+                fallbackLabel = fallbackLabel,
+                colorSeedCode = colorSeedCode,
                 fallbackIconSize = FallbackIconSize,
                 fallbackIcon = fallbackIcon,
                 isSelected = isSelected,

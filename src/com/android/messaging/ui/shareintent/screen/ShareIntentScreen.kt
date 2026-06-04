@@ -467,9 +467,7 @@ private fun LazyListScope.recentTargetsSection(
                     }
                     onAction(action)
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = ItemDividerHorizontalInset),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 val textRes = when {
                     canLoadMoreRecent -> R.string.share_recent_show_more_action

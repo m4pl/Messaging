@@ -19,6 +19,8 @@ internal class ConversationMetadataUiStateMapperImpl @Inject constructor() :
             else -> {
                 ConversationMetadataUiState.Avatar.Single(
                     photoUri = metadata.otherParticipantPhotoUri,
+                    normalizedDestination = metadata.otherParticipantNormalizedDestination,
+                    displayName = metadata.conversationName,
                 )
             }
         }
