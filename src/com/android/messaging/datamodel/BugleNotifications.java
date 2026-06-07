@@ -136,8 +136,14 @@ public class BugleNotifications {
         }
     Assert.isNotMainThread();
 
-        if (!shouldNotify(conversationId)) {
+        if (!PhoneUtils.getDefault().isDefaultSmsApp()) {
+            LogUtil.d(TAG, "Skipping notification: not the default SMS app");
             cancel(PendingIntentConstants.SMS_NOTIFICATION_ID);
+            return;
+        }
+        if (conversationId != null && isConversationSnoozed(conversationId)) {
+            LogUtil.d(TAG, "Skipping notification: conversation snoozed, id=" + conversationId);
+            cancel(PendingIntentConstants.SMS_NOTIFICATION_ID, conversationId);
             return;
         }
         if ((coverage & UPDATE_MESSAGES) != 0) {
@@ -201,23 +207,6 @@ public class BugleNotifications {
         if (LogUtil.isLoggable(TAG, LogUtil.DEBUG)) {
             LogUtil.d(TAG, "Canceled notifications of type " + type);
         }
-    }
-
-    /**
-     * Returns {@code true} if a notification should be posted. Suppressed when Bugle is
-     * not the default SMS app, or when the target conversation is snoozed. The reason is
-     * logged at DEBUG. {@code conversationId} may be {@code null} for global events.
-     */
-    private static boolean shouldNotify(final String conversationId) {
-        if (!PhoneUtils.getDefault().isDefaultSmsApp()) {
-            LogUtil.d(TAG, "Skipping notification: not the default SMS app");
-            return false;
-        }
-        if (conversationId != null && isConversationSnoozed(conversationId)) {
-            LogUtil.d(TAG, "Skipping notification: conversation snoozed, id=" + conversationId);
-            return false;
-        }
-        return true;
     }
 
     private static boolean isConversationSnoozed(final String conversationId) {
