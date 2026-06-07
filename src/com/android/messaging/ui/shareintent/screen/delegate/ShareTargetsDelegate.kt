@@ -27,16 +27,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal interface ShareTargetsDelegate {
-    val state: Flow<ShareTargetsUiState>
+    val state: StateFlow<ShareTargetsUiState>
     val selectedIds: Flow<ImmutableSet<String>>
     fun bind(scope: CoroutineScope)
     fun setSearchActive(active: Boolean)
@@ -73,27 +74,34 @@ internal class ShareTargetsDelegateImpl @Inject constructor(
 
     private var boundScope: CoroutineScope? = null
 
+    private val _state = MutableStateFlow(ShareTargetsUiState())
+    override val state: StateFlow<ShareTargetsUiState> = _state.asStateFlow()
+
     override val selectedIds: Flow<ImmutableSet<String>> = selectedTargetsList.map {
         it.toSelectionIds()
     }
 
-    override val state: Flow<ShareTargetsUiState> = combine(
-        combine(recents, searchQuery, visibleRecentLimit, ::buildRecentTargets),
-        contactsState,
-        isSearchActive,
-        selectedTargetsList,
-    ) { recentTargets, contacts, active, selectedTargets ->
-        buildState(
-            recentTargets = recentTargets,
-            contacts = contacts,
-            isSearchActive = active,
-            selectedTargets = selectedTargets,
-        )
-    }.flowOn(defaultDispatcher)
-
     override fun bind(scope: CoroutineScope) {
         if (boundScope != null) return
         boundScope = scope
+
+        scope.launch(defaultDispatcher) {
+            combine(
+                combine(recents, searchQuery, visibleRecentLimit, ::buildRecentTargets),
+                contactsState,
+                isSearchActive,
+                selectedTargetsList,
+            ) { recentTargets, contacts, active, selectedTargets ->
+                buildState(
+                    recentTargets = recentTargets,
+                    contacts = contacts,
+                    isSearchActive = active,
+                    selectedTargets = selectedTargets,
+                )
+            }.collect { state ->
+                _state.value = state
+            }
+        }
 
         scope.launch(defaultDispatcher) {
             repository.observeShareTargets()
