@@ -12,13 +12,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal interface ShareDraftDelegate {
-    val state: Flow<ShareDraftUiState>
+    val state: StateFlow<ShareDraftUiState>
     fun bind(scope: CoroutineScope, selectedIds: Flow<ImmutableSet<String>>)
     fun resolveDraft(draft: ConversationDraft?)
     fun setDraftText(text: String)
@@ -40,22 +41,8 @@ internal class ShareDraftDelegateImpl @Inject constructor(
 
     private var isBound = false
 
-    override val state: Flow<ShareDraftUiState> =
-        combine(
-            draft,
-            isReviewing,
-            isDraftLoading,
-        ) { current, reviewing, loading ->
-            ShareDraftUiState(
-                isLoading = loading,
-                isReviewing = reviewing,
-                text = current.messageText,
-                subjectText = current.subjectText,
-                attachments = current.attachments
-                    .map(ConversationDraftAttachment::toShareAttachmentUiModel)
-                    .toImmutableList(),
-            )
-        }.flowOn(defaultDispatcher)
+    private val _state = MutableStateFlow(ShareDraftUiState())
+    override val state: StateFlow<ShareDraftUiState> = _state.asStateFlow()
 
     override fun bind(
         scope: CoroutineScope,
@@ -63,6 +50,26 @@ internal class ShareDraftDelegateImpl @Inject constructor(
     ) {
         if (isBound) return
         isBound = true
+
+        scope.launch(defaultDispatcher) {
+            combine(
+                draft,
+                isReviewing,
+                isDraftLoading,
+            ) { current, reviewing, loading ->
+                ShareDraftUiState(
+                    isLoading = loading,
+                    isReviewing = reviewing,
+                    text = current.messageText,
+                    subjectText = current.subjectText,
+                    attachments = current.attachments
+                        .map(ConversationDraftAttachment::toShareAttachmentUiModel)
+                        .toImmutableList(),
+                )
+            }.collect { state ->
+                _state.value = state
+            }
+        }
 
         scope.launch(defaultDispatcher) {
             selectedIds.collect { selected ->
