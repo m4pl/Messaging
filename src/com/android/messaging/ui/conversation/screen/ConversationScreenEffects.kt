@@ -99,8 +99,8 @@ private suspend fun ConversationScreenModel.handleConversationScreenEffect(
     when (effect) {
         ConversationScreenEffect.CloseConversation -> onNavigateBack()
 
-        is ConversationScreenEffect.ShowMessageDetails -> {
-            onNavigateToMessageDetails(effect.message.messageId)
+        is ConversationScreenEffect.NavigateToMessageDetails -> {
+            onNavigateToMessageDetails(effect.messageId)
         }
 
         is ConversationScreenEffect.RequestDefaultSmsRole -> {
