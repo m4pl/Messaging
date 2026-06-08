@@ -68,6 +68,8 @@ import com.android.messaging.ui.conversation.composer.mapper.ConversationCompose
 import com.android.messaging.ui.conversation.composer.mapper.ConversationComposerUiStateMapperImpl
 import com.android.messaging.ui.conversation.mediapicker.mapper.ConversationDraftAttachmentMapper
 import com.android.messaging.ui.conversation.mediapicker.mapper.ConversationDraftAttachmentMapperImpl
+import com.android.messaging.ui.conversation.messagedetails.mapper.MessageDetailsUiStateMapper
+import com.android.messaging.ui.conversation.messagedetails.mapper.MessageDetailsUiStateMapperImpl
 import com.android.messaging.ui.conversation.messages.mapper.ConversationMessageUiModelMapper
 import com.android.messaging.ui.conversation.messages.mapper.ConversationMessageUiModelMapperImpl
 import com.android.messaging.ui.conversation.metadata.mapper.ConversationMetadataUiStateMapper
@@ -148,6 +150,12 @@ internal abstract class ConversationBindsModule {
     abstract fun bindContactUiModelMapper(
         impl: ContactUiModelMapperImpl,
     ): ContactUiModelMapper
+
+    @Binds
+    @Reusable
+    abstract fun bindMessageDetailsUiStateMapper(
+        impl: MessageDetailsUiStateMapperImpl,
+    ): MessageDetailsUiStateMapper
 
     @Binds
     @Reusable
