@@ -2,10 +2,7 @@ package com.android.messaging.ui.conversation.screen.model
 
 import android.content.Intent
 import android.net.Uri
-import com.android.messaging.datamodel.data.ConversationMessageData
-import com.android.messaging.datamodel.data.ConversationParticipantsData
 import com.android.messaging.datamodel.data.MessageData
-import com.android.messaging.datamodel.data.ParticipantData
 
 internal sealed interface ConversationScreenEffect {
     data object CloseConversation : ConversationScreenEffect
@@ -66,9 +63,7 @@ internal sealed interface ConversationScreenEffect {
         val normalizedDestination: String?,
     ) : ConversationScreenEffect
 
-    data class ShowMessageDetails(
-        val message: ConversationMessageData,
-        val participants: ConversationParticipantsData,
-        val selfParticipant: ParticipantData?,
+    data class NavigateToMessageDetails(
+        val messageId: String,
     ) : ConversationScreenEffect
 }

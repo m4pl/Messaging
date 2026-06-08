@@ -18,7 +18,7 @@ import com.android.messaging.ui.conversation.messages.model.message.Conversation
 import com.android.messaging.ui.conversation.screen.model.ConversationMessageDeleteConfirmationUiState
 import com.android.messaging.ui.conversation.screen.model.ConversationMessageSelectionAction
 import com.android.messaging.ui.conversation.screen.model.ConversationMessageSelectionUiState
-import com.android.messaging.ui.conversation.screen.model.ConversationScreenEffect
+import com.android.messaging.ui.conversation.screen.model.ConversationScreenEffect as Effect
 import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 
 internal interface ConversationMessageSelectionDelegate :
     ConversationScreenDelegate<ConversationMessageSelectionUiState> {
-    val effects: Flow<ConversationScreenEffect>
+    val effects: Flow<Effect>
 
     fun onMessageClick(messageId: String)
 
@@ -69,7 +69,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
     private val defaultDispatcher: CoroutineDispatcher,
 ) : ConversationMessageSelectionDelegate {
 
-    private val _effects = MutableSharedFlow<ConversationScreenEffect>(
+    private val _effects = MutableSharedFlow<Effect>(
         extraBufferCapacity = 1,
     )
     private val _state = MutableStateFlow(ConversationMessageSelectionUiState())
@@ -237,7 +237,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
         downloadMessageWhenActionRequirementsSatisfied(messageId = selectedMessage.messageId)
     }
 
-    private fun emitEffect(effect: ConversationScreenEffect) {
+    private fun emitEffect(effect: Effect) {
         boundScope?.launch(defaultDispatcher) {
             _effects.emit(effect)
         }
@@ -255,7 +255,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
             ) ?: return@launch
 
             _effects.emit(
-                ConversationScreenEffect.LaunchForwardMessage(
+                Effect.LaunchForwardMessage(
                     message = forwardedMessage,
                 ),
             )
@@ -266,22 +266,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
         val selectedMessage = singleSelectedMessageOrNull() ?: return
 
         clearMessageSelection()
-        boundScope?.launch(defaultDispatcher) {
-            conversationsRepository
-                .getMessageDetailsData(
-                    conversationId = selectedMessage.conversationId,
-                    messageId = selectedMessage.messageId,
-                )
-                ?.let { messageDetailsData ->
-                    ConversationScreenEffect.ShowMessageDetails(
-                        message = messageDetailsData.message,
-                        participants = messageDetailsData.participants,
-                        selfParticipant = messageDetailsData.selfParticipant,
-                    )
-                }?.let { effect ->
-                    _effects.emit(effect)
-                }
-        }
+        emitEffect(Effect.NavigateToMessageDetails(selectedMessage.messageId))
     }
 
     private fun requestDeleteSelectedMessages() {
@@ -375,7 +360,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
             ConversationActionRequirementsResult.SmsNotCapable -> {
                 onBlocked()
                 emitEffect(
-                    effect = ConversationScreenEffect.ShowMessage(
+                    effect = Effect.ShowMessage(
                         messageResId = R.string.sms_disabled,
                     ),
                 )
@@ -384,7 +369,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
             ConversationActionRequirementsResult.NoPreferredSmsSim -> {
                 onBlocked()
                 emitEffect(
-                    effect = ConversationScreenEffect.ShowMessage(
+                    effect = Effect.ShowMessage(
                         messageResId = R.string.no_preferred_sim_selected,
                     ),
                 )
@@ -394,7 +379,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
                 onBlocked()
                 onMissingDefaultSmsRole()
                 emitEffect(
-                    effect = ConversationScreenEffect.RequestDefaultSmsRole(
+                    effect = Effect.RequestDefaultSmsRole(
                         isSending = isSending,
                     ),
                 )
@@ -470,7 +455,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
                 .saveAttachmentsToMediaStore(attachments = attachments)
                 .collect { result ->
                     _effects.emit(
-                        ConversationScreenEffect.ShowSaveAttachmentsResult(
+                        Effect.ShowSaveAttachmentsResult(
                             imageCount = result.imageCount,
                             videoCount = result.videoCount,
                             otherCount = result.otherCount,
@@ -501,7 +486,7 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
 
         clearMessageSelection()
         emitEffect(
-            effect = ConversationScreenEffect.ShareMessage(
+            effect = Effect.ShareMessage(
                 attachmentContentType = firstAttachment?.contentType,
                 attachmentContentUri = firstAttachment?.contentUri?.toString(),
                 text = messageText,

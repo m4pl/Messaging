@@ -57,11 +57,6 @@ internal interface ConversationsRepository {
 
     fun downloadMessage(messageId: String)
 
-    suspend fun getMessageDetailsData(
-        conversationId: String,
-        messageId: String,
-    ): ConversationMessageDetailsData?
-
     suspend fun getMessageDetails(
         conversationId: String,
         messageId: String,
@@ -178,18 +173,6 @@ internal class ConversationsRepositoryImpl @Inject constructor(
         messageId
             .takeIf { it.isNotBlank() }
             ?.let(RedownloadMmsAction::redownloadMessage)
-    }
-
-    override suspend fun getMessageDetailsData(
-        conversationId: String,
-        messageId: String,
-    ): ConversationMessageDetailsData? {
-        return withContext(context = messagingDbDispatcher) {
-            loadMessageDetailsData(
-                conversationId = conversationId,
-                messageId = messageId,
-            )
-        }
     }
 
     override suspend fun getMessageDetails(
