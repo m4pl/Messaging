@@ -13,9 +13,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.android.messaging.ui.common.components.ParticipantAvatar
-import com.android.messaging.ui.common.components.participantAvatarLabel
-import com.android.messaging.ui.common.components.participantColorSeed
+import com.android.messaging.ui.common.components.participant.ParticipantAvatar
+import com.android.messaging.ui.common.components.participant.participantAvatarLabel
+import com.android.messaging.ui.common.components.participant.participantColorSeed
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
 import com.android.messaging.ui.conversation.preview.previewIncomingMessage
 import com.android.messaging.ui.core.MessagingPreviewColumn

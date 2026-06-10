@@ -22,9 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
-import com.android.messaging.ui.common.components.ParticipantAvatar
-import com.android.messaging.ui.common.components.participantAvatarLabel
-import com.android.messaging.ui.common.components.participantColorSeed
+import com.android.messaging.ui.common.components.participant.ParticipantAvatar
+import com.android.messaging.ui.common.components.participant.participantAvatarLabel
+import com.android.messaging.ui.common.components.participant.participantColorSeed
 import com.android.messaging.ui.conversation.preview.previewRecipientPickerUiState
 import com.android.messaging.ui.conversation.recipientpicker.model.picker.RecipientPickerListItem
 import com.android.messaging.ui.core.MessagingPreviewColumn

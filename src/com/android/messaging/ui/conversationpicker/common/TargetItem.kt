@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.android.messaging.ui.common.components.ParticipantAvatar
 import com.android.messaging.ui.common.components.TwoLineListItem
+import com.android.messaging.ui.common.components.participant.ParticipantAvatar
 import com.android.messaging.ui.conversationpicker.model.TargetUiState
 import com.android.messaging.ui.core.MessagingPreviewColumn
 

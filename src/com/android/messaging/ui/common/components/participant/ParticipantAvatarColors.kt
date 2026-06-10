@@ -1,29 +1,9 @@
-package com.android.messaging.ui.common.components
+package com.android.messaging.ui.common.components.participant
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import coil3.compose.AsyncImage
-import com.android.messaging.sms.MmsSmsUtils
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -45,20 +25,20 @@ private const val DARK_THEME_AVATAR_BACKGROUND_LIGHTNESS = 0.30f
 private const val DARK_THEME_AVATAR_CONTENT_SATURATION = 0.70f
 private const val DARK_THEME_AVATAR_CONTENT_LIGHTNESS = 0.88f
 
+internal data class ParticipantAvatarFallbackColors(
+    val background: Color,
+    val content: Color,
+)
+
 @Composable
-internal fun ParticipantAvatar(
-    avatarUri: String?,
-    fallbackIcon: ImageVector,
-    fallbackSize: Dp,
-    fallbackLabel: String?,
-    modifier: Modifier = Modifier,
-    colorSeedCode: String? = null,
-    shape: Shape = CircleShape,
-    isSelected: Boolean = false,
-) {
+internal fun resolvedFallbackColors(
+    colorSeedCode: String?,
+    isSelected: Boolean,
+): ParticipantAvatarFallbackColors {
     val colorScheme = MaterialTheme.colorScheme
     val isDarkTheme = colorScheme.background.luminance() < DARK_THEME_LUMINANCE_THRESHOLD
-    val fallbackColors = when {
+
+    return when {
         isSelected -> ParticipantAvatarFallbackColors(
             background = colorScheme.primary,
             content = colorScheme.onPrimary,
@@ -73,94 +53,6 @@ internal fun ParticipantAvatar(
             colorSeedCode = colorSeedCode,
             isDarkTheme = isDarkTheme,
         )
-    }
-
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(fallbackColors.background),
-        contentAlignment = Alignment.Center,
-    ) {
-        when {
-            isSelected -> {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(fallbackSize),
-                    tint = fallbackColors.content,
-                )
-            }
-
-            !avatarUri.isNullOrBlank() -> {
-                AsyncImage(
-                    model = avatarUri,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-
-            !fallbackLabel.isNullOrBlank() -> {
-                val fontSize = with(LocalDensity.current) { fallbackSize.toSp() }
-
-                Text(
-                    text = fallbackLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontSize = fontSize,
-                    lineHeight = fontSize,
-                    color = fallbackColors.content,
-                )
-            }
-
-            else -> {
-                Icon(
-                    imageVector = fallbackIcon,
-                    contentDescription = null,
-                    modifier = Modifier.size(fallbackSize),
-                    tint = fallbackColors.content,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun ParticipantAvatar(
-    avatarUri: String?,
-    size: Dp,
-    fallbackLabel: String?,
-    modifier: Modifier = Modifier,
-    colorSeedCode: String? = null,
-    fallbackSize: Dp = size / 2,
-    fallbackIcon: ImageVector = Icons.Default.Person,
-    shape: Shape = CircleShape,
-    isSelected: Boolean = false,
-) {
-    ParticipantAvatar(
-        avatarUri = avatarUri,
-        fallbackIcon = fallbackIcon,
-        fallbackSize = fallbackSize,
-        fallbackLabel = fallbackLabel,
-        modifier = modifier.size(size),
-        colorSeedCode = colorSeedCode,
-        shape = shape,
-        isSelected = isSelected,
-    )
-}
-
-internal fun participantColorSeed(normalizedDestination: String?): String? {
-    return normalizedDestination
-        ?.filterNot { it.isWhitespace() }
-        ?.takeIf { it.isNotEmpty() }
-}
-
-internal fun participantAvatarLabel(source: String?): String? {
-    val trimmedSource = source?.trim()
-
-    return when {
-        trimmedSource.isNullOrBlank() -> null
-        MmsSmsUtils.isPhoneNumber(trimmedSource) -> null
-        else -> trimmedSource.first().uppercaseChar().toString()
     }
 }
 
@@ -198,11 +90,6 @@ internal fun participantAvatarFallbackColors(
         )
     }
 }
-
-internal data class ParticipantAvatarFallbackColors(
-    val background: Color,
-    val content: Color,
-)
 
 private fun participantAvatarHue(colorSeedCode: String): Float {
     val positiveHash = colorSeedCode.stableHashCode() and Int.MAX_VALUE

@@ -4,8 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.android.messaging.ui.common.components.participantAvatarLabel
-import com.android.messaging.ui.common.components.participantColorSeed
+import com.android.messaging.ui.common.components.participant.participantAvatarLabel
+import com.android.messaging.ui.common.components.participant.participantColorSeed
 import com.android.messaging.ui.conversationpicker.model.TargetUiState
 
 internal data class TargetAvatarContent(

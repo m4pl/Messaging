@@ -1,4 +1,4 @@
-package com.android.messaging.ui.common.components
+package com.android.messaging.ui.common.components.participant
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.android.messaging.R
+import com.android.messaging.ui.common.components.AnchorRelativePositionProvider
+import com.android.messaging.ui.common.components.MarqueeText
 import com.android.messaging.ui.core.MessagingPreviewColumn
 
 private val PopupWidth = 192.dp
