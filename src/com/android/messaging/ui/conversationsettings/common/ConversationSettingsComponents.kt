@@ -38,9 +38,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
-import com.android.messaging.ui.common.components.ParticipantAvatar
-import com.android.messaging.ui.common.components.ParticipantQuickActionsPopup
-import com.android.messaging.ui.common.components.participantAvatarLabel
+import com.android.messaging.ui.common.components.participant.ParticipantAvatar
+import com.android.messaging.ui.common.components.participant.ParticipantQuickActionsPopup
+import com.android.messaging.ui.common.components.participant.participantAvatarLabel
 import com.android.messaging.ui.conversationsettings.screen.model.ParticipantUiState
 import com.android.messaging.ui.core.MessagingPreviewColumn
 

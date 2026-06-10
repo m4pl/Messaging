@@ -52,9 +52,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.text.BidiFormatter
 import androidx.core.text.TextDirectionHeuristicsCompat
 import com.android.messaging.R
-import com.android.messaging.ui.common.components.ParticipantAvatar
-import com.android.messaging.ui.common.components.participantAvatarLabel
-import com.android.messaging.ui.common.components.participantColorSeed
+import com.android.messaging.ui.common.components.participant.ParticipantAvatar
+import com.android.messaging.ui.common.components.participant.participantAvatarLabel
+import com.android.messaging.ui.common.components.participant.participantColorSeed
 import com.android.messaging.ui.conversation.CONVERSATION_ADD_CONTACT_BUTTON_TEST_TAG
 import com.android.messaging.ui.conversation.CONVERSATION_ADD_PEOPLE_BUTTON_TEST_TAG
 import com.android.messaging.ui.conversation.CONVERSATION_ARCHIVE_BUTTON_TEST_TAG
