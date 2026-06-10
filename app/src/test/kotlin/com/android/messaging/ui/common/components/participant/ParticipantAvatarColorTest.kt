@@ -1,4 +1,4 @@
-package com.android.messaging.ui.common.components
+package com.android.messaging.ui.common.components.participant
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
