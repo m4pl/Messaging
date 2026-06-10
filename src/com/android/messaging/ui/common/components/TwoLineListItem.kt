@@ -28,7 +28,6 @@ private val ItemHorizontalPadding = 8.dp
 private val ItemVerticalPadding = 8.dp
 private val ListRowShape = RoundedCornerShape(percent = 50)
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun TwoLineListItem(
     title: String,
@@ -39,6 +38,54 @@ internal fun TwoLineListItem(
     onLongClick: (() -> Unit)? = null,
     shape: Shape = ListRowShape,
     color: Color = MaterialTheme.colorScheme.background,
+    trailingContent: (@Composable () -> Unit)? = null,
+) {
+    TwoLineListItem(
+        onClick = onClick,
+        leadingContent = leadingContent,
+        titleContent = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        modifier = modifier,
+        onLongClick = onLongClick,
+        shape = shape,
+        color = color,
+        subtitleContent = when {
+            subtitle.isNullOrBlank() -> null
+
+            else -> {
+                {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        },
+        trailingContent = trailingContent,
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun TwoLineListItem(
+    onClick: () -> Unit,
+    leadingContent: @Composable () -> Unit,
+    titleContent: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    shape: Shape = ListRowShape,
+    color: Color = MaterialTheme.colorScheme.background,
+    subtitleContent: (@Composable () -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
 ) {
     Surface(
@@ -62,9 +109,9 @@ internal fun TwoLineListItem(
 
             Spacer(modifier = Modifier.width(ItemHorizontalPadding))
 
-            TwoLineListItemText(
-                title = title,
-                subtitle = subtitle,
+            TwoLineListItemContent(
+                titleContent = titleContent,
+                subtitleContent = subtitleContent,
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = ItemHorizontalPadding),
@@ -76,9 +123,9 @@ internal fun TwoLineListItem(
 }
 
 @Composable
-private fun TwoLineListItemText(
-    title: String,
-    subtitle: String?,
+private fun TwoLineListItemContent(
+    titleContent: @Composable () -> Unit,
+    subtitleContent: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val twoLineHeight = with(LocalDensity.current) {
@@ -90,22 +137,7 @@ private fun TwoLineListItemText(
         modifier = modifier.heightIn(min = twoLineHeight),
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-
-        if (!subtitle.isNullOrBlank()) {
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        titleContent()
+        subtitleContent?.invoke()
     }
 }
