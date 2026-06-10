@@ -1,6 +1,7 @@
-package com.android.messaging.domain.conversationlist.usecase
+package com.android.messaging.data.blockedparticipants.repository
 
-import com.android.messaging.datamodel.action.UpdateDestinationBlockedAction
+import com.android.messaging.datamodel.action.UpdateDestinationBlockedAction.UpdateDestinationBlockedActionListener
+import com.android.messaging.datamodel.action.UpdateDestinationBlockedAction.updateDestinationBlocked
 import com.android.messaging.di.core.MainDispatcher
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -8,39 +9,38 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
-internal interface SetConversationBlocked {
-    suspend operator fun invoke(
+internal interface BlockedParticipantsRepository {
+    suspend fun setDestinationBlocked(
         destination: String,
-        conversationId: String,
+        conversationId: String?,
         isBlocked: Boolean,
     ): Boolean
 }
 
-internal class SetConversationBlockedImpl @Inject constructor(
+internal class BlockedParticipantsRepositoryImpl @Inject constructor(
     @param:MainDispatcher
     private val mainDispatcher: CoroutineDispatcher,
-) : SetConversationBlocked {
+) : BlockedParticipantsRepository {
 
-    override suspend operator fun invoke(
+    override suspend fun setDestinationBlocked(
         destination: String,
-        conversationId: String,
+        conversationId: String?,
         isBlocked: Boolean,
     ): Boolean {
         val resolvedDestination = destination.takeIf(String::isNotBlank) ?: return false
 
         return withContext(mainDispatcher) {
             suspendCancellableCoroutine { continuation ->
-                val listener = UpdateDestinationBlockedAction
-                    .UpdateDestinationBlockedActionListener { _, success, _, _ ->
-                        if (continuation.isActive) {
-                            continuation.resume(success)
-                        }
+                val listener = UpdateDestinationBlockedActionListener { _, success, _, _ ->
+                    if (continuation.isActive) {
+                        continuation.resume(success)
                     }
+                }
 
-                val actionMonitor = UpdateDestinationBlockedAction.updateDestinationBlocked(
+                val actionMonitor = updateDestinationBlocked(
                     resolvedDestination,
                     isBlocked,
-                    conversationId.takeIf(String::isNotBlank),
+                    conversationId?.takeIf(String::isNotBlank),
                     listener,
                 )
 
