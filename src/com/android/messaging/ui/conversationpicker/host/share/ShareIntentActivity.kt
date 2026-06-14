@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.android.messaging.data.conversation.model.draft.ConversationDraft
 import com.android.messaging.di.core.ApplicationCoroutineScope
+import com.android.messaging.di.core.MainDispatcher
 import com.android.messaging.domain.conversationpicker.usecase.BuildMessageDataFromDraft
 import com.android.messaging.domain.conversationpicker.usecase.SendContentToTargets
 import com.android.messaging.domain.shareintent.usecase.BuildSharedConversationDraft
@@ -20,6 +21,7 @@ import com.android.messaging.ui.conversationpicker.ConversationPickerScreen
 import com.android.messaging.ui.core.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 
 @AndroidEntryPoint
@@ -28,6 +30,10 @@ class ShareIntentActivity : ComponentActivity() {
     @Inject
     @ApplicationCoroutineScope
     internal lateinit var applicationScope: CoroutineScope
+
+    @Inject
+    @MainDispatcher
+    internal lateinit var mainDispatcher: CoroutineDispatcher
 
     @Inject
     internal lateinit var sendContentToTargets: SendContentToTargets
@@ -60,6 +66,7 @@ class ShareIntentActivity : ComponentActivity() {
                 val effectHandler = remember(conversationDraft) {
                     ShareIntentEffectHandler(
                         applicationScope = applicationScope,
+                        mainDispatcher = mainDispatcher,
                         activity = this,
                         draft = conversationDraft,
                         sendContentToTargets = sendContentToTargets,
