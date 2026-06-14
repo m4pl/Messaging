@@ -60,7 +60,17 @@ internal class ContactDestinationFormatterImpl @Inject constructor() : ContactDe
         return when {
             trimmed.isEmpty() -> trimmed
             MmsSmsUtils.isEmailAddress(trimmed) -> trimmed.lowercase(Locale.ROOT)
-            else -> canonicalizePhoneNumber(trimmed)
+            else -> canonicalizePhoneNumber(trimmed).stripPhoneSeparators()
         }
+    }
+
+    private fun String.stripPhoneSeparators(): String {
+        return filterNot { character ->
+            character.isWhitespace() || character in PHONE_SEPARATOR_CHARS
+        }
+    }
+
+    private companion object {
+        private val PHONE_SEPARATOR_CHARS = setOf('-', '(', ')', '.', '/')
     }
 }
