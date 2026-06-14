@@ -170,6 +170,45 @@ internal class ContactsRepositoryImplTest {
     }
 
     @Test
+    fun sameNumberWithDifferentFormattingCollapsesToSingleDestination() = runTest {
+        val rows = listOf(
+            phoneRow(
+                contactId = 8L,
+                sortKey = "Dana",
+                number = "+1 777-7777",
+                type = ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE,
+            ),
+            phoneRow(
+                contactId = 8L,
+                sortKey = "Dana",
+                number = "+17777777",
+                type = ContactsContract.CommonDataKinds.Phone.TYPE_HOME,
+            ),
+        )
+
+        stubFilterPhoneCursor(
+            query = "Dana",
+            rows = rows
+        )
+        stubFilterEmailCursor(
+            query = "Dana",
+            rows = emptyList()
+        )
+
+        stubExpansionPhoneCursor(rows = rows)
+        stubExpansionEmailCursor(rows = emptyList())
+
+        val repo = createRepository()
+        val page = repo.searchContacts(
+            query = "Dana",
+            offset = 0,
+        ).first()
+
+        val destination = page.contacts.single().destinations.single()
+        Assert.assertEquals("+17777777", destination.normalizedValue)
+    }
+
+    @Test
     fun twoContactsSharingNumberBothKeepIt() = runTest {
         stubFilterPhoneCursor(
             query = "Same",
