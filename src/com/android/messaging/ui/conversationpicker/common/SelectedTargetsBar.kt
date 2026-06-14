@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -99,11 +99,11 @@ internal fun SelectedTargetsBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(SelectedBarHeight),
+            .heightIn(min = SelectedBarHeight),
     ) {
         LazyRow(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = SelectedBarStartPadding,
                 end = when {
@@ -130,9 +130,11 @@ internal fun SelectedTargetsBar(
         }
 
         if (showProceedButton) {
-            SelectedTargetsProceedButton(
-                onProceed = onProceed,
-            )
+            Box(modifier = Modifier.matchParentSize()) {
+                SelectedTargetsProceedButton(
+                    onProceed = onProceed,
+                )
+            }
         }
     }
 }
@@ -198,7 +200,7 @@ private fun SelectedTargetChip(
             text = target.displayName,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(SelectedChipLabelHeight),
+                .heightIn(min = SelectedChipLabelHeight),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
