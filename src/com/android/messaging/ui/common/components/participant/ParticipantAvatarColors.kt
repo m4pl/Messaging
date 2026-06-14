@@ -2,6 +2,7 @@ package com.android.messaging.ui.common.components.participant
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import kotlin.math.abs
@@ -49,10 +50,12 @@ internal fun resolvedFallbackColors(
             content = colorScheme.onPrimaryContainer,
         )
 
-        else -> participantAvatarFallbackColors(
-            colorSeedCode = colorSeedCode,
-            isDarkTheme = isDarkTheme,
-        )
+        else -> remember(colorSeedCode, isDarkTheme) {
+            participantAvatarFallbackColors(
+                colorSeedCode = colorSeedCode,
+                isDarkTheme = isDarkTheme,
+            )
+        }
     }
 }
 
