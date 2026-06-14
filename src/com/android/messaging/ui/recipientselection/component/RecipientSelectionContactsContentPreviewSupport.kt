@@ -64,6 +64,59 @@ internal fun previewRecipientSelectionContactsLoadedState(): RecipientSelectionC
     )
 }
 
+internal fun previewRecipientSelectionContactsSectionedState(): RecipientSelectionContentUiState {
+    return RecipientSelectionContentUiState(
+        picker = RecipientPickerUiState(
+            query = "",
+            items = persistentListOf<RecipientPickerListItem>()
+                .add(
+                    previewRecipientSelectionSingleDestinationContactItem(
+                        contactId = 1L,
+                        destination = "+31600000001",
+                        displayName = "Ada Lovelace",
+                    ),
+                )
+                .add(
+                    previewRecipientSelectionSingleDestinationContactItem(
+                        contactId = 2L,
+                        destination = "+31600000002",
+                        displayName = "Alan Turing",
+                    ),
+                )
+                .add(
+                    previewRecipientSelectionSingleDestinationContactItem(
+                        contactId = 3L,
+                        destination = "+31600000003",
+                        displayName = "Bob Kahn",
+                    ),
+                )
+                .add(
+                    previewRecipientSelectionSingleDestinationContactItem(
+                        contactId = 4L,
+                        destination = "+31600000004",
+                        displayName = "Zoe Washington",
+                    ),
+                )
+                .add(
+                    previewRecipientSelectionSingleDestinationContactItem(
+                        contactId = 5L,
+                        destination = "+31600000005",
+                        displayName = "+31 6 5555 0100",
+                    ),
+                ),
+            canLoadMore = false,
+            hasContactsPermission = true,
+            isLoading = false,
+            isLoadingMore = false,
+        ),
+        primaryAction = previewRecipientSelectionPrimaryActionUiState(
+            isEnabled = true,
+        ),
+        selectedRecipients = persistentListOf(),
+        isQueryEnabled = true,
+    )
+}
+
 internal fun previewRecipientSelectionContactsLoadingState(): RecipientSelectionContentUiState {
     return RecipientSelectionContentUiState(
         picker = RecipientPickerUiState(

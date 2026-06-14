@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,19 +28,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.common.components.selection.SelectionListContent
 import com.android.messaging.ui.core.MessagingPreviewColumn
-import com.android.messaging.ui.recipientselection.model.picker.RecipientPickerListItem
+import com.android.messaging.ui.recipientselection.model.section.RecipientContactListEntry
 import com.android.messaging.ui.recipientselection.model.selection.OnRecipientDestinationAction
 import com.android.messaging.ui.recipientselection.model.selection.RecipientSelectionContentUiState
 import com.android.messaging.ui.recipientselection.model.selection.RecipientSelectionRowDecorators
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toImmutableSet
 
 private const val RECIPIENT_CONTACT_CONTENT_TYPE = "recipient_contact"
+private const val RECIPIENT_SECTION_HEADER_CONTENT_TYPE = "recipient_section_header"
 
 @Composable
 internal fun RecipientSelectionContactsContent(
@@ -61,6 +64,14 @@ internal fun RecipientSelectionContactsContent(
         uiState.selectedRecipients
             .map { recipient -> recipient.destination }
             .toImmutableSet()
+    }
+
+    val showSectionHeaders = pickerUiState.query.isBlank()
+    val contactEntries = remember(pickerUiState.items, showSectionHeaders) {
+        recipientContactListEntries(
+            items = pickerUiState.items,
+            showSectionHeaders = showSectionHeaders,
+        )
     }
 
     SelectionListContent(
@@ -95,6 +106,7 @@ internal fun RecipientSelectionContactsContent(
 
         recipientSelectionContactItems(
             uiState = uiState,
+            entries = contactEntries,
             selectedDestinations = selectedDestinations,
             rowDecorators = rowDecorators,
             onRecipientDestinationClick = onRecipientDestinationClick,
@@ -105,6 +117,7 @@ internal fun RecipientSelectionContactsContent(
 
 private fun LazyListScope.recipientSelectionContactItems(
     uiState: RecipientSelectionContentUiState,
+    entries: ImmutableList<RecipientContactListEntry>,
     selectedDestinations: ImmutableSet<String>,
     rowDecorators: RecipientSelectionRowDecorators,
     onRecipientDestinationClick: OnRecipientDestinationAction,
@@ -126,20 +139,27 @@ private fun LazyListScope.recipientSelectionContactItems(
         }
 
         else -> {
-            itemsIndexed(
-                items = pickerUiState.items,
-                key = { _, item -> item.id },
-                contentType = { _, _ -> RECIPIENT_CONTACT_CONTENT_TYPE },
-            ) { index, item ->
-                RecipientSelectionContactItem(
-                    item = item,
-                    index = index,
-                    uiState = uiState,
-                    selectedDestinations = selectedDestinations,
-                    rowDecorators = rowDecorators,
-                    onRecipientDestinationClick = onRecipientDestinationClick,
-                    onRecipientDestinationLongClick = onRecipientDestinationLongClick,
-                )
+            items(
+                items = entries,
+                key = { entry -> entry.key },
+                contentType = { entry -> entry.contentType() },
+            ) { entry ->
+                when (entry) {
+                    is RecipientContactListEntry.Header -> {
+                        RecipientContactSectionHeader(entry.label)
+                    }
+
+                    is RecipientContactListEntry.Row -> {
+                        RecipientSelectionContactItem(
+                            entry = entry,
+                            uiState = uiState,
+                            selectedDestinations = selectedDestinations,
+                            rowDecorators = rowDecorators,
+                            onRecipientDestinationClick = onRecipientDestinationClick,
+                            onRecipientDestinationLongClick = onRecipientDestinationLongClick,
+                        )
+                    }
+                }
             }
         }
     }
@@ -151,19 +171,44 @@ private fun LazyListScope.recipientSelectionContactItems(
     }
 }
 
+private fun RecipientContactListEntry.contentType(): String {
+    return when (this) {
+        is RecipientContactListEntry.Header -> RECIPIENT_SECTION_HEADER_CONTENT_TYPE
+        is RecipientContactListEntry.Row -> RECIPIENT_CONTACT_CONTENT_TYPE
+    }
+}
+
+@Composable
+private fun RecipientContactSectionHeader(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = label,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                start = rowHorizontalPadding,
+                top = 4.dp,
+                bottom = 4.dp,
+            ),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+    )
+}
+
 @Composable
 private fun RecipientSelectionContactItem(
-    item: RecipientPickerListItem,
-    index: Int,
+    entry: RecipientContactListEntry.Row,
     uiState: RecipientSelectionContentUiState,
     selectedDestinations: ImmutableSet<String>,
     rowDecorators: RecipientSelectionRowDecorators,
     onRecipientDestinationClick: OnRecipientDestinationAction,
     onRecipientDestinationLongClick: OnRecipientDestinationAction?,
 ) {
-    val lastContactIndex = uiState.picker.items.lastIndex
+    val item = entry.item
     val bottomPadding = when {
-        index == lastContactIndex -> 0.dp
+        entry.positionInSection == entry.sectionSize - 1 -> 0.dp
         else -> 2.dp
     }
 
@@ -182,8 +227,8 @@ private fun RecipientSelectionContactItem(
         },
         rowDecorators = rowDecorators,
         shape = recipientSelectionContactRowShape(
-            index = index,
-            totalCount = uiState.picker.items.size,
+            index = entry.positionInSection,
+            totalCount = entry.sectionSize,
         ),
     )
 }
@@ -256,12 +301,17 @@ private fun RecipientSelectionLoadingMoreState() {
 }
 
 @Composable
-private fun RecipientSelectionEmptyState() {
+private fun RecipientSelectionEmptyState(
+    modifier: Modifier = Modifier,
+) {
     Text(
-        modifier = Modifier.padding(vertical = 24.dp, horizontal = 4.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(all = 24.dp),
         text = stringResource(id = R.string.contact_list_empty_text),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
     )
 }
 
@@ -272,6 +322,18 @@ private fun RecipientSelectionContactsContentLoadedPreview() {
         PreviewRecipientSelectionContactsContent(
             modifier = Modifier.height(height = 420.dp),
             uiState = previewRecipientSelectionContactsLoadedState(),
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun RecipientSelectionContactsContentSectionedPreview() {
+    MessagingPreviewColumn {
+        PreviewRecipientSelectionContactsContent(
+            modifier = Modifier.height(height = 480.dp),
+            uiState = previewRecipientSelectionContactsSectionedState(),
+            onRecipientDestinationLongClick = null,
         )
     }
 }
