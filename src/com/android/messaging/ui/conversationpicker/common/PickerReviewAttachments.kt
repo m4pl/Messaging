@@ -1,13 +1,20 @@
 package com.android.messaging.ui.conversationpicker.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -36,6 +43,10 @@ private val ReviewPageSpacing = 12.dp
 private val ReviewPageHorizontalPadding = 24.dp
 private val ReviewPageVerticalPadding = 12.dp
 private val ReviewDeleteChipPadding = 8.dp
+private val ReviewPageIndicatorPadding = 12.dp
+private val ReviewIndicatorDotSize = 8.dp
+private val ReviewIndicatorDotSpacing = 6.dp
+private const val REVIEW_INDICATOR_INACTIVE_ALPHA = 0.4f
 
 @Composable
 internal fun PickerReviewAttachments(
@@ -54,29 +65,75 @@ internal fun PickerReviewAttachments(
         pageCount = attachments.size,
     )
 
-    HorizontalPager(
-        modifier = modifier.testTag(ATTACHMENT_PREVIEW_LIST_TEST_TAG),
-        state = pagerState,
-        contentPadding = PaddingValues(horizontal = ReviewPageHorizontalPadding),
-        pageSpacing = ReviewPageSpacing,
-        key = { page -> attachments[page].id },
-        verticalAlignment = Alignment.CenterVertically,
-    ) { page ->
-        val attachment = attachments[page]
-
-        PickerReviewAttachmentPage(
-            attachment = attachment,
-            page = page,
-            pagerState = pagerState,
-            isOnlyItem = attachments.size == 1,
-            shouldShowDeleteChip = page == visibleDeleteChipPage,
-            onClick = { onAttachmentClick(attachment.id) },
-            onRemove = { onAttachmentRemove(attachment.id) },
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        HorizontalPager(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = ReviewPageVerticalPadding)
-                .testTag(attachmentItemTestTag(id = attachment.id)),
-        )
+                .weight(weight = 1f)
+                .fillMaxWidth()
+                .testTag(ATTACHMENT_PREVIEW_LIST_TEST_TAG),
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = ReviewPageHorizontalPadding),
+            pageSpacing = ReviewPageSpacing,
+            key = { page -> attachments[page].id },
+            verticalAlignment = Alignment.CenterVertically,
+        ) { page ->
+            val attachment = attachments[page]
+
+            PickerReviewAttachmentPage(
+                attachment = attachment,
+                page = page,
+                pagerState = pagerState,
+                isOnlyItem = attachments.size == 1,
+                shouldShowDeleteChip = page == visibleDeleteChipPage,
+                onClick = { onAttachmentClick(attachment.id) },
+                onRemove = { onAttachmentRemove(attachment.id) },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = ReviewPageVerticalPadding)
+                    .testTag(attachmentItemTestTag(id = attachment.id)),
+            )
+        }
+
+        if (attachments.size > 1) {
+            PickerReviewPagerIndicator(
+                pagerState = pagerState,
+                pageCount = attachments.size,
+                modifier = Modifier.padding(vertical = ReviewPageIndicatorPadding),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PickerReviewPagerIndicator(
+    pagerState: PagerState,
+    pageCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(space = ReviewIndicatorDotSpacing),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        repeat(times = pageCount) { index ->
+            val isSelected = pagerState.currentPage == index
+            val dotColor = when {
+                isSelected -> MaterialTheme.colorScheme.primary
+                else ->
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                        .copy(alpha = REVIEW_INDICATOR_INACTIVE_ALPHA)
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(size = ReviewIndicatorDotSize)
+                    .clip(shape = CircleShape)
+                    .background(color = dotColor),
+            )
+        }
     }
 }
 
