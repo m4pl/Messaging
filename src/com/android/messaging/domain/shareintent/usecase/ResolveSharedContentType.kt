@@ -5,7 +5,6 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import com.android.messaging.util.LogUtil
 import com.android.messaging.util.MediaMetadataRetrieverWrapper
-import java.io.IOException
 import javax.inject.Inject
 
 internal interface ResolveSharedContentType {
@@ -24,12 +23,18 @@ internal class ResolveSharedContentTypeImpl @Inject constructor(
             return fallbackType
         }
 
-        // First try looking at file extension. This is less reliable in some ways but it's
-        // recommended by
+        // Prefer the provider-declared type from ContentResolver.getType, falling back to
+        // metadata extraction only when it is unavailable. This is recommended by
         // https://developer.android.com/training/secure-file-sharing/retrieve-info.html
         // Some implementations of MediaMetadataRetriever get things horribly wrong for common
         // formats such as jpeg (reports as video/ffmpeg).
-        return contentResolver.getType(uri) ?: extractFromMetadata(uri, fallbackType)
+        return resolveDeclaredType(uri) ?: extractFromMetadata(uri, fallbackType)
+    }
+
+    private fun resolveDeclaredType(uri: Uri): String? {
+        return runCatching { contentResolver.getType(uri) }
+            .onFailure { LogUtil.i(LogUtil.BUGLE_TAG, "Could not query type of $uri", it) }
+            .getOrNull()
     }
 
     private fun extractFromMetadata(
@@ -39,11 +44,12 @@ internal class ResolveSharedContentTypeImpl @Inject constructor(
         val retriever = MediaMetadataRetrieverWrapper()
 
         return try {
-            retriever.setDataSource(uri)
-            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: fallbackType
-        } catch (e: IOException) {
-            LogUtil.i(LogUtil.BUGLE_TAG, "Could not determine type of $uri", e)
-            fallbackType
+            runCatching {
+                retriever.setDataSource(uri)
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+            }.onFailure {
+                LogUtil.i(LogUtil.BUGLE_TAG, "Could not determine type of $uri", it)
+            }.getOrNull() ?: fallbackType
         } finally {
             retriever.release()
         }

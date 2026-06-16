@@ -44,7 +44,14 @@ internal class SendContentToConversationsImpl @Inject constructor(
 
         var anyFailed = false
         conversationIds.forEachIndexed { index, conversationId ->
-            if (!sendToConversation(conversationId, drafts[index])) {
+            val perConversationDraft = drafts[index]
+            if (perConversationDraft == null) {
+                LogUtil.w(TAG, "Skipping send to $conversationId: failed to copy attachments")
+                anyFailed = true
+                return@forEachIndexed
+            }
+
+            if (!sendToConversation(conversationId, perConversationDraft)) {
                 anyFailed = true
             }
         }
@@ -58,7 +65,7 @@ internal class SendContentToConversationsImpl @Inject constructor(
     private suspend fun perConversationDrafts(
         draft: ConversationDraft,
         count: Int,
-    ): List<ConversationDraft> {
+    ): List<ConversationDraft?> {
         if (draft.attachments.isEmpty()) {
             return List(count) { draft }
         }
@@ -67,9 +74,8 @@ internal class SendContentToConversationsImpl @Inject constructor(
             List(count) { index ->
                 when (index) {
                     0 -> draft
-                    else -> draft.copy(
-                        attachments = copyAttachments(draft.attachments),
-                    )
+                    else -> copyAttachments(draft.attachments)
+                        ?.let { draft.copy(attachments = it) }
                 }
             }
         }
@@ -77,13 +83,12 @@ internal class SendContentToConversationsImpl @Inject constructor(
 
     private fun copyAttachments(
         attachments: ImmutableList<ConversationDraftAttachment>,
-    ): ImmutableList<ConversationDraftAttachment> {
-        return attachments.mapNotNull { attachment ->
-            UriUtil.persistContentToScratchSpace(
-                attachment.contentUri.toUri(),
-            )?.let {
-                attachment.copy(contentUri = it.toString())
-            }
+    ): ImmutableList<ConversationDraftAttachment>? {
+        return attachments.map { attachment ->
+            val copiedUri = UriUtil.persistContentToScratchSpace(
+                attachment.contentUri.toUri()
+            ) ?: return null
+            attachment.copy(contentUri = copiedUri.toString())
         }.toImmutableList()
     }
 

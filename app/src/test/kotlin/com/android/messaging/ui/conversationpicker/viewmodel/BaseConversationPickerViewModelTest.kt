@@ -70,7 +70,6 @@ internal abstract class BaseConversationPickerViewModelTest {
         every { state } returns simSelectionState
     }
 
-
     protected val resolveConversationId = mockk<ResolveConversationId>()
 
     protected fun createViewModel(): ConversationPickerViewModel {
