@@ -10,7 +10,7 @@ import com.android.messaging.util.ContentType
 import com.android.messaging.util.LogUtil
 import com.android.messaging.util.MediaMetadataRetrieverWrapper
 import com.android.messaging.util.UriUtil
-import java.io.IOException
+import java.io.BufferedReader
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -68,7 +68,7 @@ internal class SharedAttachmentRepositoryImpl @Inject constructor(
 
             runCatching {
                 contentResolver.openInputStream(sourceUri)?.use { stream ->
-                    stream.bufferedReader().readText()
+                    stream.bufferedReader().readBounded(MAX_SHARED_TEXT_CHARS)
                 }
             }.onFailure {
                 LogUtil.w(TAG, "Could not read shared text from $sourceUri", it)
@@ -83,16 +83,32 @@ internal class SharedAttachmentRepositoryImpl @Inject constructor(
 
         val retriever = MediaMetadataRetrieverWrapper()
         return try {
-            retriever.setDataSource(sourceUri)
-            retriever.extractInteger(MediaMetadataRetriever.METADATA_KEY_DURATION, 0)
-                .toLong()
-                .takeIf { it > 0L }
-        } catch (exception: IOException) {
-            LogUtil.w(TAG, "Could not read duration of shared audio $sourceUri", exception)
-            null
+            runCatching {
+                retriever.setDataSource(sourceUri)
+                retriever.extractInteger(MediaMetadataRetriever.METADATA_KEY_DURATION, 0)
+                    .toLong()
+                    .takeIf { it > 0L }
+            }.onFailure {
+                LogUtil.w(TAG, "Could not read duration of shared audio $sourceUri", it)
+            }.getOrNull()
         } finally {
             retriever.release()
         }
+    }
+
+    private fun BufferedReader.readBounded(limit: Int): String {
+        val buffer = CharArray(limit)
+        var total = 0
+
+        while (total < limit) {
+            val read = read(buffer, total, limit - total)
+            if (read == -1) {
+                break
+            }
+            total += read
+        }
+
+        return String(buffer, 0, total)
     }
 
     private fun queryDisplayName(sourceUri: Uri): String? {
@@ -121,5 +137,6 @@ internal class SharedAttachmentRepositoryImpl @Inject constructor(
 
     private companion object {
         private const val TAG = "SharedAttachmentRepo"
+        private const val MAX_SHARED_TEXT_CHARS = 100_000
     }
 }
