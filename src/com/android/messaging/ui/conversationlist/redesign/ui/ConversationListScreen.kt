@@ -21,15 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.rounded.ArrowUpward
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,6 +50,8 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.messaging.R
+import com.android.messaging.ui.common.components.PrimaryActionButton
+import com.android.messaging.ui.common.components.showActionSnackbar
 import com.android.messaging.ui.conversationlist.redesign.ConversationListEffectHandler
 import com.android.messaging.ui.conversationlist.redesign.ConversationListScreenModel
 import com.android.messaging.ui.conversationlist.redesign.ConversationListViewModel
@@ -67,7 +66,6 @@ import kotlinx.coroutines.launch
 
 private val FabSpacing = 16.dp
 private val FabBottomReserve = 72.dp
-private val FabShape = RoundedCornerShape(16.dp)
 private val ContentCornerShape = RoundedCornerShape(
     topStart = 28.dp,
     topEnd = 28.dp,
@@ -196,19 +194,19 @@ private fun CoroutineScope.launchArchivedSnackbar(
     }
 
     launch {
-        showUndoableSnackbar(
-            snackbarHostState = snackbarHostState,
+        val undoClicked = snackbarHostState.showActionSnackbar(
             message = context.getString(messageResId, effect.count),
-            undoLabel = undoLabel,
-            onUndo = {
-                onAction(
-                    Action.ArchiveUndoClicked(
-                        conversationIds = effect.conversationIds,
-                        isArchived = effect.isArchived,
-                    ),
-                )
-            },
+            actionLabel = undoLabel,
         )
+
+        if (undoClicked) {
+            onAction(
+                Action.ArchiveUndoClicked(
+                    conversationIds = effect.conversationIds,
+                    isArchived = effect.isArchived,
+                ),
+            )
+        }
     }
 }
 
@@ -224,35 +222,19 @@ private fun CoroutineScope.launchBlockedSnackbar(
     }
 
     launch {
-        showUndoableSnackbar(
-            snackbarHostState = snackbarHostState,
+        val undoClicked = snackbarHostState.showActionSnackbar(
             message = context.getString(R.string.update_destination_blocked),
-            undoLabel = undoLabel,
-            onUndo = {
-                onAction(
-                    Action.BlockUndoClicked(
-                        conversationId = effect.conversationId,
-                        destination = effect.destination,
-                    ),
-                )
-            },
+            actionLabel = undoLabel,
         )
-    }
-}
 
-private suspend fun showUndoableSnackbar(
-    snackbarHostState: SnackbarHostState,
-    message: String,
-    undoLabel: String,
-    onUndo: () -> Unit,
-) {
-    val snackbarResult = snackbarHostState.showSnackbar(
-        message = message,
-        actionLabel = undoLabel,
-    )
-
-    if (snackbarResult == SnackbarResult.ActionPerformed) {
-        onUndo()
+        if (undoClicked) {
+            onAction(
+                Action.BlockUndoClicked(
+                    conversationId = effect.conversationId,
+                    destination = effect.destination,
+                ),
+            )
+        }
     }
 }
 
@@ -421,19 +403,11 @@ private fun StartChatFab(
         enter = scaleIn() + fadeIn(),
         exit = scaleOut() + fadeOut(),
     ) {
-        ExtendedFloatingActionButton(
+        PrimaryActionButton(
+            text = stringResource(R.string.conversation_list_start_chat),
             onClick = onClick,
             expanded = expanded,
-            shape = FabShape,
-            icon = {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.Chat,
-                    contentDescription = stringResource(R.string.conversation_list_start_chat),
-                )
-            },
-            text = {
-                Text(text = stringResource(R.string.conversation_list_start_chat))
-            },
+            leadingIcon = Icons.AutoMirrored.Rounded.Chat,
         )
     }
 }
