@@ -27,6 +27,7 @@ import com.android.messaging.ui.common.components.TwoLineListItem
 import com.android.messaging.ui.common.components.participant.ParticipantAvatar
 import com.android.messaging.ui.common.components.participant.ParticipantQuickActionsPopup
 import com.android.messaging.ui.common.components.participant.participantAvatarLabel
+import com.android.messaging.ui.common.components.participant.participantColorSeed
 import com.android.messaging.ui.core.MessagingPreviewColumn
 
 @Composable
@@ -124,6 +125,7 @@ private fun BlockedParticipantQuickActions(
     visible: Boolean,
     participant: BlockedParticipantUiState,
     fallbackIcon: ImageVector,
+    colorSeedCode: String?,
     onDismiss: () -> Unit,
     onMessageClick: () -> Unit,
     onCallClick: (() -> Unit)?,
@@ -136,6 +138,7 @@ private fun BlockedParticipantQuickActions(
         subtitle = participant.details,
         fallbackIcon = fallbackIcon,
         fallbackLabel = participantAvatarLabel(source = participant.displayName),
+        colorSeedCode = colorSeedCode,
         onDismiss = onDismiss,
         onMessageClick = {
             onMessageClick()
@@ -166,12 +169,17 @@ private fun BlockedParticipantAvatarWithQuickActions(
     onCallClick: (() -> Unit)?,
     onContactClick: (() -> Unit)?,
 ) {
+    val colorSeedCode = participantColorSeed(
+        normalizedDestination = participant.normalizedDestination,
+    )
+
     Box(modifier = Modifier.size(48.dp)) {
         ParticipantAvatar(
             avatarUri = participant.avatarUri,
             size = 48.dp,
             fallbackLabel = participantAvatarLabel(source = participant.displayName),
             fallbackIcon = fallbackIcon,
+            colorSeedCode = colorSeedCode,
             isSelected = isSelected,
             modifier = Modifier
                 .clip(CircleShape)
@@ -185,6 +193,7 @@ private fun BlockedParticipantAvatarWithQuickActions(
             visible = quickActionsVisible && !inSelectionMode,
             participant = participant,
             fallbackIcon = fallbackIcon,
+            colorSeedCode = colorSeedCode,
             onDismiss = onDismissQuickActions,
             onMessageClick = onMessageClick,
             onCallClick = onCallClick,

@@ -35,16 +35,23 @@ internal fun ConversationListItemAvatar(
         else -> Icons.Default.Person
     }
 
+    val fallbackLabel = when {
+        item.avatar.isGroup -> null
+        else -> participantAvatarLabel(source = item.title)
+    }
+
+    val colorSeedCode = participantColorSeed(
+        normalizedDestination = item.avatar.normalizedDestination,
+    )
+
     var showQuickActions by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.size(ItemAvatarSize)) {
         ParticipantAvatar(
             avatarUri = item.avatar.uri,
             size = ItemAvatarSize,
-            fallbackLabel = participantAvatarLabel(source = item.title),
-            colorSeedCode = participantColorSeed(
-                normalizedDestination = item.avatar.normalizedDestination,
-            ),
+            fallbackLabel = fallbackLabel,
+            colorSeedCode = colorSeedCode,
             fallbackSize = ItemAvatarFallbackSize,
             fallbackIcon = fallbackIcon,
             isSelected = item.isSelected,
@@ -63,6 +70,8 @@ internal fun ConversationListItemAvatar(
             item = item,
             visible = showQuickActions && !isSelectionMode,
             fallbackIcon = fallbackIcon,
+            fallbackLabel = fallbackLabel,
+            colorSeedCode = colorSeedCode,
             onDismiss = { showQuickActions = false },
             onMessageClick = onMessageClick,
             onCallClick = onCallClick,
@@ -76,6 +85,8 @@ private fun ConversationListAvatarQuickActions(
     item: ConversationListItemUiModel,
     visible: Boolean,
     fallbackIcon: ImageVector,
+    fallbackLabel: String?,
+    colorSeedCode: String?,
     onDismiss: () -> Unit,
     onMessageClick: () -> Unit,
     onCallClick: (() -> Unit)?,
@@ -87,7 +98,8 @@ private fun ConversationListAvatarQuickActions(
         displayName = item.title.orEmpty(),
         subtitle = item.avatar.details,
         fallbackIcon = fallbackIcon,
-        fallbackLabel = participantAvatarLabel(source = item.title),
+        fallbackLabel = fallbackLabel,
+        colorSeedCode = colorSeedCode,
         onDismiss = onDismiss,
         onMessageClick = {
             onMessageClick()

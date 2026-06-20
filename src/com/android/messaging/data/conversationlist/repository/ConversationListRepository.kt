@@ -11,6 +11,8 @@ import com.android.messaging.data.conversationlist.model.ConversationListNotific
 import com.android.messaging.data.conversationlist.model.ConversationListParticipant
 import com.android.messaging.data.conversationlist.model.ConversationListSnapshot
 import com.android.messaging.data.conversationlist.store.ConversationListStatusStore
+import com.android.messaging.data.conversationsettings.model.SnoozeOption
+import com.android.messaging.data.conversationsettings.repository.ConversationNotificationRepository
 import com.android.messaging.datamodel.DatabaseHelper.ParticipantColumns
 import com.android.messaging.datamodel.MessagingContentProvider
 import com.android.messaging.datamodel.data.ConversationListData
@@ -26,30 +28,48 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 
 internal interface ConversationListRepository {
     fun observeInboxSnapshot(): Flow<ConversationListSnapshot>
     fun setNewestConversationVisible(isVisible: Boolean)
+    fun snooze(conversationId: String, option: SnoozeOption)
+    fun clearSnooze(conversationId: String)
+    fun refresh()
 }
 
 internal class ConversationListRepositoryImpl @Inject constructor(
     private val contentResolver: ContentResolver,
     private val statusStore: ConversationListStatusStore,
+    private val notificationRepository: ConversationNotificationRepository,
     @param:MessagingDbDispatcher
     private val messagingDbDispatcher: CoroutineDispatcher,
 ) : ConversationListRepository {
 
+    private val manualRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeInboxSnapshot(): Flow<ConversationListSnapshot> {
-        val itemsFlow = observeUri(MessagingContentProvider.CONVERSATIONS_URI)
+        val itemsFlow = merge(
+            observeUri(MessagingContentProvider.CONVERSATIONS_URI),
+            notificationRepository.observeSnoozeChanges(),
+            manualRefresh,
+        )
             .conflate()
             .map { queryInboxConversations() }
+            .flatMapLatest(::observeSnoozeState)
 
         val blockedDestinationsFlow = observeUri(MessagingContentProvider.PARTICIPANTS_URI)
             .conflate()
@@ -69,6 +89,57 @@ internal class ConversationListRepositoryImpl @Inject constructor(
 
     override fun setNewestConversationVisible(isVisible: Boolean) {
         statusStore.setNewestConversationVisible(isVisible)
+    }
+
+    override fun snooze(
+        conversationId: String,
+        option: SnoozeOption,
+    ) {
+        val resolvedConversationId = conversationId.takeIf(String::isNotBlank) ?: return
+        notificationRepository.snooze(resolvedConversationId, option)
+    }
+
+    override fun clearSnooze(conversationId: String) {
+        val resolvedConversationId = conversationId.takeIf(String::isNotBlank) ?: return
+        notificationRepository.clearSnooze(resolvedConversationId)
+    }
+
+    override fun refresh() {
+        manualRefresh.tryEmit(Unit)
+    }
+
+    private fun observeSnoozeState(
+        items: ImmutableList<ConversationListItem>,
+    ): Flow<ImmutableList<ConversationListItem>> {
+        return flow {
+            while (true) {
+                val now = System.currentTimeMillis()
+                val resolved = items
+                    .map { item ->
+                        val snoozedUntilMillis = notificationRepository
+                            .getSnoozeUntilMillis(item.conversationId)
+                            .takeIf { it > now }
+                            ?: ConversationListNotification.SNOOZE_NOT_SET
+
+                        item.copy(
+                            notification = item.notification.copy(
+                                snoozedUntilMillis = snoozedUntilMillis,
+                            ),
+                        )
+                    }
+                    .toImmutableList()
+
+                emit(resolved)
+
+                val nextExpiryMillis = resolved
+                    .map { it.notification.snoozedUntilMillis }
+                    .filter { expiry -> expiry > now && expiry != SNOOZE_NEVER_EXPIRES }
+                    .minOrNull()
+                    ?: break
+
+                delay(nextExpiryMillis - now)
+            }
+        }
     }
 
     private fun observeUri(uri: Uri): Flow<Unit> {
@@ -223,6 +294,8 @@ internal class ConversationListRepositoryImpl @Inject constructor(
     }
 
     private companion object {
+        private const val SNOOZE_NEVER_EXPIRES = Long.MAX_VALUE
+
         private val BLOCKED_PARTICIPANTS_PROJECTION = arrayOf(
             ParticipantColumns._ID,
             ParticipantColumns.NORMALIZED_DESTINATION,
