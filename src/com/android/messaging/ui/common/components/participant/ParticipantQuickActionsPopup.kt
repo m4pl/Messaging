@@ -76,6 +76,7 @@ internal fun ParticipantQuickActionsPopup(
     onMessageClick: (() -> Unit)?,
     onCallClick: (() -> Unit)?,
     onContactClick: (() -> Unit)?,
+    colorSeedCode: String?,
     isContactSaved: Boolean = true,
 ) {
     val transitionState = remember { MutableTransitionState(false) }
@@ -127,6 +128,7 @@ internal fun ParticipantQuickActionsPopup(
                 subtitle = subtitle,
                 fallbackIcon = fallbackIcon,
                 fallbackLabel = fallbackLabel,
+                colorSeedCode = colorSeedCode,
                 onMessageClick = onMessageClick,
                 onCallClick = onCallClick,
                 onContactClick = onContactClick,
@@ -143,6 +145,7 @@ private fun QuickActionsCard(
     subtitle: String?,
     fallbackIcon: ImageVector,
     fallbackLabel: String?,
+    colorSeedCode: String?,
     onMessageClick: (() -> Unit)?,
     onCallClick: (() -> Unit)?,
     onContactClick: (() -> Unit)?,
@@ -165,6 +168,7 @@ private fun QuickActionsCard(
                 avatarUri = avatarUri,
                 fallbackIcon = fallbackIcon,
                 fallbackLabel = fallbackLabel,
+                colorSeedCode = colorSeedCode,
                 fadeColor = cardColor,
             )
 
@@ -205,6 +209,7 @@ private fun AvatarHeader(
     avatarUri: String?,
     fallbackIcon: ImageVector,
     fallbackLabel: String?,
+    colorSeedCode: String?,
     fadeColor: Color,
 ) {
     Box(
@@ -217,6 +222,7 @@ private fun AvatarHeader(
             fallbackIcon = fallbackIcon,
             fallbackSize = AvatarFallbackSize,
             fallbackLabel = fallbackLabel,
+            colorSeedCode = colorSeedCode,
             shape = RectangleShape,
             modifier = Modifier.fillMaxSize(),
         )
@@ -321,6 +327,7 @@ private fun ParticipantQuickActionsPopupPreview() {
             subtitle = "+1 555 000 0000000 (Mobile, USA)",
             fallbackIcon = Icons.Default.Person,
             fallbackLabel = "T",
+            colorSeedCode = null,
             onMessageClick = {},
             onCallClick = {},
             onContactClick = {},

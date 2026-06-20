@@ -44,4 +44,12 @@ internal data class ConversationListDraft(
 
 internal data class ConversationListNotification(
     val isEnabled: Boolean,
-)
+    val snoozedUntilMillis: Long = SNOOZE_NOT_SET,
+) {
+    val isSnoozed: Boolean
+        get() = snoozedUntilMillis > System.currentTimeMillis()
+
+    internal companion object {
+        const val SNOOZE_NOT_SET = 0L
+    }
+}

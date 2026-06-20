@@ -86,6 +86,7 @@ internal fun ConversationListScreen(
     var pendingAddContactDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingDelete by rememberSaveable { mutableStateOf(false) }
     var pendingBlockDestination by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingSnooze by rememberSaveable { mutableStateOf(false) }
 
     ConversationListEffects(
         screenModel = screenModel,
@@ -102,6 +103,7 @@ internal fun ConversationListScreen(
         snackbarHostState = snackbarHostState,
         onAction = screenModel::onAction,
         onDeleteClick = { pendingDelete = true },
+        onSnoozeClick = { pendingSnooze = true },
         onScrollToTop = { screenModel.onAction(Action.ScrollUpClicked) },
         modifier = modifier,
     )
@@ -111,10 +113,12 @@ internal fun ConversationListScreen(
         addContactDestination = pendingAddContactDestination,
         isDeleteVisible = pendingDelete,
         blockDestination = pendingBlockDestination,
+        isSnoozeVisible = pendingSnooze,
         onAction = screenModel::onAction,
         onDismissAddContact = { pendingAddContactDestination = null },
         onDismissDelete = { pendingDelete = false },
         onDismissBlock = { pendingBlockDestination = null },
+        onDismissSnooze = { pendingSnooze = false },
     )
 }
 
@@ -246,6 +250,7 @@ private fun ConversationListScaffold(
     snackbarHostState: SnackbarHostState,
     onAction: (Action) -> Unit,
     onDeleteClick: () -> Unit,
+    onSnoozeClick: () -> Unit,
     onScrollToTop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -270,6 +275,7 @@ private fun ConversationListScaffold(
                 isSelectionMode = isSelectionMode,
                 onAction = onAction,
                 onDeleteClick = onDeleteClick,
+                onSnoozeClick = onSnoozeClick,
             )
         },
         snackbarHost = {
@@ -344,6 +350,7 @@ private fun ConversationListTopBar(
     isSelectionMode: Boolean,
     onAction: (Action) -> Unit,
     onDeleteClick: () -> Unit,
+    onSnoozeClick: () -> Unit,
 ) {
     when {
         isSelectionMode -> {
@@ -352,6 +359,7 @@ private fun ConversationListTopBar(
                 actions = uiState.selection.actions,
                 onAction = onAction,
                 onDeleteClick = onDeleteClick,
+                onSnoozeClick = onSnoozeClick,
             )
         }
 
@@ -443,6 +451,7 @@ private fun ConversationListScaffoldItemsPreview() {
             snackbarHostState = remember { SnackbarHostState() },
             onAction = {},
             onDeleteClick = {},
+            onSnoozeClick = {},
             onScrollToTop = {},
         )
     }
@@ -461,6 +470,7 @@ private fun ConversationListScaffoldEmptyPreview() {
             snackbarHostState = remember { SnackbarHostState() },
             onAction = {},
             onDeleteClick = {},
+            onSnoozeClick = {},
             onScrollToTop = {},
         )
     }

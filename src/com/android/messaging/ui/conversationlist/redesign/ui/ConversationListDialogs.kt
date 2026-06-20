@@ -8,6 +8,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.android.messaging.R
+import com.android.messaging.ui.common.components.SnoozeChatDialog
 import com.android.messaging.ui.conversationlist.redesign.model.ConversationListAction as Action
 import com.android.messaging.ui.core.MessagingPreviewTheme
 
@@ -17,10 +18,12 @@ internal fun ConversationListDialogs(
     addContactDestination: String?,
     isDeleteVisible: Boolean,
     blockDestination: String?,
+    isSnoozeVisible: Boolean,
     onAction: (Action) -> Unit,
     onDismissAddContact: () -> Unit,
     onDismissDelete: () -> Unit,
     onDismissBlock: () -> Unit,
+    onDismissSnooze: () -> Unit,
 ) {
     addContactDestination?.let { destination ->
         ConversationListAddContactDialog(
@@ -52,6 +55,16 @@ internal fun ConversationListDialogs(
                 onAction(Action.BlockConfirmed)
             },
             onDismiss = onDismissBlock,
+        )
+    }
+
+    if (isSnoozeVisible) {
+        SnoozeChatDialog(
+            onDismiss = onDismissSnooze,
+            onConfirm = { option ->
+                onAction(Action.SnoozeOptionSelected(option))
+                onDismissSnooze()
+            },
         )
     }
 }

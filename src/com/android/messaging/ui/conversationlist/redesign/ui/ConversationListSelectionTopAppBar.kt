@@ -4,7 +4,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Snooze
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +35,7 @@ internal fun ConversationListSelectionTopAppBar(
     actions: SelectionActionsUiState,
     onAction: (Action) -> Unit,
     onDeleteClick: () -> Unit,
+    onSnoozeClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
@@ -54,6 +57,7 @@ internal fun ConversationListSelectionTopAppBar(
                 actions = actions,
                 onAction = onAction,
                 onDeleteClick = onDeleteClick,
+                onSnoozeClick = onSnoozeClick,
             )
         },
     )
@@ -77,7 +81,24 @@ private fun ConversationListSelectionActions(
     actions: SelectionActionsUiState,
     onAction: (Action) -> Unit,
     onDeleteClick: () -> Unit,
+    onSnoozeClick: () -> Unit,
 ) {
+    if (actions.canSnooze) {
+        SelectionActionButton(
+            imageVector = Icons.Default.Snooze,
+            labelResId = R.string.snooze_chat_setting_title,
+            onClick = onSnoozeClick,
+        )
+    }
+
+    if (actions.canUnsnooze) {
+        SelectionActionButton(
+            imageVector = Icons.Default.NotificationsActive,
+            labelResId = R.string.unsnooze_chat_setting_title,
+            onClick = { onAction(Action.UnsnoozeClicked) },
+        )
+    }
+
     if (actions.canArchive) {
         SelectionActionButton(
             imageVector = Icons.Default.Archive,
@@ -154,9 +175,11 @@ private fun ConversationListSelectionTopAppBarPreview() {
                 canDelete = true,
                 canAddContact = true,
                 canBlock = true,
+                canSnooze = true,
             ),
             onAction = {},
             onDeleteClick = {},
+            onSnoozeClick = {},
         )
     }
 }

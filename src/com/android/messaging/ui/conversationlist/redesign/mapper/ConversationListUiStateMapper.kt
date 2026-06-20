@@ -105,6 +105,7 @@ internal class ConversationListUiStateMapperImpl @Inject constructor(
             isGroup = participant.isGroup,
             isEnterprise = participant.isEnterprise,
             isMuted = !notification.isEnabled,
+            isSnoozed = notification.isSnoozed,
             isArchived = isArchived,
             isSelected = isSelected,
         )
@@ -177,6 +178,7 @@ internal class ConversationListUiStateMapperImpl @Inject constructor(
             participantLookupKey = item.participant.lookupKey,
             isGroup = item.participant.isGroup,
             isArchived = item.isArchived,
+            isSnoozed = item.notification.isSnoozed,
         )
     }
 
@@ -205,6 +207,8 @@ internal class ConversationListUiStateMapperImpl @Inject constructor(
             canDelete = selectedConversations.isNotEmpty(),
             canAddContact = canAddContact == true,
             canBlock = canBlock == true,
+            canSnooze = selectedConversations.any { !it.isSnoozed },
+            canUnsnooze = selectedConversations.any { it.isSnoozed },
         )
     }
 

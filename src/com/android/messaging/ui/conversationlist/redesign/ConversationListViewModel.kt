@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.android.messaging.data.conversationlist.model.ConversationListItem
 import com.android.messaging.data.conversationlist.model.ConversationListSnapshot
 import com.android.messaging.data.conversationlist.repository.ConversationListRepository
+import com.android.messaging.data.conversationsettings.model.SnoozeOption
 import com.android.messaging.data.debug.DebugFeaturesProvider
 import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListActionsDelegate
 import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListSelectionDelegate
@@ -120,6 +121,7 @@ internal class ConversationListViewModel @Inject constructor(
         when (action) {
             Action.ScreenResumed -> {
                 isDebugEnabled.value = debugFeaturesProvider.isEnabled()
+                repository.refresh()
             }
         }
     }
@@ -198,7 +200,37 @@ internal class ConversationListViewModel @Inject constructor(
             Action.UnarchiveClicked -> onArchiveClick(isArchived = false)
             Action.BlockClicked -> onBlockClick()
             Action.SelectionCleared -> selectionDelegate.clear()
+            Action.UnsnoozeClicked -> onUnsnoozeClick()
+            is Action.SnoozeOptionSelected -> onSnoozeOptionSelected(action.option)
         }
+    }
+
+    private fun onUnsnoozeClick() {
+        val selectedItems = selectionDelegate.currentSelectedItems()
+
+        if (selectedItems.isEmpty()) {
+            return
+        }
+
+        selectedItems.forEach { item ->
+            repository.clearSnooze(item.conversationId)
+        }
+
+        selectionDelegate.clear()
+    }
+
+    private fun onSnoozeOptionSelected(option: SnoozeOption) {
+        val selectedItems = selectionDelegate.currentSelectedItems()
+
+        if (selectedItems.isEmpty()) {
+            return
+        }
+
+        selectedItems.forEach { item ->
+            repository.snooze(item.conversationId, option)
+        }
+
+        selectionDelegate.clear()
     }
 
     private fun onConversationClick(conversationId: String) {
