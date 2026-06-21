@@ -3,6 +3,7 @@ package com.android.messaging.ui.conversationpicker.mapper
 import android.net.Uri
 import com.android.messaging.data.contact.formatter.ContactDestinationFormatter
 import com.android.messaging.data.conversationpicker.model.TargetConversation
+import com.android.messaging.domain.conversation.usecase.avatar.ResolveAvatarUri
 import com.android.messaging.ui.conversationpicker.formatter.TargetTextFormatter
 import com.android.messaging.ui.conversationpicker.model.TargetUiState
 import com.android.messaging.util.PhoneUtils
@@ -35,8 +36,11 @@ internal class TargetUiStateMapperImplTest {
         }
     }
 
+    private val resolveAvatarUri = mockk<ResolveAvatarUri>()
+
     private val mapper = TargetUiStateMapperImpl(
         contactDestinationFormatter = contactDestinationFormatter,
+        resolveAvatarUri = resolveAvatarUri,
         textFormatter = textFormatter,
     )
 
@@ -47,6 +51,7 @@ internal class TargetUiStateMapperImplTest {
         every { phoneUtilsInstance.formatForDisplay(any()) } answers {
             "formatted:${firstArg<String>()}"
         }
+        every { resolveAvatarUri(any()) } returns null
     }
 
     @After
@@ -129,6 +134,7 @@ internal class TargetUiStateMapperImplTest {
     @Test
     fun map_resolvesPrimaryUriWhenIconIsAvatarUri() {
         val avatarIcon = avatarUri(primaryUri = "content://primary")
+        every { resolveAvatarUri(avatarIcon) } returns "content://primary"
 
         val result = mapper.map(
             persistentListOf(conversation(icon = avatarIcon)),
@@ -150,6 +156,8 @@ internal class TargetUiStateMapperImplTest {
 
     @Test
     fun map_usesRawIconWhenIconIsNotAvatarUri() {
+        every { resolveAvatarUri("content://plain") } returns "content://plain"
+
         val result = mapper.map(
             persistentListOf(conversation(icon = "content://plain")),
         ).single()
