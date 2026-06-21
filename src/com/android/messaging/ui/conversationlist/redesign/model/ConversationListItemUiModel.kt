@@ -19,6 +19,7 @@ internal data class ConversationListItemUiModel(
     val isMuted: Boolean,
     val isSnoozed: Boolean,
     val isArchived: Boolean,
+    val isPinned: Boolean,
     val isSelected: Boolean,
 )
 

@@ -4,8 +4,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Snooze
-import androidx.compose.material.icons.filled.Unarchive
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -86,20 +87,36 @@ private fun ConversationListSelectionActions(
     onDeleteClick: () -> Unit,
     onSnoozeClick: () -> Unit,
 ) {
-    if (actions.canSnooze) {
-        SelectionActionButton(
-            imageVector = Icons.Default.Snooze,
-            labelResId = R.string.snooze_chat_setting_title,
-            onClick = onSnoozeClick,
-        )
+    actions.isFirstSelectedSnoozed?.let { isSnoozed ->
+        when {
+            isSnoozed -> SelectionActionButton(
+                imageVector = Icons.Default.NotificationsActive,
+                labelResId = R.string.unsnooze_chat_setting_title,
+                onClick = { onAction(Action.UnsnoozeClicked) },
+            )
+
+            else -> SelectionActionButton(
+                imageVector = Icons.Default.Snooze,
+                labelResId = R.string.snooze_chat_setting_title,
+                onClick = onSnoozeClick,
+            )
+        }
     }
 
-    if (actions.canUnsnooze) {
-        SelectionActionButton(
-            imageVector = Icons.Default.NotificationsActive,
-            labelResId = R.string.unsnooze_chat_setting_title,
-            onClick = { onAction(Action.UnsnoozeClicked) },
-        )
+    actions.isFirstSelectedPinned?.let { isPinned ->
+        when {
+            isPinned -> SelectionActionButton(
+                imageVector = Icons.Filled.PushPin,
+                labelResId = R.string.action_unpin,
+                onClick = { onAction(Action.UnpinClicked) },
+            )
+
+            else -> SelectionActionButton(
+                imageVector = Icons.Outlined.PushPin,
+                labelResId = R.string.action_pin,
+                onClick = { onAction(Action.PinClicked) },
+            )
+        }
     }
 
     if (actions.canArchive) {
@@ -107,14 +124,6 @@ private fun ConversationListSelectionActions(
             imageVector = Icons.Default.Archive,
             labelResId = R.string.action_archive,
             onClick = { onAction(Action.ArchiveClicked) },
-        )
-    }
-
-    if (actions.canUnarchive) {
-        SelectionActionButton(
-            imageVector = Icons.Default.Unarchive,
-            labelResId = R.string.action_unarchive,
-            onClick = { onAction(Action.UnarchiveClicked) },
         )
     }
 
@@ -239,7 +248,8 @@ private fun ConversationListSelectionTopAppBarPreview() {
                 canDelete = true,
                 canAddContact = true,
                 canBlock = true,
-                canSnooze = true,
+                isFirstSelectedPinned = false,
+                isFirstSelectedSnoozed = false,
                 isFirstSelectedUnread = true,
             ),
             onAction = {},

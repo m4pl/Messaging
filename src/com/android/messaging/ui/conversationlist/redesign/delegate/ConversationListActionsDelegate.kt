@@ -22,6 +22,11 @@ internal interface ConversationListActionsDelegate {
         shouldShowSnackbar: Boolean,
     )
 
+    fun setPinned(
+        conversationIds: List<String>,
+        isPinned: Boolean,
+    )
+
     fun markRead(conversationId: String)
     fun markUnread(conversationId: String)
     fun delete(items: List<ConversationListItem>)
@@ -78,6 +83,28 @@ internal class ConversationListActionsDelegateImpl @Inject constructor(
                 isArchived = isArchived,
             ),
         )
+    }
+
+    override fun setPinned(
+        conversationIds: List<String>,
+        isPinned: Boolean,
+    ) {
+        val resolvedConversationIds = conversationIds
+            .filter(String::isNotBlank)
+            .distinct()
+
+        if (resolvedConversationIds.isEmpty()) {
+            return
+        }
+
+        boundScope?.launch {
+            resolvedConversationIds.forEach { conversationId ->
+                when {
+                    isPinned -> conversationsRepository.pinConversation(conversationId)
+                    else -> conversationsRepository.unpinConversation(conversationId)
+                }
+            }
+        }
     }
 
     override fun markRead(conversationId: String) {

@@ -23,6 +23,7 @@ internal fun previewConversationListItem(
     isEnterprise: Boolean = false,
     isMuted: Boolean = false,
     isSnoozed: Boolean = false,
+    isPinned: Boolean = false,
     isDraft: Boolean = false,
     isSelected: Boolean = false,
 ): ConversationListItemUiModel {
@@ -58,6 +59,7 @@ internal fun previewConversationListItem(
         isMuted = isMuted,
         isSnoozed = isSnoozed,
         isArchived = false,
+        isPinned = isPinned,
         isSelected = isSelected,
     )
 }

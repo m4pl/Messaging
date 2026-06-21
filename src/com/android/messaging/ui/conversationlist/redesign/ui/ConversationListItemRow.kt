@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.NotificationsPaused
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -105,6 +106,10 @@ private fun ConversationListItemHeader(item: ConversationListItemUiModel) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+
+            if (item.isPinned) {
+                ConversationListItemBadgeIcon(Icons.Default.PushPin)
+            }
 
             if (item.isEnterprise) {
                 ConversationListItemBadgeIcon(Icons.Default.Work)
