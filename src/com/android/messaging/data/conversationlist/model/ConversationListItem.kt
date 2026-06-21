@@ -6,6 +6,7 @@ internal data class ConversationListItem(
     val icon: String?,
     val subject: String?,
     val isArchived: Boolean,
+    val isPinned: Boolean,
     val participant: ConversationListParticipant,
     val latestMessage: ConversationListLatestMessage,
     val draft: ConversationListDraft,

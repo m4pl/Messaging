@@ -10,6 +10,7 @@ import com.android.messaging.data.conversation.model.metadata.ConversationCompos
 import com.android.messaging.data.conversation.model.metadata.ConversationMetadata
 import com.android.messaging.data.conversation.model.send.ConversationSendData
 import com.android.messaging.data.conversation.platform.MessageDetailsPlatformSource
+import com.android.messaging.data.conversation.store.ConversationPinStore
 import com.android.messaging.data.conversation.store.ConversationReadStore
 import com.android.messaging.data.conversation.store.ConversationSelfIdStore
 import com.android.messaging.datamodel.DatabaseHelper.ConversationColumns
@@ -69,6 +70,10 @@ internal interface ConversationsRepository {
 
     fun unarchiveConversation(conversationId: String)
 
+    suspend fun pinConversation(conversationId: String)
+
+    suspend fun unpinConversation(conversationId: String)
+
     suspend fun markConversationRead(conversationId: String)
 
     suspend fun markConversationUnread(conversationId: String)
@@ -84,6 +89,7 @@ internal class ConversationsRepositoryImpl @Inject constructor(
     private val messageDetailsPlatformSource: MessageDetailsPlatformSource,
     private val conversationSelfIdStore: ConversationSelfIdStore,
     private val conversationReadStore: ConversationReadStore,
+    private val conversationPinStore: ConversationPinStore,
     @param:DefaultDispatcher
     private val defaultDispatcher: CoroutineDispatcher,
     @param:MessagingDbDispatcher
@@ -219,6 +225,22 @@ internal class ConversationsRepositoryImpl @Inject constructor(
         conversationId
             .takeIf { it.isNotBlank() }
             ?.let(UpdateConversationArchiveStatusAction::unarchiveConversation)
+    }
+
+    override suspend fun pinConversation(conversationId: String) {
+        val resolvedConversationId = conversationId.takeIf(String::isNotBlank) ?: return
+
+        withContext(messagingDbDispatcher) {
+            conversationPinStore.pinConversation(resolvedConversationId)
+        }
+    }
+
+    override suspend fun unpinConversation(conversationId: String) {
+        val resolvedConversationId = conversationId.takeIf(String::isNotBlank) ?: return
+
+        withContext(messagingDbDispatcher) {
+            conversationPinStore.unpinConversation(resolvedConversationId)
+        }
     }
 
     override suspend fun markConversationRead(conversationId: String) {

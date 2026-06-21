@@ -230,11 +230,12 @@ internal class ConversationListViewModel @Inject constructor(
     private fun onSelectionAction(action: Action.SelectionAction) {
         when (action) {
             Action.AddContactClicked -> onAddContactClick()
-            Action.ArchiveClicked -> onArchiveClick(isArchived = true)
-            Action.UnarchiveClicked -> onArchiveClick(isArchived = false)
+            Action.ArchiveClicked -> onArchiveClick()
             Action.BlockClicked -> onBlockClick()
             Action.MarkReadClicked -> onMarkRead(isRead = true)
             Action.MarkUnreadClicked -> onMarkRead(isRead = false)
+            Action.PinClicked -> onPinClick(isPinned = true)
+            Action.UnpinClicked -> onPinClick(isPinned = false)
             Action.SelectionCleared -> selectionDelegate.clear()
             Action.UnsnoozeClicked -> onUnsnoozeClick()
             is Action.SnoozeOptionSelected -> onSnoozeOptionSelected(action.option)
@@ -315,7 +316,7 @@ internal class ConversationListViewModel @Inject constructor(
         repository.setNewestConversationVisible(isVisible)
     }
 
-    private fun onArchiveClick(isArchived: Boolean) {
+    private fun onArchiveClick() {
         val selectedItems = selectionDelegate.currentSelectedItems()
 
         if (selectedItems.isEmpty()) {
@@ -324,8 +325,22 @@ internal class ConversationListViewModel @Inject constructor(
 
         actionsDelegate.setArchived(
             conversationIds = selectedItems.map(ConversationListItem::conversationId),
-            isArchived = isArchived,
+            isArchived = true,
             shouldShowSnackbar = true
+        )
+        selectionDelegate.clear()
+    }
+
+    private fun onPinClick(isPinned: Boolean) {
+        val selectedItems = selectionDelegate.currentSelectedItems()
+
+        if (selectedItems.isEmpty()) {
+            return
+        }
+
+        actionsDelegate.setPinned(
+            conversationIds = selectedItems.map(ConversationListItem::conversationId),
+            isPinned = isPinned,
         )
         selectionDelegate.clear()
     }

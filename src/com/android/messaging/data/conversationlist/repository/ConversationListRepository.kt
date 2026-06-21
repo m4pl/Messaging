@@ -212,6 +212,7 @@ internal class ConversationListRepositoryImpl @Inject constructor(
             icon = icon,
             subject = subject,
             isArchived = isArchived,
+            isPinned = isPinned,
             participant = toParticipant(),
             latestMessage = toLatestMessage(),
             draft = toDraft(),
