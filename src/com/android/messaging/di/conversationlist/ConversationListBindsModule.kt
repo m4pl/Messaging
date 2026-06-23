@@ -4,8 +4,8 @@ import com.android.messaging.data.conversationlist.repository.ConversationListRe
 import com.android.messaging.data.conversationlist.repository.ConversationListRepositoryImpl
 import com.android.messaging.data.conversationlist.store.ConversationListStatusStore
 import com.android.messaging.data.conversationlist.store.ConversationListStatusStoreImpl
-import com.android.messaging.ui.conversationlist.redesign.mapper.ConversationListUiStateMapper
-import com.android.messaging.ui.conversationlist.redesign.mapper.ConversationListUiStateMapperImpl
+import com.android.messaging.ui.conversationlist.mapper.ConversationListUiStateMapper
+import com.android.messaging.ui.conversationlist.mapper.ConversationListUiStateMapperImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Reusable

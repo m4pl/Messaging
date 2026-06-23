@@ -1,11 +1,11 @@
 package com.android.messaging.di.conversationlist
 
-import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListActionsDelegate
-import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListActionsDelegateImpl
-import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListOptimisticSnapshotDelegate
-import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListOptimisticSnapshotDelegateImpl
-import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListSelectionDelegate
-import com.android.messaging.ui.conversationlist.redesign.delegate.ConversationListSelectionDelegateImpl
+import com.android.messaging.ui.conversationlist.delegate.ConversationListActionsDelegate
+import com.android.messaging.ui.conversationlist.delegate.ConversationListActionsDelegateImpl
+import com.android.messaging.ui.conversationlist.delegate.ConversationListOptimisticSnapshotDelegate
+import com.android.messaging.ui.conversationlist.delegate.ConversationListOptimisticSnapshotDelegateImpl
+import com.android.messaging.ui.conversationlist.delegate.ConversationListSelectionDelegate
+import com.android.messaging.ui.conversationlist.delegate.ConversationListSelectionDelegateImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
