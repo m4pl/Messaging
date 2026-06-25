@@ -9,8 +9,8 @@ import androidx.core.content.IntentCompat
 import com.android.messaging.datamodel.data.MessageData
 import com.android.messaging.di.core.ApplicationCoroutineScope
 import com.android.messaging.di.core.MainDispatcher
+import com.android.messaging.domain.conversationpicker.usecase.BuildConversationDraftFromMessage
 import com.android.messaging.domain.conversationpicker.usecase.SendContentToTargets
-import com.android.messaging.domain.forward.usecase.BuildForwardConversationDraft
 import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.conversationpicker.ConversationPickerScreen
 import com.android.messaging.ui.core.AppTheme
@@ -34,7 +34,7 @@ class ForwardMessageActivity : ComponentActivity() {
     internal lateinit var sendContentToTargets: SendContentToTargets
 
     @Inject
-    internal lateinit var buildForwardConversationDraft: BuildForwardConversationDraft
+    internal lateinit var buildConversationDraftFromMessage: BuildConversationDraftFromMessage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +55,7 @@ class ForwardMessageActivity : ComponentActivity() {
         setContent {
             AppTheme {
                 val draft = remember(message) {
-                    buildForwardConversationDraft(message)
+                    buildConversationDraftFromMessage(message)
                 }
 
                 val effectHandler = remember(message) {

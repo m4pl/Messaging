@@ -1,4 +1,4 @@
-package com.android.messaging.domain.forward.usecase
+package com.android.messaging.domain.conversationpicker.usecase
 
 import android.net.Uri
 import com.android.messaging.data.conversation.model.draft.ConversationDraftAttachment
@@ -12,9 +12,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-internal class BuildForwardConversationDraftImplTest {
+internal class BuildConversationDraftFromMessageImplTest {
 
-    private val buildForwardConversationDraft = BuildForwardConversationDraftImpl()
+    private val buildConversationDraftFromMessage = BuildConversationDraftFromMessageImpl()
 
     @Test
     fun invoke_textSubjectAndMediaPart_mapsAllFields() {
@@ -25,11 +25,12 @@ internal class BuildForwardConversationDraftImplTest {
                 mediaPart(
                     contentType = "image/jpeg",
                     uri = "content://media/1",
+                    caption = "Caption",
                 ),
             ),
         )
 
-        val draft = buildForwardConversationDraft(message)
+        val draft = buildConversationDraftFromMessage(message)
 
         assertEquals("Forwarded body", draft.messageText)
         assertEquals("Forwarded subject", draft.subjectText)
@@ -38,10 +39,30 @@ internal class BuildForwardConversationDraftImplTest {
                 ConversationDraftAttachment(
                     contentType = "image/jpeg",
                     contentUri = "content://media/1",
+                    captionText = "Caption",
                 ),
             ),
             draft.attachments,
         )
+    }
+
+    @Test
+    fun invoke_mediaPartWithoutCaption_mapsToEmptyCaption() {
+        val message = messageData(
+            text = "Body",
+            subject = "",
+            parts = listOf(
+                mediaPart(
+                    contentType = "image/png",
+                    uri = "content://media/1",
+                    caption = null,
+                ),
+            ),
+        )
+
+        val draft = buildConversationDraftFromMessage(message)
+
+        assertEquals("", draft.attachments.single().captionText)
     }
 
     @Test
@@ -52,7 +73,7 @@ internal class BuildForwardConversationDraftImplTest {
             parts = emptyList(),
         )
 
-        val draft = buildForwardConversationDraft(message)
+        val draft = buildConversationDraftFromMessage(message)
 
         assertEquals("", draft.subjectText)
     }
@@ -66,15 +87,17 @@ internal class BuildForwardConversationDraftImplTest {
                 mediaPart(
                     contentType = "text/plain",
                     uri = "content://text/1",
+                    caption = null,
                 ),
                 mediaPart(
                     contentType = "image/png",
                     uri = "content://media/2",
+                    caption = null,
                 ),
             ),
         )
 
-        val draft = buildForwardConversationDraft(message)
+        val draft = buildConversationDraftFromMessage(message)
 
         assertEquals(
             listOf(
@@ -100,7 +123,7 @@ internal class BuildForwardConversationDraftImplTest {
             parts = listOf(partWithoutUri),
         )
 
-        val draft = buildForwardConversationDraft(message)
+        val draft = buildConversationDraftFromMessage(message)
 
         assertEquals(emptyList<ConversationDraftAttachment>(), draft.attachments)
     }
@@ -113,7 +136,7 @@ internal class BuildForwardConversationDraftImplTest {
             parts = emptyList(),
         )
 
-        val draft = buildForwardConversationDraft(message)
+        val draft = buildConversationDraftFromMessage(message)
 
         assertEquals(emptyList<ConversationDraftAttachment>(), draft.attachments)
     }
@@ -130,10 +153,15 @@ internal class BuildForwardConversationDraftImplTest {
         }
     }
 
-    private fun mediaPart(contentType: String, uri: String): MessagePartData {
+    private fun mediaPart(
+        contentType: String,
+        uri: String,
+        caption: String?,
+    ): MessagePartData {
         return mockk {
             every { this@mockk.contentType } returns contentType
             every { contentUri } returns Uri.parse(uri)
+            every { text } returns caption
         }
     }
 }
