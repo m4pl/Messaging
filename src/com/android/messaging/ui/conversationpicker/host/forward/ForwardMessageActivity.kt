@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.core.content.IntentCompat
 import com.android.messaging.datamodel.data.MessageData
 import com.android.messaging.di.core.ApplicationCoroutineScope
+import com.android.messaging.di.core.MainDispatcher
 import com.android.messaging.domain.conversationpicker.usecase.SendContentToTargets
 import com.android.messaging.domain.forward.usecase.BuildForwardConversationDraft
 import com.android.messaging.ui.UIIntents
@@ -15,6 +16,7 @@ import com.android.messaging.ui.conversationpicker.ConversationPickerScreen
 import com.android.messaging.ui.core.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 
 @AndroidEntryPoint
@@ -23,6 +25,10 @@ class ForwardMessageActivity : ComponentActivity() {
     @Inject
     @ApplicationCoroutineScope
     internal lateinit var applicationScope: CoroutineScope
+
+    @Inject
+    @MainDispatcher
+    internal lateinit var mainDispatcher: CoroutineDispatcher
 
     @Inject
     internal lateinit var sendContentToTargets: SendContentToTargets
@@ -53,8 +59,9 @@ class ForwardMessageActivity : ComponentActivity() {
                 }
 
                 val effectHandler = remember(message) {
-                    ForwardMessageHandler(
+                    ForwardMessageEffectHandler(
                         applicationScope = applicationScope,
+                        mainDispatcher = mainDispatcher,
                         activity = this,
                         message = message,
                         sendContentToTargets = sendContentToTargets,
