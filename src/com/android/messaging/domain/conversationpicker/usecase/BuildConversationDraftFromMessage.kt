@@ -1,4 +1,4 @@
-package com.android.messaging.domain.forward.usecase
+package com.android.messaging.domain.conversationpicker.usecase
 
 import com.android.messaging.data.conversation.model.draft.ConversationDraft
 import com.android.messaging.data.conversation.model.draft.ConversationDraftAttachment
@@ -7,12 +7,12 @@ import com.android.messaging.util.ContentType
 import javax.inject.Inject
 import kotlinx.collections.immutable.toImmutableList
 
-internal interface BuildForwardConversationDraft {
+internal interface BuildConversationDraftFromMessage {
     operator fun invoke(message: MessageData): ConversationDraft
 }
 
-internal class BuildForwardConversationDraftImpl @Inject constructor() :
-    BuildForwardConversationDraft {
+internal class BuildConversationDraftFromMessageImpl @Inject constructor() :
+    BuildConversationDraftFromMessage {
 
     override fun invoke(message: MessageData): ConversationDraft {
         val attachments = message.parts
@@ -23,6 +23,7 @@ internal class BuildForwardConversationDraftImpl @Inject constructor() :
                 ConversationDraftAttachment(
                     contentType = part.contentType,
                     contentUri = part.contentUri.toString(),
+                    captionText = part.text.orEmpty(),
                 )
             }
             .toImmutableList()
