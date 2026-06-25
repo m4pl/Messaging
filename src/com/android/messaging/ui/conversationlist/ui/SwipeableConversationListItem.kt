@@ -7,14 +7,15 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.MarkChatRead
 import androidx.compose.material.icons.filled.MarkChatUnread
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,9 +31,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
@@ -41,11 +47,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.conversationlist.model.ConversationListItemUiModel
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val SwipeBackgroundShape = RoundedCornerShape(percent = 50)
 
@@ -60,6 +66,8 @@ private val SwipeFlingMinDistance = 48.dp
 private const val SWIPE_FLING_VELOCITY_THRESHOLD = 1_000f
 
 private const val SWIPE_HORIZONTAL_VELOCITY_BIAS = 1.5f
+
+private const val SWIPE_DIRECTION_BIAS = 1.5f
 
 private const val SWIPE_SETTLE_VISIBILITY_THRESHOLD = 1f
 
@@ -225,44 +233,87 @@ private fun Modifier.swipeActions(
         coroutineScope {
             var settleJob: Job? = null
 
-            detectHorizontalDragGestures(
-                onDragStart = {
-                    velocityTracker.resetTracking()
-                    settleJob?.cancel()
-                },
-                onHorizontalDrag = { change, dragAmount ->
-                    change.consume()
-                    velocityTracker.addPosition(change.uptimeMillis, change.position)
-                    offsetX.floatValue += dragAmount
-                },
-                onDragEnd = {
-                    val velocity = velocityTracker.calculateVelocity()
-                    val width = size.width.toFloat()
-                    settleJob = launch {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                velocityTracker.resetTracking()
+                settleJob?.cancel()
+
+                var initialOverSlop = 0f
+                val slopChange = awaitTouchSlopOrCancellation(down.id) { change, overSlop ->
+                    if (isHorizontalDrag(overSlop)) {
+                        change.consume()
+                        initialOverSlop = overSlop.x
+                    }
+                }
+
+                if (slopChange == null) {
+                    return@awaitEachGesture
+                }
+
+                velocityTracker.addPosition(
+                    timeMillis = slopChange.uptimeMillis,
+                    position = slopChange.position,
+                )
+                offsetX.floatValue += initialOverSlop
+
+                val completed = awaitHorizontalDragToEnd(
+                    pointerId = slopChange.id,
+                    offsetX = offsetX,
+                    velocityTracker = velocityTracker,
+                )
+
+                settleJob = when {
+                    completed -> launch {
+                        val velocity = velocityTracker.calculateVelocity()
                         settleSwipe(
                             offsetX = offsetX,
                             visibilityFraction = visibilityFraction,
                             thresholdPx = thresholdPx,
                             minFlingDistancePx = minFlingDistancePx,
-                            width = width,
+                            width = size.width.toFloat(),
                             velocityX = velocity.x,
                             velocityY = velocity.y,
                             onArchive = onArchive,
                             onToggleRead = onToggleRead,
                         )
                     }
-                },
-                onDragCancel = {
-                    settleJob = launch {
+
+                    else -> launch {
                         animateOffset(
                             offsetX = offsetX,
                             targetValue = 0f,
                             animationSpec = SwipeSettleSpec,
                         )
                     }
-                },
-            )
+                }
+            }
         }
+    }
+}
+
+private suspend fun AwaitPointerEventScope.awaitHorizontalDragToEnd(
+    pointerId: PointerId,
+    offsetX: MutableFloatState,
+    velocityTracker: VelocityTracker,
+): Boolean {
+    while (true) {
+        val event = awaitPointerEvent()
+        val change = event.changes.firstOrNull { it.id == pointerId }
+
+        if (change == null || change.isConsumed) {
+            return false
+        }
+
+        if (change.changedToUpIgnoreConsumed()) {
+            return true
+        }
+
+        velocityTracker.addPosition(
+            timeMillis = change.uptimeMillis,
+            position = change.position,
+        )
+        offsetX.floatValue += change.positionChange().x
+        change.consume()
     }
 }
 
@@ -319,6 +370,10 @@ private suspend fun settleSwipe(
             )
         }
     }
+}
+
+private fun isHorizontalDrag(panOffset: Offset): Boolean {
+    return abs(panOffset.x) > abs(panOffset.y) * SWIPE_DIRECTION_BIAS
 }
 
 private fun resolveSettleAction(
