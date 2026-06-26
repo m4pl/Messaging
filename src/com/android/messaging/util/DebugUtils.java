@@ -314,7 +314,7 @@ public class DebugUtils {
 
         private void receiveFromDumpFile(final String dumpFileName) {
             if (dumpFileName.startsWith(MmsUtils.SMS_DUMP_PREFIX)) {
-                final SmsMessage[] messages = DebugUtils.retreiveSmsFromDumpFile(dumpFileName);
+                final SmsMessage[] messages = DebugUtils.retrieveSmsFromDumpFile(dumpFileName);
                 if (messages != null) {
                     SmsReceiver.deliverSmsMessages(mHost, ParticipantData.DEFAULT_SELF_SUB_ID,
                             0, messages);
