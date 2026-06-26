@@ -3,6 +3,7 @@ package com.android.messaging.ui.conversationlist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.messaging.data.conversationlist.model.ConversationListItem
+import com.android.messaging.data.conversationlist.model.ConversationListMode
 import com.android.messaging.data.conversationlist.model.ConversationListSnapshot
 import com.android.messaging.data.conversationlist.repository.ConversationListRepository
 import com.android.messaging.data.conversationsettings.model.SnoozeOption
@@ -81,6 +82,7 @@ internal class ConversationListViewModel @Inject constructor(
     init {
         optimisticSnapshotDelegate.bind(
             scope = viewModelScope,
+            mode = ConversationListMode.Inbox,
         )
         selectionDelegate.bind(
             scope = viewModelScope,
@@ -124,7 +126,7 @@ internal class ConversationListViewModel @Inject constructor(
     private fun onSnackbarAction(action: Action.SnackbarAction) {
         when (action) {
             is Action.ArchiveSnackbarDismissed -> {
-                optimisticSnapshotDelegate.discardArchived(action.conversationIds)
+                optimisticSnapshotDelegate.discardRemoval(action.conversationIds)
             }
 
             is Action.ArchiveUndoClicked -> {
@@ -177,8 +179,8 @@ internal class ConversationListViewModel @Inject constructor(
         isArchived: Boolean,
     ) {
         when {
-            isArchived -> optimisticSnapshotDelegate.restoreArchived(conversationIds)
-            else -> optimisticSnapshotDelegate.archive(conversationIds)
+            isArchived -> optimisticSnapshotDelegate.restore(conversationIds)
+            else -> optimisticSnapshotDelegate.remove(conversationIds)
         }
 
         actionsDelegate.setArchived(
@@ -278,7 +280,7 @@ internal class ConversationListViewModel @Inject constructor(
     private fun onConversationSwipedToArchive(conversationId: String) {
         val conversationIds = listOf(conversationId)
 
-        optimisticSnapshotDelegate.archive(conversationIds)
+        optimisticSnapshotDelegate.remove(conversationIds)
         actionsDelegate.setArchived(
             conversationIds = conversationIds,
             isArchived = true,
@@ -389,7 +391,7 @@ internal class ConversationListViewModel @Inject constructor(
 
     private fun onArchiveClick() {
         withSelectedIds { conversationIds ->
-            optimisticSnapshotDelegate.archive(conversationIds)
+            optimisticSnapshotDelegate.remove(conversationIds)
             actionsDelegate.setArchived(
                 conversationIds = conversationIds,
                 isArchived = true,
