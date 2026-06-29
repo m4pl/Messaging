@@ -12,6 +12,6 @@ internal val ItemBadgeIconSize = 16.dp
 
 internal val ItemStatusDotSize = 12.dp
 
-internal val ItemTrailingEndPadding = 4.dp
+internal val ItemPreviewThumbnailSize = 20.dp
 
-internal val ItemPreviewThumbnailSize = 44.dp
+internal val ItemPreviewThumbnailCornerRadius = 4.dp

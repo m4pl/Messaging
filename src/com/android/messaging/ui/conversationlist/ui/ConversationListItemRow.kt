@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.NotificationsPaused
 import androidx.compose.material.icons.filled.PushPin
@@ -24,19 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.data.conversationlist.model.ConversationListMessageStatus
 import com.android.messaging.ui.common.components.TwoLineListItem
-import com.android.messaging.ui.common.components.attachment.MediaThumbnail
 import com.android.messaging.ui.conversationlist.model.ConversationListItemUiModel
 import com.android.messaging.ui.conversationlist.model.ConversationListPreviewUiModel
 import com.android.messaging.ui.core.MessagingPreviewColumn
@@ -77,9 +72,6 @@ internal fun ConversationListItemRow(
         color = itemContainerColor(item),
         subtitleContent = {
             ConversationListItemBody(item)
-        },
-        trailingContent = {
-            ConversationListItemTrailing(item)
         },
     )
 }
@@ -158,48 +150,14 @@ private fun ConversationListItemBody(item: ConversationListItemUiModel) {
     }
 
     itemSnippetText(item)?.let { snippetText ->
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(ItemBadgeSpacing),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (item.status is ConversationListMessageStatus.Failed) {
-                ConversationListItemFailedIcon(item)
-            }
-
-            Text(
-                text = snippetText,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = itemUnreadFontWeight(item),
-                fontStyle = FontStyle.Italic.takeIf { item.snippet.isDraft },
-                color = itemSnippetColor(item),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        ConversationListItemSnippet(
+            item = item,
+            text = snippetText,
+            fontWeight = itemUnreadFontWeight(item),
+            fontStyle = FontStyle.Italic.takeIf { item.snippet.isDraft },
+            color = itemSnippetColor(item),
+        )
     }
-}
-
-@Composable
-private fun ConversationListItemTrailing(item: ConversationListItemUiModel) {
-    Row(
-        modifier = Modifier.padding(end = ItemTrailingEndPadding),
-        horizontalArrangement = Arrangement.spacedBy(ItemHeaderSpacing),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ConversationListItemPreviewThumbnail(item.snippet.preview)
-    }
-}
-
-@Composable
-private fun ConversationListItemFailedIcon(item: ConversationListItemUiModel) {
-    val description = stringResource(itemFailedStatusResId(item))
-
-    Icon(
-        imageVector = Icons.Default.Error,
-        contentDescription = description,
-        modifier = Modifier.size(ItemBadgeIconSize),
-        tint = MaterialTheme.colorScheme.error,
-    )
 }
 
 @Composable
@@ -222,42 +180,6 @@ private fun ConversationListItemBadgeIcon(icon: ImageVector) {
         contentDescription = null,
         modifier = Modifier.size(ItemBadgeIconSize),
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-@Composable
-private fun ConversationListItemPreviewThumbnail(preview: ConversationListPreviewUiModel?) {
-    val contentUri: String
-    val contentType: String
-
-    when (preview) {
-        is ConversationListPreviewUiModel.Image -> {
-            contentUri = preview.contentUri
-            contentType = preview.contentType
-        }
-
-        is ConversationListPreviewUiModel.Video -> {
-            contentUri = preview.contentUri
-            contentType = preview.contentType
-        }
-
-        else -> return
-    }
-
-    val thumbnailSizePx = with(LocalDensity.current) {
-        ItemPreviewThumbnailSize.roundToPx()
-    }
-
-    MediaThumbnail(
-        modifier = Modifier
-            .size(ItemPreviewThumbnailSize)
-            .clip(MaterialTheme.shapes.extraSmall),
-        contentUri = contentUri,
-        contentType = contentType,
-        size = IntSize(
-            width = thumbnailSizePx,
-            height = thumbnailSizePx,
-        ),
     )
 }
 
@@ -293,13 +215,6 @@ private fun ConversationListItemStatusLabel(item: ConversationListItemUiModel) {
         color = color,
         maxLines = 1,
     )
-}
-
-private fun itemFailedStatusResId(item: ConversationListItemUiModel): Int {
-    return when {
-        item.isOutgoing -> R.string.conversation_list_status_not_sent
-        else -> R.string.conversation_list_status_not_downloaded
-    }
 }
 
 @Composable
