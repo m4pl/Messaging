@@ -1,4 +1,4 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.item
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +34,8 @@ import com.android.messaging.data.conversationlist.model.ConversationListMessage
 import com.android.messaging.ui.common.components.TwoLineListItem
 import com.android.messaging.ui.conversationlist.model.ConversationListItemUiModel
 import com.android.messaging.ui.conversationlist.model.ConversationListPreviewUiModel
+import com.android.messaging.ui.conversationlist.ui.support.conversationListItemTestTag
+import com.android.messaging.ui.conversationlist.ui.support.previewConversationListItem
 import com.android.messaging.ui.core.MessagingPreviewColumn
 import com.android.messaging.util.Dates
 
@@ -234,28 +236,8 @@ private fun itemSnippetText(item: ConversationListItemUiModel): String? {
         }
     }
 
-    return when (item.snippet.preview) {
-        is ConversationListPreviewUiModel.Audio -> {
-            stringResource(R.string.conversation_list_snippet_audio_clip)
-        }
-
-        is ConversationListPreviewUiModel.Image -> {
-            stringResource(R.string.conversation_list_snippet_picture)
-        }
-
-        is ConversationListPreviewUiModel.Video -> {
-            stringResource(R.string.conversation_list_snippet_video)
-        }
-
-        is ConversationListPreviewUiModel.VCard -> {
-            stringResource(R.string.conversation_list_snippet_vcard)
-        }
-
-        is ConversationListPreviewUiModel.File -> {
-            stringResource(R.string.mms_text)
-        }
-
-        null -> null
+    return item.snippet.preview?.let { preview ->
+        stringResource(preview.snippetLabelResId())
     }
 }
 

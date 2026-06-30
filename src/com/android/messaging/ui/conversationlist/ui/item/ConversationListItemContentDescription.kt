@@ -1,4 +1,4 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.item
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
@@ -7,7 +7,6 @@ import androidx.compose.ui.res.stringResource
 import com.android.messaging.R
 import com.android.messaging.data.conversationlist.model.ConversationListMessageStatus
 import com.android.messaging.ui.conversationlist.model.ConversationListItemUiModel
-import com.android.messaging.ui.conversationlist.model.ConversationListPreviewUiModel
 import com.android.messaging.util.Dates
 
 @Composable
@@ -85,36 +84,9 @@ private fun conversationListItemContentDescriptionMessage(
 ): String {
     return item.mmsDownloadTitleResId?.let { stringResource(it) }
         ?: item.snippet.text?.takeIf(String::isNotBlank)
-        ?: conversationListPreviewContentDescription(item.snippet.preview)
-}
-
-@Composable
-private fun conversationListPreviewContentDescription(
-    preview: ConversationListPreviewUiModel?,
-): String {
-    return when (preview) {
-        is ConversationListPreviewUiModel.Audio -> {
-            stringResource(R.string.conversation_list_snippet_audio_clip)
-        }
-
-        is ConversationListPreviewUiModel.Image -> {
-            stringResource(R.string.conversation_list_snippet_picture)
-        }
-
-        is ConversationListPreviewUiModel.Video -> {
-            stringResource(R.string.conversation_list_snippet_video)
-        }
-
-        is ConversationListPreviewUiModel.VCard -> {
-            stringResource(R.string.conversation_list_snippet_vcard)
-        }
-
-        is ConversationListPreviewUiModel.File -> {
-            stringResource(R.string.mms_text)
-        }
-
-        null -> ""
-    }
+        ?: item.snippet.preview?.let { preview ->
+            stringResource(preview.snippetLabelResId())
+        }.orEmpty()
 }
 
 internal fun conversationListItemBadgeContentDescriptionResIds(

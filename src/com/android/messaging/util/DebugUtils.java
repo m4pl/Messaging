@@ -31,6 +31,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import static androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert;
+
 import com.android.messaging.Factory;
 import com.android.messaging.R;
 import com.android.messaging.datamodel.SyncManager;
@@ -66,6 +68,8 @@ public class DebugUtils {
 
     public static final int DEBUG_SOUND_SERVER_REQUEST = 0;
     public static final int DEBUG_SOUND_DB_OP = 1;
+
+    private static final int DIALOG_THEME = Theme_AppCompat_Light_Dialog_Alert;
 
     public static void maybePlayDebugNoise(final Context context, final int sound) {
         if (sDebugNoise) {
@@ -114,7 +118,7 @@ public class DebugUtils {
     }
 
     public static void showDebugOptions(final Activity host) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(host);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(host, DIALOG_THEME);
 
         final ArrayAdapter<DebugAction> arrayAdapter = new ArrayAdapter<DebugAction>(
                 host, android.R.layout.simple_list_item_1);
@@ -248,7 +252,7 @@ public class DebugUtils {
             }
         }
         final int[] selectedIndex = new int[] { checkedIndex };
-        new AlertDialog.Builder(host)
+        new AlertDialog.Builder(host, DIALOG_THEME)
                 .setTitle("SIM emulation mode")
                 .setSingleChoiceItems(labels, checkedIndex,
                         (dialog, which) -> selectedIndex[0] = which)
@@ -299,7 +303,7 @@ public class DebugUtils {
             final int titleResId = ACTION_LOAD.equals(mAction)
                     ? R.string.load_sms_mms_from_dump_file_dialog_title
                     : R.string.email_sms_mms_from_dump_file_dialog_title;
-            new AlertDialog.Builder(mHost)
+            new AlertDialog.Builder(mHost, DIALOG_THEME)
                     .setTitle(titleResId)
                     .setItems(result, (dialog, which) -> {
                         final String file = result[which];

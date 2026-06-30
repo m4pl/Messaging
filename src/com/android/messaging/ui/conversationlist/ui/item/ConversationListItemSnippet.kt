@@ -1,5 +1,6 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.item
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
+import com.android.messaging.R
 import com.android.messaging.data.conversationlist.model.ConversationListMessageStatus
 import com.android.messaging.ui.common.components.TextWithTrailingContent
 import com.android.messaging.ui.common.components.attachment.MediaThumbnail
@@ -135,6 +137,17 @@ private fun ConversationListItemFailedIcon() {
         modifier = Modifier.size(ItemBadgeIconSize),
         tint = MaterialTheme.colorScheme.error,
     )
+}
+
+@StringRes
+internal fun ConversationListPreviewUiModel.snippetLabelResId(): Int {
+    return when (this) {
+        is ConversationListPreviewUiModel.Audio -> R.string.conversation_list_snippet_audio_clip
+        is ConversationListPreviewUiModel.Image -> R.string.conversation_list_snippet_picture
+        is ConversationListPreviewUiModel.Video -> R.string.conversation_list_snippet_video
+        is ConversationListPreviewUiModel.VCard -> R.string.conversation_list_snippet_vcard
+        is ConversationListPreviewUiModel.File -> R.string.mms_text
+    }
 }
 
 private fun ConversationListPreviewUiModel.hasThumbnail(): Boolean {

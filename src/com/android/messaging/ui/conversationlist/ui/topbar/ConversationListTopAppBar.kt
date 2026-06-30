@@ -1,35 +1,21 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.topbar
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.conversationlist.model.ConversationListAction as Action
 import com.android.messaging.ui.core.MessagingPreviewTheme
-
-private val OverflowMenuWidth = 220.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,71 +59,43 @@ private fun ConversationListOverflowMenu(
     isDebugEnabled: Boolean,
     onAction: (Action) -> Unit,
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
+    OverflowMenu { dismiss ->
+        OverflowMenuItem(
+            labelResId = R.string.action_menu_show_archived,
+            onClick = {
+                onAction(Action.ArchivedConversationsClicked)
+                dismiss()
+            },
+        )
 
-    Box {
-        IconButton(onClick = { isExpanded = true }) {
-            Icon(
-                imageVector = Icons.Rounded.MoreVert,
-                contentDescription = stringResource(R.string.more_options),
+        if (hasBlockedParticipants) {
+            OverflowMenuItem(
+                labelResId = R.string.blocked_contacts_title,
+                onClick = {
+                    onAction(Action.BlockedParticipantsClicked)
+                    dismiss()
+                },
             )
         }
 
-        DropdownMenu(
-            modifier = Modifier.width(OverflowMenuWidth),
-            expanded = isExpanded,
-            onDismissRequest = { isExpanded = false },
-        ) {
-            ConversationListMenuItem(
-                labelResId = R.string.action_menu_show_archived,
+        OverflowMenuItem(
+            labelResId = R.string.action_settings,
+            onClick = {
+                onAction(Action.SettingsClicked)
+                dismiss()
+            },
+        )
+
+        if (isDebugEnabled) {
+            OverflowMenuItem(
+                labelResId = R.string.action_debug_options,
                 onClick = {
-                    onAction(Action.ArchivedConversationsClicked)
-                    isExpanded = false
+                    onAction(Action.DebugOptionsClicked)
+                    dismiss()
                 },
             )
-
-            if (hasBlockedParticipants) {
-                ConversationListMenuItem(
-                    labelResId = R.string.blocked_contacts_title,
-                    onClick = {
-                        onAction(Action.BlockedParticipantsClicked)
-                        isExpanded = false
-                    },
-                )
-            }
-
-            ConversationListMenuItem(
-                labelResId = R.string.action_settings,
-                onClick = {
-                    onAction(Action.SettingsClicked)
-                    isExpanded = false
-                },
-            )
-
-            if (isDebugEnabled) {
-                ConversationListMenuItem(
-                    labelResId = R.string.action_debug_options,
-                    onClick = {
-                        onAction(Action.DebugOptionsClicked)
-                        isExpanded = false
-                    },
-                )
-            }
         }
     }
-}
-
-@Composable
-private fun ConversationListMenuItem(
-    labelResId: Int,
-    onClick: () -> Unit,
-) {
-    DropdownMenuItem(
-        text = {
-            Text(text = stringResource(labelResId))
-        },
-        onClick = onClick,
-    )
 }
 
 @PreviewLightDark

@@ -1,6 +1,7 @@
 package com.android.messaging.ui.conversationlist.ui
 
 import com.android.messaging.ui.conversationlist.model.ConversationListItemUiModel
+import com.android.messaging.ui.conversationlist.ui.support.previewConversationListItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
