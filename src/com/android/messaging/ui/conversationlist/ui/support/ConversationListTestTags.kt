@@ -1,4 +1,4 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.support
 
 internal const val CONVERSATION_LIST_TEST_TAG = "conversation_list"
 

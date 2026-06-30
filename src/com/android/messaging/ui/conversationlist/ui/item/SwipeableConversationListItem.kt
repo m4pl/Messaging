@@ -1,4 +1,4 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.item
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.conversationlist.model.ConversationListItemUiModel
+import com.android.messaging.ui.conversationlist.ui.support.AppearanceAnimationToken
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job

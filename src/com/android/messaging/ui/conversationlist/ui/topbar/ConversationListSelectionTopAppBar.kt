@@ -1,7 +1,5 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.topbar
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
@@ -10,9 +8,6 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Snooze
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,22 +17,15 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.ui.conversationlist.model.ConversationListAction as Action
 import com.android.messaging.ui.conversationlist.model.SelectionActionsUiState
 import com.android.messaging.ui.core.MessagingPreviewTheme
-
-private val OverflowMenuWidth = 220.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,72 +136,44 @@ private fun SelectionOverflowMenu(
     actions: SelectionActionsUiState,
     onAction: (Action) -> Unit,
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
-
-    Box {
-        IconButton(onClick = { isExpanded = true }) {
-            Icon(
-                imageVector = Icons.Rounded.MoreVert,
-                contentDescription = stringResource(R.string.more_options),
+    OverflowMenu { dismiss ->
+        actions.firstSelectedIsUnread?.let { isUnread ->
+            OverflowMenuItem(
+                labelResId = when {
+                    isUnread -> R.string.mark_as_read
+                    else -> R.string.mark_as_unread
+                },
+                onClick = {
+                    val action = when {
+                        isUnread -> Action.MarkReadClicked
+                        else -> Action.MarkUnreadClicked
+                    }
+                    onAction(action)
+                    dismiss()
+                },
             )
         }
 
-        DropdownMenu(
-            modifier = Modifier.width(OverflowMenuWidth),
-            expanded = isExpanded,
-            onDismissRequest = { isExpanded = false },
-        ) {
-            actions.firstSelectedIsUnread?.let { isUnread ->
-                SelectionMenuItem(
-                    labelResId = when {
-                        isUnread -> R.string.mark_as_read
-                        else -> R.string.mark_as_unread
-                    },
-                    onClick = {
-                        val action = when {
-                            isUnread -> Action.MarkReadClicked
-                            else -> Action.MarkUnreadClicked
-                        }
-                        onAction(action)
-                        isExpanded = false
-                    },
-                )
-            }
+        if (actions.canAddContact) {
+            OverflowMenuItem(
+                labelResId = R.string.action_add_contact,
+                onClick = {
+                    onAction(Action.AddContactClicked)
+                    dismiss()
+                },
+            )
+        }
 
-            if (actions.canAddContact) {
-                SelectionMenuItem(
-                    labelResId = R.string.action_add_contact,
-                    onClick = {
-                        onAction(Action.AddContactClicked)
-                        isExpanded = false
-                    },
-                )
-            }
-
-            if (actions.canBlock) {
-                SelectionMenuItem(
-                    labelResId = R.string.action_block,
-                    onClick = {
-                        onAction(Action.BlockClicked)
-                        isExpanded = false
-                    },
-                )
-            }
+        if (actions.canBlock) {
+            OverflowMenuItem(
+                labelResId = R.string.action_block,
+                onClick = {
+                    onAction(Action.BlockClicked)
+                    dismiss()
+                },
+            )
         }
     }
-}
-
-@Composable
-private fun SelectionMenuItem(
-    labelResId: Int,
-    onClick: () -> Unit,
-) {
-    DropdownMenuItem(
-        text = {
-            Text(text = stringResource(labelResId))
-        },
-        onClick = onClick,
-    )
 }
 
 @Composable

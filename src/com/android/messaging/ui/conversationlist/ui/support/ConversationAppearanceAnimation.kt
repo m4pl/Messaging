@@ -1,4 +1,4 @@
-package com.android.messaging.ui.conversationlist.ui
+package com.android.messaging.ui.conversationlist.ui.support
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
