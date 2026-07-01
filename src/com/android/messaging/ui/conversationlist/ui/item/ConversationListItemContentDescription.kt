@@ -15,7 +15,7 @@ internal fun conversationListItemContentDescription(
 ): String {
     val message = conversationListItemContentDescriptionMessage(item)
     val time = remember(item.timestampMillis) {
-        Dates.getConversationTimeString(item.timestampMillis).toString()
+        Dates.getConversationContentDescriptionTimeString(item.timestampMillis).toString()
     }
     val spec = conversationListItemContentDescriptionSpec(
         item = item,
