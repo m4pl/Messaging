@@ -48,7 +48,7 @@ import com.android.messaging.ui.appsettings.SettingsActivity;
 import com.android.messaging.ui.blockedparticipants.BlockedParticipantsActivity;
 import com.android.messaging.ui.conversation.ConversationActivity;
 import com.android.messaging.ui.conversation.LaunchConversationActivity;
-import com.android.messaging.ui.conversationlist.ConversationListActivity;
+import com.android.messaging.ui.conversationlist.chats.ConversationListActivity;
 import com.android.messaging.ui.conversationlist.archived.ArchivedConversationListActivity;
 import com.android.messaging.ui.conversationpicker.host.forward.ForwardMessageActivity;
 import com.android.messaging.ui.conversationsettings.ConversationSettingsActivity;
