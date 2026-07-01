@@ -22,6 +22,8 @@ import com.android.messaging.data.conversation.repository.ConversationVCardMetad
 import com.android.messaging.data.conversation.repository.ConversationVCardMetadataRepositoryImpl
 import com.android.messaging.data.conversation.repository.ConversationsRepository
 import com.android.messaging.data.conversation.repository.ConversationsRepositoryImpl
+import com.android.messaging.data.conversation.store.ConversationArchiveStore
+import com.android.messaging.data.conversation.store.ConversationArchiveStoreImpl
 import com.android.messaging.data.conversation.store.ConversationDraftStore
 import com.android.messaging.data.conversation.store.ConversationDraftStoreImpl
 import com.android.messaging.data.conversation.store.ConversationPinStore
@@ -140,6 +142,12 @@ internal abstract class ConversationBindsModule {
     abstract fun bindConversationPinStore(
         impl: ConversationPinStoreImpl,
     ): ConversationPinStore
+
+    @Binds
+    @Reusable
+    abstract fun bindConversationArchiveStore(
+        impl: ConversationArchiveStoreImpl,
+    ): ConversationArchiveStore
 
     @Binds
     @Reusable

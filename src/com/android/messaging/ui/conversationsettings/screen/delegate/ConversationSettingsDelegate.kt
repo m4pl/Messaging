@@ -117,9 +117,11 @@ internal class ConversationSettingsDelegateImpl @Inject constructor(
     override fun setArchived(archived: Boolean) {
         val conversationId = currentConversationId() ?: return
 
-        when {
-            archived -> conversationsRepository.archiveConversation(conversationId)
-            else -> conversationsRepository.unarchiveConversation(conversationId)
+        applicationScope.launch {
+            when {
+                archived -> conversationsRepository.archiveConversation(conversationId)
+                else -> conversationsRepository.unarchiveConversation(conversationId)
+            }
         }
     }
 

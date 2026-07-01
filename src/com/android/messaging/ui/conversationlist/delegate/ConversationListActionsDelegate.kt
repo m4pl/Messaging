@@ -64,10 +64,12 @@ internal class ConversationListActionsDelegateImpl @Inject constructor(
             return
         }
 
-        resolvedConversationIds.forEach { conversationId ->
-            when {
-                isArchived -> conversationsRepository.archiveConversation(conversationId)
-                else -> conversationsRepository.unarchiveConversation(conversationId)
+        boundScope?.launch {
+            resolvedConversationIds.forEach { conversationId ->
+                when {
+                    isArchived -> conversationsRepository.archiveConversation(conversationId)
+                    else -> conversationsRepository.unarchiveConversation(conversationId)
+                }
             }
         }
 

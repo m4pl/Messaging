@@ -146,8 +146,6 @@ internal class ConversationListActionsDelegateImplTest {
                 shouldShowSnackbar = true,
             )
 
-            verify(exactly = 1) { harness.conversationsRepository.archiveConversation("a") }
-            verify(exactly = 1) { harness.conversationsRepository.archiveConversation("b") }
             assertEquals(
                 ConversationListEffect.ArchiveStatusChanged(
                     conversationIds = persistentListOf("a", "b"),
@@ -157,6 +155,10 @@ internal class ConversationListActionsDelegateImplTest {
             )
             cancelAndIgnoreRemainingEvents()
         }
+        runCurrent()
+
+        coVerify(exactly = 1) { harness.conversationsRepository.archiveConversation("a") }
+        coVerify(exactly = 1) { harness.conversationsRepository.archiveConversation("b") }
     }
 
     @Test
@@ -170,10 +172,12 @@ internal class ConversationListActionsDelegateImplTest {
                 shouldShowSnackbar = false,
             )
 
-            verify(exactly = 1) { harness.conversationsRepository.archiveConversation("a") }
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
         }
+        runCurrent()
+
+        coVerify(exactly = 1) { harness.conversationsRepository.archiveConversation("a") }
     }
 
     @Test
@@ -187,7 +191,6 @@ internal class ConversationListActionsDelegateImplTest {
                 shouldShowSnackbar = true,
             )
 
-            verify(exactly = 1) { harness.conversationsRepository.unarchiveConversation("a") }
             assertEquals(
                 ConversationListEffect.ArchiveStatusChanged(
                     conversationIds = persistentListOf("a"),
@@ -197,6 +200,9 @@ internal class ConversationListActionsDelegateImplTest {
             )
             cancelAndIgnoreRemainingEvents()
         }
+        runCurrent()
+
+        coVerify(exactly = 1) { harness.conversationsRepository.unarchiveConversation("a") }
     }
 
     @Test
