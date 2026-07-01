@@ -1502,6 +1502,28 @@ public class BugleDatabaseOperations {
         }
     }
 
+    /**
+     * Returns whether the conversation is currently archived in the local db. Used so that a
+     * message sync does not clobber the user's archive state when it refreshes conversation
+     * metadata.
+     */
+    @DoesNotRunOnMainThread
+    public static boolean getConversationArchiveStatusInTransaction(
+            final DatabaseWrapper dbWrapper,
+            final String conversationId
+    ) {
+        try (Cursor cursor = dbWrapper.query(
+                DatabaseHelper.CONVERSATIONS_TABLE,
+                new String[] { ConversationColumns.ARCHIVE_STATUS },
+                ConversationColumns._ID + "=?",
+                new String[] { conversationId },
+                null, null, null
+            )
+        ) {
+            return cursor.moveToFirst() && cursor.getInt(0) == 1;
+        }
+    }
+
     /** Preserve parts in message but clear the stored draft */
     public static final int UPDATE_MODE_CLEAR_DRAFT = 1;
     /** Add the message as a draft */
