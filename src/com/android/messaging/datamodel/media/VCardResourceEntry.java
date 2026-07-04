@@ -343,6 +343,18 @@ public class VCardResourceEntry {
             mClickIntent = clickIntent;
         }
 
+        public String getDisplayDestination() {
+            return mDisplayDestination;
+        }
+
+        public String getDestinationType() {
+            return mDestinationType;
+        }
+
+        public Intent getClickIntent() {
+            return mClickIntent;
+        }
+
         /**
          * Returns a UI-facing representation that can be bound and consumed by the UI layer to
          * display this VCard resource destination entry.
