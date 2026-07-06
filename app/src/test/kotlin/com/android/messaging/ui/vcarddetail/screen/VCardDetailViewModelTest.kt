@@ -19,9 +19,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -41,7 +41,9 @@ internal class VCardDetailViewModelTest {
     private val addVCardToContacts = mockk<AddVCardToContacts>()
     private val uiStateMapper = VCardDetailUiStateMapperImpl()
 
-    private val results = MutableSharedFlow<VCardDetailResult>(extraBufferCapacity = 8)
+    private val results = MutableSharedFlow<VCardDetailResult>(extraBufferCapacity = 1)
+    private val observedVCardUris = mutableListOf<String>()
+    private val observedRefreshes = mutableListOf<Flow<Unit>>()
 
     private val contacts = persistentListOf(
         VCardContact(
@@ -62,7 +64,7 @@ internal class VCardDetailViewModelTest {
 
             val uiState = viewModel.uiState.value
             assertFalse(uiState.isLoading)
-            assertEquals(contacts, uiState.contacts)
+            assertEquals(1, uiState.contacts.size)
             assertTrue(uiState.canAddToContacts)
         }
 
@@ -85,15 +87,14 @@ internal class VCardDetailViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.refresh()
-        advanceUntilIdle()
-
-        verify(exactly = 1) {
-            repository.observeVCard(
-                vCardUri = VCARD_URI,
-                refreshes = any(),
-            )
+        val refreshes = observedRefreshes.single()
+        refreshes.test {
+            viewModel.refresh()
+            assertEquals(Unit, awaitItem())
+            cancelAndIgnoreRemainingEvents()
         }
+
+        assertEquals(listOf(VCARD_URI), observedVCardUris)
     }
 
     @Test
@@ -104,12 +105,15 @@ internal class VCardDetailViewModelTest {
         results.emit(VCardDetailResult.Loaded(contacts))
         advanceUntilIdle()
 
+        val loadedContacts = viewModel.uiState.value.contacts
+        assertTrue(loadedContacts.isNotEmpty())
+
         results.emit(VCardDetailResult.Loading)
         advanceUntilIdle()
 
         val uiState = viewModel.uiState.value
         assertFalse(uiState.isLoading)
-        assertEquals(contacts, uiState.contacts)
+        assertEquals(loadedContacts, uiState.contacts)
         assertTrue(uiState.canAddToContacts)
     }
 
@@ -215,8 +219,8 @@ internal class VCardDetailViewModelTest {
     private fun createViewModel(): VCardDetailViewModel {
         every {
             repository.observeVCard(
-                vCardUri = VCARD_URI,
-                refreshes = any(),
+                vCardUri = capture(observedVCardUris),
+                refreshes = capture(observedRefreshes),
             )
         } returns results
 

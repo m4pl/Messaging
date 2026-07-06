@@ -13,6 +13,7 @@ import com.android.messaging.data.conversation.model.attachment.ConversationVCar
 import com.android.messaging.data.vcard.model.VCardAvatarPhoto
 import com.android.messaging.ui.common.components.attachment.VCardAttachmentCard
 import com.android.messaging.ui.common.components.attachment.VCardAttachmentKind
+import com.android.messaging.ui.common.text.asLtrText
 import com.android.messaging.ui.conversation.preview.previewVCardUiModel
 import com.android.messaging.ui.core.MessagingPreviewColumn
 
@@ -40,11 +41,11 @@ internal fun ConversationVCardAttachmentCardContent(
         kind = type.toVCardAttachmentKind(),
         avatarPhoto = avatarPhoto,
         avatarName = titleText,
-        title = resolveVCardText(
+        title = resolveLtrVCardText(
             text = titleText,
             textResId = titleTextResId,
         ).orEmpty(),
-        subtitle = resolveVCardText(
+        subtitle = resolveLtrVCardText(
             text = subtitleText,
             textResId = subtitleTextResId,
         ),
@@ -59,11 +60,11 @@ internal fun ConversationVCardAttachmentType.toVCardAttachmentKind(): VCardAttac
 }
 
 @Composable
-internal fun resolveVCardText(
+internal fun resolveLtrVCardText(
     text: String?,
     textResId: Int?,
 ): String? {
-    return text ?: textResId?.let { resId ->
+    return text?.asLtrText() ?: textResId?.let { resId ->
         stringResource(resId)
     }
 }

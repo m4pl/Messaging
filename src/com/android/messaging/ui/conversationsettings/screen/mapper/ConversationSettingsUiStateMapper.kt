@@ -1,7 +1,5 @@
 package com.android.messaging.ui.conversationsettings.screen.mapper
 
-import androidx.core.text.BidiFormatter
-import androidx.core.text.TextDirectionHeuristicsCompat.LTR
 import com.android.messaging.data.conversationsettings.model.ConversationSettingsData
 import com.android.messaging.data.subscription.model.Subscription
 import com.android.messaging.datamodel.data.ParticipantData
@@ -76,19 +74,15 @@ internal class ConversationSettingsUiStateMapperImpl @Inject constructor(
     private fun toParticipantUiState(
         participant: ParticipantData,
     ): ParticipantUiState {
-        val bidiFormatter = BidiFormatter.getInstance()
         val fullName = participant.fullName
+        val hasFullName = fullName.isNotEmpty()
         val displayName = when {
-            fullName.isNullOrEmpty() -> {
-                bidiFormatter.unicodeWrap(participant.sendDestination.orEmpty(), LTR)
-            }
-            else -> fullName
+            hasFullName -> fullName
+            else -> participant.sendDestination.orEmpty()
         }
         val details = when {
-            fullName.isNullOrEmpty() || participant.isUnknownSender -> null
-            else -> participant.sendDestination?.let {
-                bidiFormatter.unicodeWrap(it, LTR)
-            }
+            hasFullName && !participant.isUnknownSender -> participant.sendDestination
+            else -> null
         }
         val canCall = canPlacePhoneCall(participant.normalizedDestination)
         val isContactSaved = isContactSavedUseCase(
@@ -105,11 +99,10 @@ internal class ConversationSettingsUiStateMapperImpl @Inject constructor(
             lookupKey = participant.lookupKey,
             normalizedDestination = participant.normalizedDestination,
             isBlocked = participant.isBlocked,
-            displayDestination = participant.displayDestination?.let {
-                bidiFormatter.unicodeWrap(it, LTR)
-            },
+            displayDestination = participant.displayDestination,
             canCall = canCall,
             isContactSaved = isContactSaved,
+            isDisplayNameLtr = !hasFullName,
         )
     }
 }
