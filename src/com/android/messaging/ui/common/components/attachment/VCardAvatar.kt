@@ -20,6 +20,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
 import com.android.messaging.data.vcard.model.VCardAvatarPhoto
+import kotlin.text.CharCategory
+import kotlin.text.category
 
 @Composable
 internal fun VCardAvatar(
@@ -101,8 +103,13 @@ private fun VCardAvatarFallback(
 private fun vCardAvatarLabel(avatarName: String?): String? {
     return avatarName
         ?.trim()
+        ?.dropWhile(::isFormatChar)
         ?.takeIf { it.isNotBlank() }
         ?.first()
         ?.uppercaseChar()
         ?.toString()
+}
+
+private fun isFormatChar(char: Char): Boolean {
+    return char.category == CharCategory.FORMAT
 }

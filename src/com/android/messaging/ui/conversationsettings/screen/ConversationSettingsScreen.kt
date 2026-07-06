@@ -68,6 +68,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.messaging.R
 import com.android.messaging.ui.common.components.horizontalSafeDrawingInsets
+import com.android.messaging.ui.common.text.asLtrText
 import com.android.messaging.ui.conversation.ConversationActivity
 import com.android.messaging.ui.conversation.conversationSettingsParticipantRowTestTag
 import com.android.messaging.ui.conversationsettings.common.ConversationHeader
@@ -485,9 +486,11 @@ private fun LazyListScope.generalSettingsItems(
         }
 
         item(key = "block") {
+            val displayDestination = otherParticipant.displayDestination.orEmpty().asLtrText()
+
             ConversationSettingsItem(
                 icon = Icons.Default.Block,
-                title = stringResource(titleRes, otherParticipant.displayDestination.orEmpty()),
+                title = stringResource(titleRes, displayDestination),
                 onClick = {
                     if (otherParticipant.isBlocked) {
                         onAction(Action.UnblockClicked)

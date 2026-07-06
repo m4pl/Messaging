@@ -33,7 +33,7 @@ import com.android.messaging.ui.common.components.attachment.AudioAttachmentCell
 import com.android.messaging.ui.common.components.attachment.MediaAttachmentCell
 import com.android.messaging.ui.common.components.attachment.VCardAttachmentCell
 import com.android.messaging.ui.conversation.CONVERSATION_ATTACHMENT_PREVIEW_LIST_TEST_TAG
-import com.android.messaging.ui.conversation.attachment.ui.resolveVCardText
+import com.android.messaging.ui.conversation.attachment.ui.resolveLtrVCardText
 import com.android.messaging.ui.conversation.attachment.ui.toVCardAttachmentKind
 import com.android.messaging.ui.conversation.composer.model.ComposerAttachmentUiModel
 import com.android.messaging.ui.conversation.conversationAttachmentPreviewItemTestTag
@@ -118,11 +118,11 @@ private fun ResolvedAttachmentPreviewItem(
                 kind = attachment.vCardUiModel.type.toVCardAttachmentKind(),
                 avatarPhoto = attachment.vCardUiModel.avatarPhoto,
                 avatarName = attachment.vCardUiModel.titleText,
-                title = resolveVCardText(
+                title = resolveLtrVCardText(
                     text = attachment.vCardUiModel.titleText,
                     textResId = attachment.vCardUiModel.titleTextResId,
                 ).orEmpty(),
-                subtitle = resolveVCardText(
+                subtitle = resolveLtrVCardText(
                     text = attachment.vCardUiModel.subtitleText,
                     textResId = attachment.vCardUiModel.subtitleTextResId,
                 ),

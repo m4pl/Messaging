@@ -22,12 +22,13 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
 import com.android.messaging.data.vcard.model.VCardAvatarPhoto
-import com.android.messaging.data.vcarddetail.model.VCardContact
-import com.android.messaging.data.vcarddetail.model.VCardField
 import com.android.messaging.data.vcarddetail.model.VCardFieldAction
 import com.android.messaging.ui.common.components.attachment.VCardAvatar
 import com.android.messaging.ui.common.components.selection.SelectionListItemTokens
+import com.android.messaging.ui.common.text.asLtrText
 import com.android.messaging.ui.core.MessagingPreviewColumn
+import com.android.messaging.ui.vcarddetail.screen.model.VCardContactUiModel
+import com.android.messaging.ui.vcarddetail.screen.model.VCardFieldUiModel
 import kotlinx.collections.immutable.persistentListOf
 
 private val RowHorizontalPadding = SelectionListItemTokens.rowHorizontalPadding
@@ -38,7 +39,7 @@ private val AvatarIconSize = 24.dp
 
 @Composable
 internal fun VCardContactCard(
-    contact: VCardContact,
+    contact: VCardContactUiModel,
     onFieldClick: (VCardFieldAction) -> Unit,
     onFieldLongClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -51,6 +52,7 @@ internal fun VCardContactCard(
     ) {
         VCardContactHeader(
             displayName = contact.displayName,
+            avatarName = contact.avatarName,
             avatarPhoto = contact.avatarPhoto,
         )
 
@@ -73,8 +75,11 @@ internal fun VCardContactCard(
 @Composable
 private fun VCardContactHeader(
     displayName: String?,
+    avatarName: String?,
     avatarPhoto: VCardAvatarPhoto?,
 ) {
+    val displayText = displayName?.asLtrText().orEmpty()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -85,7 +90,7 @@ private fun VCardContactHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         VCardAvatar(
-            avatarName = displayName,
+            avatarName = avatarName,
             avatarPhoto = avatarPhoto,
             size = AvatarSize,
             iconSize = AvatarIconSize,
@@ -94,7 +99,7 @@ private fun VCardContactHeader(
         Spacer(modifier = Modifier.width(AvatarToTextSpacing))
 
         Text(
-            text = displayName.orEmpty(),
+            text = displayText,
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
@@ -106,10 +111,12 @@ private fun VCardContactHeader(
 
 @Composable
 private fun VCardFieldRow(
-    field: VCardField,
+    field: VCardFieldUiModel,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
+    val displayValue = field.displayValue.asLtrText()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -124,7 +131,7 @@ private fun VCardFieldRow(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
-            text = field.value,
+            text = displayValue,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -145,27 +152,32 @@ private fun VCardFieldRow(
 private fun VCardContactCardPreview() {
     MessagingPreviewColumn {
         VCardContactCard(
-            contact = VCardContact(
+            contact = VCardContactUiModel(
                 displayName = "Ada Lovelace",
+                avatarName = "Ada Lovelace",
                 avatarPhoto = null,
                 fields = persistentListOf(
-                    VCardField(
+                    VCardFieldUiModel(
                         value = "+1 555 0001",
+                        displayValue = "+1 555 0001",
                         label = "Mobile",
                         action = VCardFieldAction.Dial("+15550001"),
                     ),
-                    VCardField(
+                    VCardFieldUiModel(
                         value = "ada@example.com",
+                        displayValue = "ada@example.com",
                         label = "Home",
                         action = VCardFieldAction.Email("ada@example.com"),
                     ),
-                    VCardField(
+                    VCardFieldUiModel(
                         value = "1 Analytical Engine Way, London",
+                        displayValue = "1 Analytical Engine Way, London",
                         label = "Address",
                         action = VCardFieldAction.OpenMap("1 Analytical Engine Way, London"),
                     ),
-                    VCardField(
+                    VCardFieldUiModel(
                         value = "First computer programmer",
+                        displayValue = "First computer programmer",
                         label = stringResource(R.string.vcard_detail_notes_label),
                         action = VCardFieldAction.None,
                     ),

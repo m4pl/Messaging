@@ -26,7 +26,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -49,12 +48,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.core.text.BidiFormatter
-import androidx.core.text.TextDirectionHeuristicsCompat
 import com.android.messaging.R
 import com.android.messaging.ui.common.components.participant.ParticipantAvatar
 import com.android.messaging.ui.common.components.participant.participantAvatarLabel
 import com.android.messaging.ui.common.components.participant.participantColorSeed
+import com.android.messaging.ui.common.text.asLtrText
 import com.android.messaging.ui.conversation.CONVERSATION_ADD_CONTACT_BUTTON_TEST_TAG
 import com.android.messaging.ui.conversation.CONVERSATION_ADD_PEOPLE_BUTTON_TEST_TAG
 import com.android.messaging.ui.conversation.CONVERSATION_ARCHIVE_BUTTON_TEST_TAG
@@ -547,12 +545,7 @@ private fun conversationSubtitle(
         is ConversationMetadataUiState.Present -> {
             when {
                 shouldShowOneOnOneSubtitle(metadata = metadata) -> {
-                    BidiFormatter
-                        .getInstance()
-                        .unicodeWrap(
-                            metadata.otherParticipantDisplayDestination,
-                            TextDirectionHeuristicsCompat.LTR,
-                        )
+                    metadata.otherParticipantDisplayDestination?.asLtrText()
                 }
 
                 metadata.participantCount > 1 -> {

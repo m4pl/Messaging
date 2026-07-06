@@ -28,16 +28,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.messaging.data.vcarddetail.model.VCardContact
-import com.android.messaging.data.vcarddetail.model.VCardField
 import com.android.messaging.data.vcarddetail.model.VCardFieldAction
 import com.android.messaging.ui.common.components.contentSurfaceShape
 import com.android.messaging.ui.common.components.horizontalSafeDrawingInsets
 import com.android.messaging.ui.core.MessagingPreviewTheme
 import com.android.messaging.ui.vcarddetail.common.VCardContactCard
 import com.android.messaging.ui.vcarddetail.common.VCardDetailTopAppBar
+import com.android.messaging.ui.vcarddetail.screen.model.VCardContactUiModel
 import com.android.messaging.ui.vcarddetail.screen.model.VCardDetailAction as Action
 import com.android.messaging.ui.vcarddetail.screen.model.VCardDetailUiState as State
+import com.android.messaging.ui.vcarddetail.screen.model.VCardFieldUiModel
 import kotlinx.collections.immutable.persistentListOf
 
 private val ScreenContentPadding = 8.dp
@@ -118,7 +118,7 @@ private fun VCardDetailContent(
 
 @Composable
 private fun VCardContactList(
-    contacts: List<VCardContact>,
+    contacts: List<VCardContactUiModel>,
     onAction: (Action) -> Unit,
     scaffoldContentPadding: PaddingValues,
 ) {
@@ -156,17 +156,20 @@ private fun VCardDetailContentPreview() {
             uiState = State(
                 isLoading = false,
                 contacts = persistentListOf(
-                    VCardContact(
+                    VCardContactUiModel(
                         displayName = "Ada Lovelace",
+                        avatarName = "Ada Lovelace",
                         avatarPhoto = null,
                         fields = persistentListOf(
-                            VCardField(
+                            VCardFieldUiModel(
                                 value = "+1 555 0001",
+                                displayValue = "+1 555 0001",
                                 label = "Mobile",
                                 action = VCardFieldAction.Dial("+15550001"),
                             ),
-                            VCardField(
+                            VCardFieldUiModel(
                                 value = "ada@example.com",
+                                displayValue = "ada@example.com",
                                 label = "Home",
                                 action = VCardFieldAction.Email("ada@example.com"),
                             ),

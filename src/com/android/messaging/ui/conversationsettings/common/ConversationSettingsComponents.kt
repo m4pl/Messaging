@@ -42,6 +42,7 @@ import com.android.messaging.ui.common.components.participant.ParticipantAvatar
 import com.android.messaging.ui.common.components.participant.ParticipantQuickActionsPopup
 import com.android.messaging.ui.common.components.participant.participantAvatarLabel
 import com.android.messaging.ui.common.components.participant.participantColorSeed
+import com.android.messaging.ui.common.text.asLtrText
 import com.android.messaging.ui.conversationsettings.screen.model.ParticipantUiState
 import com.android.messaging.ui.core.MessagingPreviewColumn
 
@@ -210,6 +211,9 @@ private fun ParticipantRow(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val displayName = participant.displayNameText()
+        val details = participant.details?.asLtrText()
+
         ParticipantAvatarWithQuickActions(
             participant = participant,
             avatarUri = avatarUri,
@@ -225,8 +229,8 @@ private fun ParticipantRow(
         Spacer(modifier = Modifier.width(16.dp))
 
         ParticipantInfo(
-            displayName = participant.displayName,
-            details = participant.details,
+            displayName = displayName,
+            details = details,
             modifier = Modifier.weight(1f),
         )
 
@@ -249,11 +253,14 @@ private fun ParticipantQuickActions(
     onCallClick: (() -> Unit)?,
     onContactClick: (() -> Unit)?,
 ) {
+    val displayName = participant.displayNameText()
+    val subtitle = participant.details?.asLtrText()
+
     ParticipantQuickActionsPopup(
         visible = visible,
         avatarUri = avatarUri,
-        displayName = participant.displayName,
-        subtitle = participant.details,
+        displayName = displayName,
+        subtitle = subtitle,
         fallbackIcon = fallbackIcon,
         fallbackLabel = fallbackLabel,
         colorSeedCode = colorSeedCode,
@@ -273,6 +280,14 @@ private fun ParticipantQuickActions(
         onInfoClick = null,
         isContactSaved = participant.isContactSaved,
     )
+}
+
+@Composable
+private fun ParticipantUiState.displayNameText(): String {
+    return when {
+        isDisplayNameLtr -> displayName.asLtrText()
+        else -> displayName
+    }
 }
 
 @Composable

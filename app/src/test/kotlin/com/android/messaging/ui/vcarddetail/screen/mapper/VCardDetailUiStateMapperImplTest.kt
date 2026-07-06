@@ -2,6 +2,7 @@ package com.android.messaging.ui.vcarddetail.screen.mapper
 
 import com.android.messaging.data.vcarddetail.model.VCardContact
 import com.android.messaging.data.vcarddetail.model.VCardDetailResult
+import com.android.messaging.ui.vcarddetail.screen.model.VCardContactUiModel
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -33,10 +34,18 @@ internal class VCardDetailUiStateMapperImplTest {
     @Test
     fun map_loadedWithContacts_exposesContactsAndAllowsAddToContacts() {
         val contacts = persistentListOf(contact("Ada Lovelace"))
+        val expectedContacts = persistentListOf(
+            VCardContactUiModel(
+                displayName = "Ada Lovelace",
+                avatarName = "Ada Lovelace",
+                avatarPhoto = null,
+                fields = persistentListOf(),
+            ),
+        )
         val uiState = mapper.map(VCardDetailResult.Loaded(contacts))
 
         assertFalse(uiState.isLoading)
-        assertEquals(contacts, uiState.contacts)
+        assertEquals(expectedContacts, uiState.contacts)
         assertTrue(uiState.canAddToContacts)
     }
 

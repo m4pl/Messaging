@@ -8,6 +8,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.android.messaging.R
 import com.android.messaging.ui.common.components.SnoozeChatDialog
+import com.android.messaging.ui.common.text.asLtrText
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsAction as Action
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsUiState as State
 import com.android.messaging.ui.core.MessagingPreviewTheme
@@ -22,7 +23,7 @@ internal fun ConversationSettingsDialogs(
     onDismissSnoozeChat: () -> Unit,
 ) {
     if (pendingBlockConfirmation) {
-        val displayName = uiState.otherParticipant?.displayDestination.orEmpty()
+        val displayName = uiState.otherParticipant?.displayDestination.orEmpty().asLtrText()
 
         BlockConfirmationDialog(
             displayName = displayName,
