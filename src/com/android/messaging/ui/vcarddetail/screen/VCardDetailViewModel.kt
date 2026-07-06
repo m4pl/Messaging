@@ -19,6 +19,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,7 @@ internal interface VCardDetailScreenModel {
     val uiState: StateFlow<State>
 
     fun onAction(action: Action)
+    fun refresh()
 }
 
 @HiltViewModel
@@ -52,12 +54,18 @@ internal class VCardDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(State())
     override val uiState: StateFlow<State> = _uiState.asStateFlow()
 
+    private val refreshTriggers = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
     private var addToContactsName: String? = null
     private var scratchUri: String? = null
 
     init {
         viewModelScope.launch {
-            repository.observeVCard(vCardUri)
+            repository
+                .observeVCard(
+                    vCardUri = vCardUri,
+                    refreshes = refreshTriggers,
+                )
                 .collect(::handleResult)
         }
     }
@@ -70,7 +78,15 @@ internal class VCardDetailViewModel @Inject constructor(
         }
     }
 
+    override fun refresh() {
+        refreshTriggers.tryEmit(Unit)
+    }
+
     private fun handleResult(result: VCardDetailResult) {
+        if (result == VCardDetailResult.Loading && uiState.value.contacts.isNotEmpty()) {
+            return
+        }
+
         if (result is VCardDetailResult.Loaded) {
             addToContactsName = result.contacts.singleOrNull()?.displayName
         }

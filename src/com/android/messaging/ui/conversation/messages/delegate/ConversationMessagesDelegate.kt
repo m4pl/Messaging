@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,10 +27,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 internal interface ConversationMessagesDelegate :
-    ConversationScreenDelegate<ConversationMessagesUiState>
+    ConversationScreenDelegate<ConversationMessagesUiState> {
+    fun refresh()
+}
 
 internal class ConversationMessagesDelegateImpl @Inject constructor(
     private val conversationsRepository: ConversationsRepository,
@@ -46,6 +50,8 @@ internal class ConversationMessagesDelegateImpl @Inject constructor(
 
     override val state = _state.asStateFlow()
 
+    private val refreshTriggers = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
     private var isBound = false
 
     override fun bind(
@@ -59,20 +65,32 @@ internal class ConversationMessagesDelegateImpl @Inject constructor(
         isBound = true
 
         scope.launch(defaultDispatcher) {
-            conversationIdFlow.collectLatest { conversationId ->
-                _state.value = ConversationMessagesUiState.Loading
+            var currentConversationId: String? = null
 
-                if (conversationId == null) {
-                    return@collectLatest
-                }
+            refreshTriggers
+                .onStart { emit(Unit) }
+                .flatMapLatest { conversationIdFlow }
+                .collectLatest { conversationId ->
+                    if (conversationId != currentConversationId) {
+                        currentConversationId = conversationId
+                        _state.value = ConversationMessagesUiState.Loading
+                    }
 
-                observeConversationMessagesUiState(
-                    conversationId = conversationId,
-                ).collect { currentMessagesUiState ->
-                    _state.value = currentMessagesUiState
+                    if (conversationId == null) {
+                        return@collectLatest
+                    }
+
+                    observeConversationMessagesUiState(
+                        conversationId = conversationId,
+                    ).collect { currentMessagesUiState ->
+                        _state.value = currentMessagesUiState
+                    }
                 }
-            }
         }
+    }
+
+    override fun refresh() {
+        refreshTriggers.tryEmit(Unit)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

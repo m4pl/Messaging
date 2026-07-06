@@ -132,6 +132,15 @@ internal class VCardParserImplTest {
         assertTrue(result.isEmpty())
     }
 
+    @Test
+    fun parse_revokedUriGrant_returnsEmpty() = runTest(testDispatcher) {
+        every { contentResolver.openInputStream(any()) } throws SecurityException("revoked")
+
+        val result = parser.parse("content://vcard")
+
+        assertTrue(result.isEmpty())
+    }
+
     private fun givenVCardContent(content: String) {
         val bytes = content.replace("\n", "\r\n").toByteArray()
         every { contentResolver.openInputStream(any()) } answers { ByteArrayInputStream(bytes) }

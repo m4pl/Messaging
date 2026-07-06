@@ -2,12 +2,12 @@ package com.android.messaging.data.vcard.photo
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import java.io.ByteArrayOutputStream
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.io.ByteArrayOutputStream
 
 private const val MAX_EXPECTED_DIMENSION = 512
 

@@ -19,6 +19,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -77,6 +78,39 @@ internal class VCardDetailViewModelTest {
             assertEquals(Effect.Close, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun refresh_keepsExistingVCardSubscription() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        verify(exactly = 1) {
+            repository.observeVCard(
+                vCardUri = VCARD_URI,
+                refreshes = any(),
+            )
+        }
+    }
+
+    @Test
+    fun onLoadingAfterLoaded_keepsCurrentContent() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        results.emit(VCardDetailResult.Loaded(contacts))
+        advanceUntilIdle()
+
+        results.emit(VCardDetailResult.Loading)
+        advanceUntilIdle()
+
+        val uiState = viewModel.uiState.value
+        assertFalse(uiState.isLoading)
+        assertEquals(contacts, uiState.contacts)
+        assertTrue(uiState.canAddToContacts)
     }
 
     @Test
@@ -179,7 +213,12 @@ internal class VCardDetailViewModelTest {
         }
 
     private fun createViewModel(): VCardDetailViewModel {
-        every { repository.observeVCard(VCARD_URI) } returns results
+        every {
+            repository.observeVCard(
+                vCardUri = VCARD_URI,
+                refreshes = any(),
+            )
+        } returns results
 
         val uri = mockk<Uri>()
         every { uri.toString() } returns VCARD_URI

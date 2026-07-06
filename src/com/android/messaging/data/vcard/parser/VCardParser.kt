@@ -137,6 +137,9 @@ internal class VCardParserImpl @Inject constructor(
         } catch (exception: IOException) {
             LogUtil.e(LogUtil.BUGLE_TAG, "Failed to read vCard", exception)
             false
+        } catch (exception: SecurityException) {
+            LogUtil.e(LogUtil.BUGLE_TAG, "No permission to read vCard", exception)
+            false
         }
     }
 

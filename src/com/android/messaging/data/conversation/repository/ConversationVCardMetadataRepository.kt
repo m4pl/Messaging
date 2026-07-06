@@ -7,6 +7,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 internal interface ConversationVCardMetadataRepository {
     fun observeAttachmentMetadata(
@@ -28,7 +29,10 @@ internal class ConversationVCardMetadataRepositoryImpl @Inject constructor(
 
         return flow {
             emit(ConversationVCardAttachmentMetadata.Loading)
-            emit(conversationVCardMetadataMapper.map(vCardEntryRepository.getEntries(contentUri)))
+            vCardEntryRepository
+                .observeEntries(contentUri)
+                .map(conversationVCardMetadataMapper::map)
+                .collect(::emit)
         }
     }
 }
