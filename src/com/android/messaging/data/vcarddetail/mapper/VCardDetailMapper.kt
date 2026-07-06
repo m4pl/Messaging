@@ -159,24 +159,7 @@ internal class VCardDetailMapperImpl @Inject constructor(
                     add(plainField(text, R.string.vcard_detail_notes_label))
                 }
             }
-
-            propertyValue(entry, PROPERTY_NICKNAME)?.let { nickname ->
-                add(plainField(nickname, R.string.vcard_detail_nickname_label))
-            }
-
-            propertyValue(entry, PROPERTY_ANNIVERSARY)?.let { anniversary ->
-                add(plainField(anniversary, R.string.vcard_detail_anniversary_label))
-            }
         }
-    }
-
-    private fun propertyValue(
-        entry: CustomVCardEntry,
-        propertyName: String,
-    ): String? {
-        return entry.getProperty(propertyName)
-            ?.rawValue
-            .asNonBlank()
     }
 
     private fun postalLabel(postal: PostalData): String? {
@@ -235,8 +218,6 @@ internal class VCardDetailMapperImpl @Inject constructor(
     }
 
     private companion object {
-        private const val PROPERTY_NICKNAME = "NICKNAME"
-        private const val PROPERTY_ANNIVERSARY = "ANNIVERSARY"
         private const val FALLBACK_POSTAL_TYPE_INDEX = 2
         private const val FALLBACK_ORGANIZATION_TYPE_INDEX = 1
         private const val URL_SCHEME_PREFIX = "http://"

@@ -3,13 +3,19 @@ package com.android.messaging.data.vcarddetail.repository
 import com.android.messaging.data.vcard.repository.VCardEntryRepository
 import com.android.messaging.data.vcarddetail.mapper.VCardDetailMapper
 import com.android.messaging.data.vcarddetail.model.VCardDetailResult
+import com.android.messaging.datamodel.media.CustomVCardEntry
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 internal interface VCardDetailRepository {
-    fun observeVCard(vCardUri: String): Flow<VCardDetailResult>
+    fun observeVCard(
+        vCardUri: String,
+        refreshes: Flow<Unit> = emptyFlow(),
+    ): Flow<VCardDetailResult>
 }
 
 internal class VCardDetailRepositoryImpl @Inject constructor(
@@ -17,7 +23,10 @@ internal class VCardDetailRepositoryImpl @Inject constructor(
     private val vCardDetailMapper: VCardDetailMapper,
 ) : VCardDetailRepository {
 
-    override fun observeVCard(vCardUri: String): Flow<VCardDetailResult> {
+    override fun observeVCard(
+        vCardUri: String,
+        refreshes: Flow<Unit>,
+    ): Flow<VCardDetailResult> {
         if (vCardUri.isBlank()) {
             return flowOf(VCardDetailResult.Failed)
         }
@@ -25,14 +34,22 @@ internal class VCardDetailRepositoryImpl @Inject constructor(
         return flow {
             emit(VCardDetailResult.Loading)
 
-            val entries = vCardEntryRepository.getEntries(vCardUri)
-            val contacts = vCardDetailMapper.map(entries)
-            val result = when {
-                contacts.isEmpty() -> VCardDetailResult.Failed
-                else -> VCardDetailResult.Loaded(contacts)
-            }
+            vCardEntryRepository
+                .observeEntries(
+                    vCardUri = vCardUri,
+                    refreshes = refreshes,
+                )
+                .map(::mapResult)
+                .collect(::emit)
+        }
+    }
 
-            emit(result)
+    private fun mapResult(entries: List<CustomVCardEntry>): VCardDetailResult {
+        val contacts = vCardDetailMapper.map(entries)
+
+        return when {
+            contacts.isEmpty() -> VCardDetailResult.Failed
+            else -> VCardDetailResult.Loaded(contacts)
         }
     }
 }

@@ -58,7 +58,12 @@ internal class VCardDetailRepositoryImplTest {
     }
 
     private fun givenParsedContacts(vararg contacts: VCardContact) {
-        every { vCardEntryRepository.observeEntries(VCARD_URI) } returns flowOf(entries)
+        every {
+            vCardEntryRepository.observeEntries(
+                vCardUri = VCARD_URI,
+                refreshes = any(),
+            )
+        } returns flowOf(entries)
         every { mapper.map(entries) } returns persistentListOf(*contacts)
     }
 

@@ -24,6 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.messaging.data.vcarddetail.model.VCardContact
@@ -55,6 +57,10 @@ internal fun VCardDetailScreen(
         screenModel.effects.collect { effect ->
             currentEffectHandler.handle(effect)
         }
+    }
+
+    LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
+        screenModel.refresh()
     }
 
     VCardDetailContent(

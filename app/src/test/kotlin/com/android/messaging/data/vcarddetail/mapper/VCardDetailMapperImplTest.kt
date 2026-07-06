@@ -136,20 +136,6 @@ internal class VCardDetailMapperImplTest {
     }
 
     @Test
-    fun map_nicknameAndAnniversary_arePlainFields() {
-        val entry = entryWith(
-            "FN" to "Ada",
-            "NICKNAME" to "Countess",
-            "ANNIVERSARY" to "1835-07-08",
-        )
-        val fields = mapper.map(listOf(entry)).single().fields
-
-        assertEquals(listOf("Countess", "1835-07-08"), fields.map { it.value })
-        assertEquals("Nickname", fields[0].label)
-        assertEquals("Anniversary", fields[1].label)
-    }
-
-    @Test
     fun map_photo_isDownscaledIntoAvatar() {
         val photoBytes = byteArrayOf(1, 2, 3)
         val downscaledBytes = byteArrayOf(9)
@@ -211,7 +197,6 @@ internal class VCardDetailMapperImplTest {
                 VCardProperty().apply {
                     setName(name)
                     setValues(value)
-                    rawValue = value
                 },
             )
         }
