@@ -580,7 +580,6 @@ private fun PickerReviewSimSelector(
         ),
         selectedContentDescription = stringResource(id = R.string.sim_selector_item_selected),
         onSimSelected = onSimSelected,
-        showDestination = true,
     )
 }
 
