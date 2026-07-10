@@ -6,15 +6,20 @@ import com.android.messaging.data.vcarddetail.mapper.VCardDetailMapper
 import com.android.messaging.data.vcarddetail.model.VCardContact
 import com.android.messaging.data.vcarddetail.model.VCardDetailResult
 import com.android.messaging.datamodel.media.CustomVCardEntry
+import com.android.messaging.testutil.MainDispatcherRule
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
 
 internal class VCardDetailRepositoryImplTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     private val vCardEntryRepository = mockk<VCardEntryRepository>()
     private val mapper = mockk<VCardDetailMapper>()
@@ -23,10 +28,13 @@ internal class VCardDetailRepositoryImplTest {
     private val repository = VCardDetailRepositoryImpl(
         vCardEntryRepository = vCardEntryRepository,
         vCardDetailMapper = mapper,
+        defaultDispatcher = mainDispatcherRule.testDispatcher,
     )
 
     @Test
-    fun observeVCard_blankUri_emitsFailedAndCompletes() = runTest {
+    fun observeVCard_blankUri_emitsFailedAndCompletes() = runTest(
+        context = mainDispatcherRule.testDispatcher,
+    ) {
         repository.observeVCard("   ").test {
             assertEquals(VCardDetailResult.Failed, awaitItem())
             awaitComplete()
@@ -34,7 +42,9 @@ internal class VCardDetailRepositoryImplTest {
     }
 
     @Test
-    fun observeVCard_withContacts_emitsLoadingThenLoadedContacts() = runTest {
+    fun observeVCard_withContacts_emitsLoadingThenLoadedContacts() = runTest(
+        context = mainDispatcherRule.testDispatcher,
+    ) {
         givenParsedContacts(contact("Ada Lovelace"))
 
         repository.observeVCard(VCARD_URI).test {
@@ -47,7 +57,9 @@ internal class VCardDetailRepositoryImplTest {
     }
 
     @Test
-    fun observeVCard_noContacts_emitsFailed() = runTest {
+    fun observeVCard_noContacts_emitsFailed() = runTest(
+        context = mainDispatcherRule.testDispatcher,
+    ) {
         givenParsedContacts()
 
         repository.observeVCard(VCARD_URI).test {
