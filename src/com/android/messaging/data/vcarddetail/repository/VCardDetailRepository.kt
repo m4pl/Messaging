@@ -4,11 +4,14 @@ import com.android.messaging.data.vcard.repository.VCardEntryRepository
 import com.android.messaging.data.vcarddetail.mapper.VCardDetailMapper
 import com.android.messaging.data.vcarddetail.model.VCardDetailResult
 import com.android.messaging.datamodel.media.CustomVCardEntry
+import com.android.messaging.di.core.DefaultDispatcher
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 internal interface VCardDetailRepository {
@@ -21,6 +24,8 @@ internal interface VCardDetailRepository {
 internal class VCardDetailRepositoryImpl @Inject constructor(
     private val vCardEntryRepository: VCardEntryRepository,
     private val vCardDetailMapper: VCardDetailMapper,
+    @param:DefaultDispatcher
+    private val defaultDispatcher: CoroutineDispatcher,
 ) : VCardDetailRepository {
 
     override fun observeVCard(
@@ -41,7 +46,7 @@ internal class VCardDetailRepositoryImpl @Inject constructor(
                 )
                 .map(::mapResult)
                 .collect(::emit)
-        }
+        }.flowOn(defaultDispatcher)
     }
 
     private fun mapResult(entries: List<CustomVCardEntry>): VCardDetailResult {
