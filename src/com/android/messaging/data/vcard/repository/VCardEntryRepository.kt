@@ -9,7 +9,6 @@ import com.android.messaging.data.vcard.parser.VCardParser
 import com.android.messaging.datamodel.media.CustomVCardEntry
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -37,8 +36,6 @@ internal class VCardEntryRepositoryImpl @Inject constructor(
 ) : VCardEntryRepository {
 
     private val lock = Mutex()
-    private val pendingParseResults =
-        mutableMapOf<String, CompletableDeferred<List<CustomVCardEntry>>>()
     private val cachedEntries = object : LinkedHashMap<String, List<CustomVCardEntry>>(
         MAX_CACHED_VCARDS,
         LOAD_FACTOR,
@@ -59,8 +56,8 @@ internal class VCardEntryRepositoryImpl @Inject constructor(
             return flowOf(emptyList())
         }
 
-        return merge(
-            refreshEvents(vCardUri),
+        return refreshEvents(
+            vCardUri,
             refreshes,
         ).map {
             getEntries(vCardUri)
@@ -68,48 +65,23 @@ internal class VCardEntryRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntries(vCardUri: String): List<CustomVCardEntry> {
-        return when {
-            vCardUri.isBlank() -> emptyList()
-
-            else -> {
-                val cacheEntries = shouldCache(vCardUri)
-                val cachedEntries = when {
-                    cacheEntries -> cached(vCardUri)
-                    else -> null
-                }
-
-                cachedEntries ?: parseShared(vCardUri, cacheEntries)
-            }
-        }
-    }
-
-    private suspend fun parseShared(
-        vCardUri: String,
-        shouldCache: Boolean,
-    ): List<CustomVCardEntry> {
-        val parseHandle = getOrCreateParseHandle(vCardUri)
-        if (!parseHandle.isOwner) {
-            return parseHandle.deferred.await()
+        if (vCardUri.isBlank()) {
+            return emptyList()
         }
 
-        val result = runCatching {
-            val entries = parser.parse(vCardUri)
+        val shouldCache = shouldCache(vCardUri)
+        val cached = when {
+            shouldCache -> cached(vCardUri)
+            else -> null
+        }
+
+        return cached ?: parser.parse(vCardUri).also { entries ->
             cacheIfNeeded(
                 vCardUri = vCardUri,
                 entries = entries,
                 shouldCache = shouldCache,
             )
-            entries
         }
-
-        result.onSuccess { entries ->
-            parseHandle.deferred.complete(entries)
-        }.onFailure { throwable ->
-            parseHandle.deferred.completeExceptionally(throwable)
-        }
-
-        clearParseHandle(vCardUri, parseHandle.deferred)
-        return result.getOrThrow()
     }
 
     private suspend fun cacheIfNeeded(
@@ -126,10 +98,13 @@ internal class VCardEntryRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun refreshEvents(vCardUri: String): Flow<Unit> {
+    private fun refreshEvents(
+        vCardUri: String,
+        refreshes: Flow<Unit>,
+    ): Flow<Unit> {
         return when {
             vCardUri.toUri().isContactVCardUri() -> contactChangeEvents().conflate()
-            else -> flowOf(Unit)
+            else -> merge(flowOf(Unit), refreshes)
         }
     }
 
@@ -155,11 +130,14 @@ internal class VCardEntryRepositoryImpl @Inject constructor(
     }
 
     private fun Uri.isContactVCardUri(): Boolean {
-        val contactVCardUri = Contacts.CONTENT_VCARD_URI
+        return matchesVCardUri(Contacts.CONTENT_VCARD_URI) ||
+            matchesVCardUri(Contacts.CONTENT_MULTI_VCARD_URI)
+    }
 
-        return scheme == contactVCardUri.scheme &&
-            authority == contactVCardUri.authority &&
-            pathSegments.take(contactVCardUri.pathSegments.size) == contactVCardUri.pathSegments
+    private fun Uri.matchesVCardUri(base: Uri): Boolean {
+        return scheme == base.scheme &&
+            authority == base.authority &&
+            pathSegments.take(base.pathSegments.size) == base.pathSegments
     }
 
     private suspend fun cached(vCardUri: String): List<CustomVCardEntry>? {
@@ -167,42 +145,6 @@ internal class VCardEntryRepositoryImpl @Inject constructor(
             cachedEntries[vCardUri]
         }
     }
-
-    private suspend fun getOrCreateParseHandle(vCardUri: String): ParseHandle {
-        return lock.withLock {
-            val existing = pendingParseResults[vCardUri]
-            if (existing != null) {
-                return@withLock ParseHandle(
-                    deferred = existing,
-                    isOwner = false,
-                )
-            }
-
-            CompletableDeferred<List<CustomVCardEntry>>().let { deferred ->
-                pendingParseResults[vCardUri] = deferred
-                ParseHandle(
-                    deferred = deferred,
-                    isOwner = true,
-                )
-            }
-        }
-    }
-
-    private suspend fun clearParseHandle(
-        vCardUri: String,
-        deferred: CompletableDeferred<List<CustomVCardEntry>>,
-    ) {
-        lock.withLock {
-            if (pendingParseResults[vCardUri] === deferred) {
-                pendingParseResults.remove(vCardUri)
-            }
-        }
-    }
-
-    private data class ParseHandle(
-        val deferred: CompletableDeferred<List<CustomVCardEntry>>,
-        val isOwner: Boolean,
-    )
 
     private companion object {
         private const val MAX_CACHED_VCARDS = 5
