@@ -1,17 +1,14 @@
 package com.android.messaging.ui.conversationpicker.mapper
 
-import android.net.Uri
 import com.android.messaging.data.contact.formatter.ContactDestinationFormatter
 import com.android.messaging.data.conversationpicker.model.TargetConversation
 import com.android.messaging.domain.conversation.usecase.avatar.ResolveAvatarUri
-import com.android.messaging.ui.conversationpicker.formatter.TargetTextFormatter
 import com.android.messaging.ui.conversationpicker.model.TargetUiState
 import com.android.messaging.util.PhoneUtils
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -32,19 +29,11 @@ internal class TargetUiStateMapperImplTest {
         every { canonicalize(any()) } answers { "canonical:${firstArg<String>()}" }
     }
 
-    private val textFormatter = mockk<TargetTextFormatter> {
-        every { wrap(any()) } answers { "wrapped:${firstArg<String>()}" }
-        every { detailsOrNull(any(), any()) } answers {
-            secondArg<String?>()?.let { "details:$it" }
-        }
-    }
-
     private val resolveAvatarUri = mockk<ResolveAvatarUri>()
 
     private val mapper = TargetUiStateMapperImpl(
         contactDestinationFormatter = contactDestinationFormatter,
         resolveAvatarUri = resolveAvatarUri,
-        textFormatter = textFormatter,
     )
 
     @Before
@@ -75,13 +64,11 @@ internal class TargetUiStateMapperImplTest {
             ),
         ).single()
 
-        verify { textFormatter.detailsOrNull(name = "Name", value = "formatted:+15550100") }
-
         val conversation = result as TargetUiState.Conversation
         assertEquals("1", conversation.conversationId)
-        assertEquals("wrapped:Name", conversation.displayName)
+        assertEquals("Name", conversation.displayName)
         assertEquals("canonical:+15550100", conversation.normalizedDestination)
-        assertEquals("details:formatted:+15550100", conversation.details)
+        assertEquals("formatted:+15550100", conversation.details)
         assertFalse(conversation.isGroup)
     }
 
@@ -135,64 +122,31 @@ internal class TargetUiStateMapperImplTest {
     }
 
     @Test
-    fun map_resolvesPrimaryUriWhenIconIsAvatarUri() {
-        val avatarIcon = avatarUri(primaryUri = "content://primary")
-        every { resolveAvatarUri(avatarIcon) } returns "content://primary"
+    fun map_usesResolvedAvatarUri() {
+        every { resolveAvatarUri("content://icon") } returns "content://resolved"
 
         val result = mapper.map(
-            persistentListOf(conversation(icon = avatarIcon)),
+            persistentListOf(conversation(icon = "content://icon")),
         ).single()
 
-        assertEquals("content://primary", result.avatarUri)
+        assertEquals("content://resolved", result.avatarUri)
     }
 
     @Test
-    fun map_setsNullAvatarWhenAvatarUriHasNoPrimary() {
-        val avatarIcon = avatarUri(primaryUri = null)
-
+    fun map_setsNullAvatarWhenResolverReturnsNull() {
         val result = mapper.map(
-            persistentListOf(conversation(icon = avatarIcon)),
+            persistentListOf(conversation(icon = "content://icon")),
         ).single()
 
         assertNull(result.avatarUri)
     }
 
     @Test
-    fun map_usesRawIconWhenIconIsNotAvatarUri() {
-        every { resolveAvatarUri("content://plain") } returns "content://plain"
-
-        val result = mapper.map(
-            persistentListOf(conversation(icon = "content://plain")),
-        ).single()
-
-        assertEquals("content://plain", result.avatarUri)
-    }
-
-    @Test
-    fun map_setsNullAvatarWhenIconIsNull() {
-        val result = mapper.map(
-            persistentListOf(conversation(icon = null)),
-        ).single()
-
-        assertNull(result.avatarUri)
-    }
-
-    @Test
-    fun map_setsNullAvatarWhenIconIsBlank() {
-        val result = mapper.map(
-            persistentListOf(conversation(icon = "   ")),
-        ).single()
-
-        assertNull(result.avatarUri)
-    }
-
-    @Test
-    fun map_setsNullDetailsWhenFormatterReturnsNull() {
-        every { textFormatter.detailsOrNull(any(), any()) } returns null
-
+    fun map_setsNullDetailsWhenFormattedDestinationMatchesName() {
         val result = mapper.map(
             persistentListOf(
                 conversation(
+                    name = "formatted:+15550100",
                     normalizedDestination = "+15550100",
                     isGroup = false,
                 ),
@@ -217,7 +171,7 @@ internal class TargetUiStateMapperImplTest {
             ),
         )
 
-        assertEquals(listOf("wrapped:First", "wrapped:Second"), result.map { it.displayName })
+        assertEquals(listOf("First", "Second"), result.map { it.displayName })
     }
 
     @Test
@@ -239,22 +193,5 @@ internal class TargetUiStateMapperImplTest {
             normalizedDestination = normalizedDestination,
             isGroup = isGroup,
         )
-    }
-
-    private fun avatarUri(primaryUri: String?): String {
-        return Uri.Builder()
-            .scheme(AVATAR_SCHEME)
-            .authority(AVATAR_AUTHORITY)
-            .apply {
-                primaryUri?.let { appendQueryParameter(AVATAR_PRIMARY_URI_PARAM, it) }
-            }
-            .build()
-            .toString()
-    }
-
-    private companion object {
-        private const val AVATAR_SCHEME = "messaging"
-        private const val AVATAR_AUTHORITY = "avatar"
-        private const val AVATAR_PRIMARY_URI_PARAM = "m"
     }
 }

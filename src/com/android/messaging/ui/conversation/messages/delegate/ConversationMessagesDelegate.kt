@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +30,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 internal interface ConversationMessagesDelegate :
-    ConversationScreenDelegate<ConversationMessagesUiState>
+    ConversationScreenDelegate<ConversationMessagesUiState> {
+    fun refresh()
+}
 
 internal class ConversationMessagesDelegateImpl @Inject constructor(
     private val conversationsRepository: ConversationsRepository,
@@ -45,6 +48,8 @@ internal class ConversationMessagesDelegateImpl @Inject constructor(
     )
 
     override val state = _state.asStateFlow()
+
+    private val refreshTriggers = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     private var isBound = false
 
@@ -73,6 +78,10 @@ internal class ConversationMessagesDelegateImpl @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun refresh() {
+        refreshTriggers.tryEmit(Unit)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -119,7 +128,10 @@ internal class ConversationMessagesDelegateImpl @Inject constructor(
 
         val vCardMetadataFlows = vCardContentUris.map { contentUri ->
             conversationVCardMetadataRepository
-                .observeAttachmentMetadata(contentUri = contentUri)
+                .observeAttachmentMetadata(
+                    contentUri = contentUri,
+                    refreshes = refreshTriggers,
+                )
                 .map { metadata ->
                     contentUri to metadata
                 }

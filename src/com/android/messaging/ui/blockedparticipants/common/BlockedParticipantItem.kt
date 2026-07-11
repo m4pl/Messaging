@@ -28,6 +28,7 @@ import com.android.messaging.ui.common.components.participant.ParticipantAvatar
 import com.android.messaging.ui.common.components.participant.ParticipantQuickActionsPopup
 import com.android.messaging.ui.common.components.participant.participantAvatarLabel
 import com.android.messaging.ui.common.components.participant.participantColorSeed
+import com.android.messaging.ui.common.text.asLtrText
 import com.android.messaging.ui.core.MessagingPreviewColumn
 
 @Composable
@@ -92,10 +93,12 @@ private fun BlockedParticipantRow(
         isSelected -> MaterialTheme.colorScheme.surfaceContainerLow
         else -> MaterialTheme.colorScheme.background
     }
+    val displayName = participant.displayName.asLtrText()
+    val details = participant.details?.asLtrText()
 
     TwoLineListItem(
-        title = participant.displayName,
-        subtitle = participant.details,
+        title = displayName,
+        subtitle = details,
         onClick = onClick,
         modifier = modifier,
         onLongClick = onLongClick,
@@ -131,11 +134,14 @@ private fun BlockedParticipantQuickActions(
     onCallClick: (() -> Unit)?,
     onContactClick: (() -> Unit)?,
 ) {
+    val displayName = participant.displayName.asLtrText()
+    val subtitle = participant.details?.asLtrText()
+
     ParticipantQuickActionsPopup(
         visible = visible,
         avatarUri = participant.avatarUri,
-        displayName = participant.displayName,
-        subtitle = participant.details,
+        displayName = displayName,
+        subtitle = subtitle,
         fallbackIcon = fallbackIcon,
         fallbackLabel = participantAvatarLabel(source = participant.displayName),
         colorSeedCode = colorSeedCode,

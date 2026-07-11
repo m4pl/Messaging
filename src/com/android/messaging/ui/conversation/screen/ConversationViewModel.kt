@@ -788,6 +788,8 @@ internal class ConversationViewModel @Inject constructor(
     }
 
     override fun onScreenForegrounded(cancelNotification: Boolean) {
+        conversationComposerAttachmentsDelegate.refresh()
+        conversationMessagesDelegate.refresh()
         conversationFocusDelegate.setScreenFocused(
             focused = true,
             cancelNotification = cancelNotification,
