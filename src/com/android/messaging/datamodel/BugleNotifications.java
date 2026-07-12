@@ -159,8 +159,7 @@ public class BugleNotifications {
         final boolean softSound = DataModel.get().isNewMessageObservable(conversationId);
         if (state == null) {
             if (softSound && !TextUtils.isEmpty(conversationId)) {
-                final Uri ringtoneUri = getNotificationRingtoneUriForConversationId(conversationId);
-                playObservableConversationNotificationSound(ringtoneUri);
+                playObservableSoundUnlessBlocked(conversationId);
             }
             return;
         }
@@ -217,12 +216,28 @@ public class BugleNotifications {
         return repository.isSnoozed(conversationId);
     }
 
-    private static Uri getNotificationRingtoneUriForConversationId(final String conversationId) {
+    private static void playObservableSoundUnlessBlocked(final String conversationId) {
         final DatabaseWrapper db = DataModel.get().getDatabase();
         final ConversationListItemData convData =
                 ConversationListItemData.getExistingConversation(db, conversationId);
-        return RingtoneUtil.getNotificationRingtoneUri(conversationId,
+
+        // Blocked conversations never notify, so don't chime for them either.
+        if (convData != null && isConversationBlocked(db, convData)) {
+            return;
+        }
+
+        final Uri ringtoneUri = RingtoneUtil.getNotificationRingtoneUri(conversationId,
                 convData != null ? convData.getNotificationSoundUri() : null);
+        playObservableConversationNotificationSound(ringtoneUri);
+    }
+
+    private static boolean isConversationBlocked(
+            final DatabaseWrapper db,
+            final ConversationListItemData convData
+    ) {
+        final String otherDestination = convData.getOtherParticipantNormalizedDestination();
+        return otherDestination != null
+                && BugleDatabaseOperations.isBlockedDestination(db, otherDestination);
     }
 
     /**

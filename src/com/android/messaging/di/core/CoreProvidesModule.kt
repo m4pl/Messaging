@@ -1,5 +1,6 @@
 package com.android.messaging.di.core
 
+import android.app.NotificationManager
 import android.app.role.RoleManager
 import android.content.ClipboardManager
 import android.content.ContentResolver
@@ -8,6 +9,9 @@ import android.content.pm.PackageManager
 import android.os.SystemClock
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import com.android.messaging.BuildConfig
+import com.android.messaging.util.PhoneUtils
+import com.android.messaging.util.core.AppVersionProvider
 import com.android.messaging.util.core.ElapsedRealtimeProvider
 import dagger.Module
 import dagger.Provides
@@ -81,6 +85,15 @@ internal class CoreProvidesModule {
 
     @Provides
     @Reusable
+    fun providePackageManager(
+        @ApplicationContext
+        context: Context,
+    ): PackageManager {
+        return context.packageManager
+    }
+
+    @Provides
+    @Reusable
     fun provideClipboardManager(
         @ApplicationContext
         context: Context,
@@ -90,11 +103,11 @@ internal class CoreProvidesModule {
 
     @Provides
     @Reusable
-    fun providePackageManager(
+    fun provideNotificationManager(
         @ApplicationContext
         context: Context,
-    ): PackageManager {
-        return context.packageManager
+    ): NotificationManager {
+        return context.getSystemService(NotificationManager::class.java)
     }
 
     @Provides
@@ -128,5 +141,17 @@ internal class CoreProvidesModule {
     @Reusable
     fun provideElapsedRealtimeProvider(): ElapsedRealtimeProvider {
         return ElapsedRealtimeProvider { SystemClock.elapsedRealtime() }
+    }
+
+    @Provides
+    @Reusable
+    fun provideAppVersionProvider(): AppVersionProvider {
+        return AppVersionProvider { BuildConfig.VERSION_CODE }
+    }
+
+    @Provides
+    @Reusable
+    fun providePhoneUtils(): PhoneUtils {
+        return PhoneUtils.getDefault()
     }
 }
