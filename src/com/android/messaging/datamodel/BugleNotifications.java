@@ -38,7 +38,7 @@ import androidx.core.graphics.drawable.IconCompat;
 
 import com.android.messaging.Factory;
 import com.android.messaging.R;
-import com.android.messaging.data.conversationsettings.repository.ConversationNotificationRepository;
+import com.android.messaging.data.conversationsettings.repository.ConversationSnoozeQuery;
 import com.android.messaging.datamodel.MessageNotificationState.Conversation;
 import com.android.messaging.datamodel.action.MarkAsReadAction;
 import com.android.messaging.datamodel.action.MarkAsSeenAction;
@@ -141,7 +141,8 @@ public class BugleNotifications {
             cancel(PendingIntentConstants.SMS_NOTIFICATION_ID);
             return;
         }
-        if (conversationId != null && isConversationSnoozed(conversationId)) {
+        if (conversationId != null
+                && ConversationSnoozeQuery.isConversationSnoozed(conversationId)) {
             LogUtil.d(TAG, "Skipping notification: conversation snoozed, id=" + conversationId);
             cancel(PendingIntentConstants.SMS_NOTIFICATION_ID, conversationId);
             return;
@@ -206,14 +207,6 @@ public class BugleNotifications {
         if (LogUtil.isLoggable(TAG, LogUtil.DEBUG)) {
             LogUtil.d(TAG, "Canceled notifications of type " + type);
         }
-    }
-
-    private static boolean isConversationSnoozed(final String conversationId) {
-        final Context context = Factory.get().getApplicationContext();
-        final ConversationNotificationRepository repository = EntryPointAccessors
-                .fromApplication(context, ConversationNotificationRepository.Provider.class)
-                .conversationNotificationRepository();
-        return repository.isSnoozed(conversationId);
     }
 
     private static void playObservableSoundUnlessBlocked(final String conversationId) {
