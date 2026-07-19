@@ -15,14 +15,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 internal interface MessageDetailsScreenModel {
     val uiState: StateFlow<State>
-
-    fun onArguments(conversationId: ConversationId, messageId: MessageId)
 
     fun onCopy(value: String)
 }
@@ -32,19 +28,20 @@ internal class MessageDetailsViewModel @Inject constructor(
     private val conversationsRepository: ConversationsRepository,
     private val messageDetailsUiStateMapper: MessageDetailsUiStateMapper,
     private val clipboardManager: ClipboardManager,
-    private val savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
     MessageDetailsScreenModel {
 
     private val _uiState = MutableStateFlow<State>(State.Loading)
     override val uiState = _uiState.asStateFlow()
 
-    private val conversationIdFlow: MutableStateFlow<ConversationId?> = MutableStateFlow(
+    private val conversationId: ConversationId = requireNotNull(
         ConversationId.fromOrNull(savedStateHandle[CONVERSATION_ID_KEY]),
-    )
-    private val messageIdFlow: MutableStateFlow<MessageId?> = MutableStateFlow(
+    ) { "conversationId is required" }
+
+    private val messageId: MessageId = requireNotNull(
         MessageId.fromOrNull(savedStateHandle[MESSAGE_ID_KEY]),
-    )
+    ) { "messageId is required" }
 
     init {
         bindMessageDetails()
@@ -52,31 +49,7 @@ internal class MessageDetailsViewModel @Inject constructor(
 
     private fun bindMessageDetails() {
         viewModelScope.launch {
-            combine(
-                conversationIdFlow,
-                messageIdFlow,
-            ) { conversationId, messageId ->
-                MessageDetailsArguments(
-                    conversationId = conversationId,
-                    messageId = messageId,
-                )
-            }.collectLatest { arguments ->
-                _uiState.value = loadMessageDetails(arguments)
-            }
-        }
-    }
-
-    override fun onArguments(
-        conversationId: ConversationId,
-        messageId: MessageId,
-    ) {
-        if (conversationIdFlow.value != conversationId) {
-            conversationIdFlow.value = conversationId
-            savedStateHandle[CONVERSATION_ID_KEY] = conversationId.value
-        }
-        if (messageIdFlow.value != messageId) {
-            messageIdFlow.value = messageId
-            savedStateHandle[MESSAGE_ID_KEY] = messageId.value
+            _uiState.value = loadMessageDetails()
         }
     }
 
@@ -84,14 +57,7 @@ internal class MessageDetailsViewModel @Inject constructor(
         clipboardManager.setPrimaryClip(ClipData.newPlainText(null, value))
     }
 
-    private suspend fun loadMessageDetails(arguments: MessageDetailsArguments): State {
-        val conversationId = arguments.conversationId
-        val messageId = arguments.messageId
-
-        if (conversationId == null || messageId == null) {
-            return State.Loading
-        }
-
+    private suspend fun loadMessageDetails(): State {
         val result = conversationsRepository.getMessageDetails(
             conversationId = conversationId,
             messageId = messageId,
@@ -103,13 +69,8 @@ internal class MessageDetailsViewModel @Inject constructor(
         )
     }
 
-    private data class MessageDetailsArguments(
-        val conversationId: ConversationId?,
-        val messageId: MessageId?,
-    )
-
     private companion object {
-        private const val CONVERSATION_ID_KEY = "conversation_id"
-        private const val MESSAGE_ID_KEY = "message_id"
+        private const val CONVERSATION_ID_KEY = "conversationId"
+        private const val MESSAGE_ID_KEY = "messageId"
     }
 }
