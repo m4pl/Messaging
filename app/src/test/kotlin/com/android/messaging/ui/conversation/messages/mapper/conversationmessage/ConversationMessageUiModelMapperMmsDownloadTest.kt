@@ -14,7 +14,7 @@ internal class ConversationMessageUiModelMapperMmsDownloadTest :
 
     @Test
     fun map_awaitingManualDownloadStatus_buildsMmsDownloadWithSizeAndExpiry() {
-        val uiModel = mapper.map(
+        val uiModel = mapPresent(
             messageData(
                 status = MessageData.BUGLE_STATUS_INCOMING_YET_TO_MANUAL_DOWNLOAD,
                 smsMessageSize = 2_048,
@@ -42,7 +42,7 @@ internal class ConversationMessageUiModelMapperMmsDownloadTest :
         )
 
         downloadingStatuses.forEach { status ->
-            val uiModel = mapper.map(messageData(status = status))
+            val uiModel = mapPresent(messageData(status = status))
 
             assertEquals(
                 "status=$status",
@@ -54,7 +54,7 @@ internal class ConversationMessageUiModelMapperMmsDownloadTest :
 
     @Test
     fun map_downloadFailedStatus_buildsDownloadFailedMmsDownload() {
-        val uiModel = mapper.map(
+        val uiModel = mapPresent(
             messageData(status = MessageData.BUGLE_STATUS_INCOMING_DOWNLOAD_FAILED),
         )
 
@@ -66,7 +66,7 @@ internal class ConversationMessageUiModelMapperMmsDownloadTest :
 
     @Test
     fun map_expiredStatus_buildsExpiredOrUnavailableMmsDownload() {
-        val uiModel = mapper.map(
+        val uiModel = mapPresent(
             messageData(status = MessageData.BUGLE_STATUS_INCOMING_EXPIRED_OR_NOT_AVAILABLE),
         )
 
@@ -85,7 +85,7 @@ internal class ConversationMessageUiModelMapperMmsDownloadTest :
         )
 
         nonDownloadStatuses.forEach { status ->
-            val uiModel = mapper.map(messageData(status = status))
+            val uiModel = mapPresent(messageData(status = status))
 
             assertNull("status=$status", uiModel.mmsDownload)
         }
