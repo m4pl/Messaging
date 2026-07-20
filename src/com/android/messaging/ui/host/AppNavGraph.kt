@@ -2,27 +2,29 @@ package com.android.messaging.ui.host
 
 import android.app.role.RoleManager
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.android.messaging.ui.conversation.entry.ConversationEntryScreenModel
 import com.android.messaging.ui.conversation.entry.ConversationEntryViewModel
 import com.android.messaging.ui.conversation.entry.model.ConversationEntryLaunchRequest
-import com.android.messaging.ui.conversation.navigation.ConversationNavRouteState
-import com.android.messaging.ui.conversation.navigation.ConversationNavigationReducerImpl
+import com.android.messaging.ui.conversation.navigation.ConversationEntryNavState
+import com.android.messaging.ui.conversation.navigation.LocalConversationEntryNavState
 import com.android.messaging.ui.conversation.navigation.conversationLaunchBackStack
 import com.android.messaging.ui.navigation.AppNavDisplay
+import com.android.messaging.ui.navigation.LocalNavigator
 import com.android.messaging.ui.navigation.NavigationReducer
 import com.android.messaging.ui.navigation.NavigationReducerImpl
+import com.android.messaging.ui.navigation.Navigator
+import com.android.messaging.ui.navigation.rememberNavigator
 
 @Composable
 internal fun AppNavGraph(
@@ -36,62 +38,51 @@ internal fun AppNavGraph(
     entryModel: ConversationEntryScreenModel = hiltViewModel<ConversationEntryViewModel>(),
     navigationReducer: NavigationReducer = defaultNavigationReducer,
 ) {
-    val entryUiState by entryModel.uiState.collectAsStateWithLifecycle()
     val backStack = rememberNavBackStack(elements = startDestinations.toTypedArray())
     val processedLaunchGeneration = rememberSaveable {
         mutableStateOf(value = launchRequest?.launchGeneration)
     }
-    val conversationReducer = remember(navigationReducer) {
-        ConversationNavigationReducerImpl(navigationReducer = navigationReducer)
-    }
-    val routeState = AppNavRouteState(
+    val navigator = rememberNavigator(
         backStack = backStack,
-        navigationReducer = rememberUpdatedState(newValue = navigationReducer),
-        onFinish = rememberUpdatedState(newValue = onFinish),
-        onOnboardingComplete = rememberUpdatedState(newValue = onOnboardingComplete),
-        roleManager = rememberUpdatedState(newValue = roleManager),
+        navigationReducer = navigationReducer,
+        onFinish = onFinish,
     )
-    val conversationRouteState = ConversationNavRouteState(
-        backStack = backStack,
-        entryModel = rememberUpdatedState(newValue = entryModel),
-        entryUiState = rememberUpdatedState(newValue = entryUiState),
-        isLaunchedFromBubble = rememberUpdatedState(
-            newValue = launchRequest?.isLaunchedFromBubble == true,
-        ),
-        navigationReducer = rememberUpdatedState(newValue = conversationReducer),
-        onFinish = rememberUpdatedState(newValue = onFinish),
-    )
-    val entryProvider = remember(backStack) {
+    val currentOnOnboardingComplete = rememberUpdatedState(newValue = onOnboardingComplete)
+    val entryProvider = remember(roleManager) {
         appNavEntryProvider(
-            routeState = routeState,
-            conversationRouteState = conversationRouteState,
+            roleManager = roleManager,
+            onOnboardingComplete = { currentOnOnboardingComplete.value() },
         )
     }
+    val entryNavState = ConversationEntryNavState(
+        model = entryModel,
+        isLaunchedFromBubble = launchRequest?.isLaunchedFromBubble == true,
+    )
 
     AppNavGraphLaunchEffect(
         launchRequest = launchRequest,
         onLaunchRequest = entryModel::onLaunchRequest,
         onLaunchBackStackUpdate = { currentLaunchRequest ->
             applyLaunchToBackStack(
-                backStack = backStack,
+                navigator = navigator,
                 conversationRootDestinations = conversationRootDestinations,
                 launchRequest = currentLaunchRequest,
-                navigationReducer = navigationReducer,
                 processedLaunchGeneration = processedLaunchGeneration,
             )
         },
     )
 
-    AppNavDisplay(
-        backStack = backStack,
-        entryProvider = entryProvider,
-        onBack = {
-            if (!navigationReducer.pop(backStack = backStack)) {
-                onFinish()
-            }
-        },
-        modifier = modifier,
-    )
+    CompositionLocalProvider(
+        LocalNavigator provides navigator,
+        LocalConversationEntryNavState provides entryNavState,
+    ) {
+        AppNavDisplay(
+            backStack = backStack,
+            entryProvider = entryProvider,
+            onBack = navigator::back,
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable
@@ -110,10 +101,9 @@ private fun AppNavGraphLaunchEffect(
 }
 
 private fun applyLaunchToBackStack(
-    backStack: MutableList<NavKey>,
+    navigator: Navigator,
     conversationRootDestinations: List<NavKey>,
     launchRequest: ConversationEntryLaunchRequest?,
-    navigationReducer: NavigationReducer,
     processedLaunchGeneration: MutableState<Int?>,
 ) {
     val launchGeneration = launchRequest?.launchGeneration
@@ -123,8 +113,7 @@ private fun applyLaunchToBackStack(
     }
 
     processedLaunchGeneration.value = launchGeneration
-    navigationReducer.reset(
-        backStack = backStack,
+    navigator.reset(
         destinations = conversationLaunchBackStack(
             rootDestinations = conversationRootDestinations,
             launchRequest = launchRequest,
