@@ -4,7 +4,6 @@ import com.android.messaging.ui.classzero.ClassZeroActivity
 import com.android.messaging.ui.contact.AddContactActivity
 import com.android.messaging.ui.conversation.LaunchConversationActivity
 import com.android.messaging.ui.license.LicenseActivity
-import com.android.messaging.ui.onboarding.OnboardingActivity
 import com.android.messaging.ui.photoviewer.PhotoViewerActivity
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
@@ -25,7 +24,6 @@ internal class ActivityPermissionGateTest {
 
     private val intentionallyUngated = setOf<Class<*>>(
         MainActivity::class.java,
-        OnboardingActivity::class.java,
         LaunchConversationActivity::class.java,
         PhotoViewerActivity::class.java,
         LicenseActivity::class.java,
