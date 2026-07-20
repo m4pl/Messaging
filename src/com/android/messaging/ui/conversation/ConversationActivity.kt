@@ -1,6 +1,5 @@
 package com.android.messaging.ui.conversation
 
-import android.app.role.RoleManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -17,13 +16,9 @@ import com.android.messaging.ui.core.AppTheme
 import com.android.messaging.ui.host.AppNavGraph
 import com.android.messaging.ui.host.toConversationLaunchRequest
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 internal class ConversationActivity : BugleComponentActivity() {
-
-    @Inject
-    lateinit var roleManager: RoleManager
 
     private var launchGeneration = 0
     private var launchRequest: ConversationEntryLaunchRequest? by mutableStateOf(value = null)
@@ -52,8 +47,6 @@ internal class ConversationActivity : BugleComponentActivity() {
                     ),
                     conversationRootDestinations = emptyList(),
                     launchRequest = launchRequest,
-                    roleManager = roleManager,
-                    onOnboardingComplete = {},
                     onFinish = ::finishAfterTransition,
                 )
             }

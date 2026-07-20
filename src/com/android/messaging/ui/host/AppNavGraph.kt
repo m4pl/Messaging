@@ -1,6 +1,5 @@
 package com.android.messaging.ui.host
 
-import android.app.role.RoleManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -31,8 +30,6 @@ internal fun AppNavGraph(
     startDestinations: List<NavKey>,
     conversationRootDestinations: List<NavKey>,
     launchRequest: ConversationEntryLaunchRequest?,
-    roleManager: RoleManager,
-    onOnboardingComplete: () -> Unit,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
     entryModel: ConversationEntryScreenModel = hiltViewModel<ConversationEntryViewModel>(),
@@ -47,13 +44,7 @@ internal fun AppNavGraph(
         navigationReducer = navigationReducer,
         onFinish = onFinish,
     )
-    val currentOnOnboardingComplete = rememberUpdatedState(newValue = onOnboardingComplete)
-    val entryProvider = remember(roleManager) {
-        appNavEntryProvider(
-            roleManager = roleManager,
-            onOnboardingComplete = { currentOnOnboardingComplete.value() },
-        )
-    }
+    val entryProvider = remember { appNavEntryProvider() }
     val entryNavState = ConversationEntryNavState(
         model = entryModel,
         isLaunchedFromBubble = launchRequest?.isLaunchedFromBubble == true,

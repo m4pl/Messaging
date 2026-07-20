@@ -1,6 +1,5 @@
 package com.android.messaging.ui
 
-import android.app.role.RoleManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,21 +14,18 @@ import androidx.navigation3.runtime.NavKey
 import com.android.messaging.domain.onboarding.usecase.ShouldShowOnboarding
 import com.android.messaging.ui.conversation.entry.model.ConversationEntryLaunchRequest
 import com.android.messaging.ui.conversation.navigation.conversationLaunchBackStack
+import com.android.messaging.ui.conversationlist.navigation.ConversationListNavKey
 import com.android.messaging.ui.core.AppTheme
 import com.android.messaging.ui.host.AppNavGraph
 import com.android.messaging.ui.host.hasConversationLaunchPayload
 import com.android.messaging.ui.host.toConversationLaunchRequest
-import com.android.messaging.ui.navigation.ConversationListNavKey
-import com.android.messaging.ui.navigation.OnboardingNavKey
+import com.android.messaging.ui.onboarding.navigation.OnboardingNavKey
 import com.android.messaging.util.BugleActivityUtil
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
 internal class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var roleManager: RoleManager
 
     @Inject
     lateinit var shouldShowOnboarding: ShouldShowOnboarding
@@ -56,8 +52,6 @@ internal class MainActivity : ComponentActivity() {
                     startDestinations = startDestinations,
                     conversationRootDestinations = listOf(ConversationListNavKey),
                     launchRequest = launchRequest,
-                    roleManager = roleManager,
-                    onOnboardingComplete = ::resumeDataModel,
                     onFinish = ::finish,
                     modifier = Modifier.fillMaxSize(),
                 )
