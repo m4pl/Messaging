@@ -28,6 +28,16 @@ class NavKeySerializationTest {
     }
 
     @Test
+    fun conversationListNavKey_roundTripsThroughSavedState() {
+        assertRoundTrips(ConversationListNavKey)
+    }
+
+    @Test
+    fun onboardingNavKey_roundTripsThroughSavedState() {
+        assertRoundTrips(OnboardingNavKey)
+    }
+
+    @Test
     fun newChatNavKey_roundTripsThroughSavedState() {
         assertRoundTrips(NewChatNavKey)
     }

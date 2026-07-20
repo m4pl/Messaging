@@ -24,6 +24,7 @@ internal class ActivityPermissionGateTest {
     )
 
     private val intentionallyUngated = setOf<Class<*>>(
+        MainActivity::class.java,
         OnboardingActivity::class.java,
         LaunchConversationActivity::class.java,
         PhotoViewerActivity::class.java,

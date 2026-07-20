@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import com.android.messaging.Factory
-import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.onboarding.screen.model.OnboardingScreenEffect as Effect
 
 internal interface OnboardingEffectHandler {
@@ -32,8 +31,6 @@ internal class OnboardingEffectHandlerImpl(
 
             Effect.Redirect -> {
                 Factory.get().onRequiredPermissionsAcquired()
-                UIIntents.get().launchConversationListActivity(activity)
-                activity.finish()
             }
 
             is Effect.RequestRuntimePermissions -> Unit

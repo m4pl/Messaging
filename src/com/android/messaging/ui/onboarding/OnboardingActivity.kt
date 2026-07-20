@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.core.AppTheme
 import com.android.messaging.ui.onboarding.screen.OnboardingEffectHandlerImpl
 import com.android.messaging.ui.onboarding.screen.OnboardingScreen
@@ -32,8 +33,14 @@ class OnboardingActivity : ComponentActivity() {
                 OnboardingScreen(
                     effectHandler = effectHandler,
                     onNavigateBack = ::finish,
+                    onOnboardingComplete = ::redirectToConversationList,
                 )
             }
         }
+    }
+
+    private fun redirectToConversationList() {
+        UIIntents.get().launchConversationListActivity(this)
+        finish()
     }
 }
