@@ -8,6 +8,3 @@ internal data object OnboardingNavKey : NavKey
 
 @Serializable
 internal data object ConversationListNavKey : NavKey
-
-@Serializable
-internal data object ConversationGraphNavKey : NavKey

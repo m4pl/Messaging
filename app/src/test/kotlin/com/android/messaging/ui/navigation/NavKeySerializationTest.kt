@@ -23,11 +23,6 @@ class NavKeySerializationTest {
     private val serializer = NavKeySerializer<NavKey>()
 
     @Test
-    fun conversationGraphNavKey_roundTripsThroughSavedState() {
-        assertRoundTrips(ConversationGraphNavKey)
-    }
-
-    @Test
     fun conversationListNavKey_roundTripsThroughSavedState() {
         assertRoundTrips(ConversationListNavKey)
     }

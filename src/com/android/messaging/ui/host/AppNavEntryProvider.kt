@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import com.android.messaging.ui.conversation.navigation.ConversationNavRouteState
+import com.android.messaging.ui.conversation.navigation.conversationEntries
 import com.android.messaging.ui.conversationlist.chats.ConversationListEffectHandlerImpl
 import com.android.messaging.ui.conversationlist.chats.ConversationListScreen
 import com.android.messaging.ui.navigation.ConversationListNavKey
@@ -18,18 +20,24 @@ import com.android.messaging.ui.onboarding.screen.OnboardingScreen
 
 internal fun appNavEntryProvider(
     routeState: AppNavRouteState,
+    conversationRouteState: ConversationNavRouteState,
 ): (NavKey) -> NavEntry<NavKey> {
     return entryProvider {
         entry<ConversationListNavKey>(
-            content = conversationListRouteContent(),
+            content = conversationListRouteContent(
+                conversationRouteState = conversationRouteState,
+            ),
         )
         entry<OnboardingNavKey>(
             content = onboardingRouteContent(routeState = routeState),
         )
+        conversationEntries(routeState = conversationRouteState)
     }
 }
 
-private fun conversationListRouteContent(): @Composable (ConversationListNavKey) -> Unit {
+private fun conversationListRouteContent(
+    conversationRouteState: ConversationNavRouteState,
+): @Composable (ConversationListNavKey) -> Unit {
     return {
         val activity = checkNotNull(LocalActivity.current)
         val hostView = LocalView.current
@@ -42,6 +50,17 @@ private fun conversationListRouteContent(): @Composable (ConversationListNavKey)
 
         ConversationListScreen(
             effectHandler = effectHandler,
+            onNavigateToConversation = { conversationId ->
+                conversationRouteState.navigationReducer.value.navigateToConversation(
+                    backStack = conversationRouteState.backStack,
+                    conversationId = conversationId,
+                )
+            },
+            onNavigateToNewChat = {
+                conversationRouteState.navigationReducer.value.navigateToNewChat(
+                    backStack = conversationRouteState.backStack,
+                )
+            },
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -66,7 +85,7 @@ private fun onboardingRouteContent(
             onOnboardingComplete = {
                 routeState.navigationReducer.value.reset(
                     backStack = routeState.backStack,
-                    destination = ConversationListNavKey,
+                    destinations = listOf(ConversationListNavKey),
                 )
                 routeState.onOnboardingComplete.value()
             },
