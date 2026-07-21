@@ -100,9 +100,7 @@ internal class ConversationActivity : BugleComponentActivity() {
             .let(::startActivity)
     }
 
-    companion object {
-        const val FINISH_RESULT_CODE: Int = 1
-
+    private companion object {
         private const val LAUNCH_GENERATION_STATE_KEY = "launch_generation"
     }
 }

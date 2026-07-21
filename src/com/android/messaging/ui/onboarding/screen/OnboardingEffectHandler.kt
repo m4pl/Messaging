@@ -5,8 +5,27 @@ import android.app.role.RoleManager
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import com.android.messaging.Factory
+import com.android.messaging.di.onboarding.OnboardingEntryPoint
 import com.android.messaging.ui.onboarding.screen.model.OnboardingScreenEffect as Effect
+import dagger.hilt.android.EntryPointAccessors
+
+@Composable
+internal fun rememberOnboardingEffectHandler(activity: Activity): OnboardingEffectHandler {
+    val context = LocalContext.current.applicationContext
+
+    return remember(activity, context) {
+        OnboardingEffectHandlerImpl(
+            activity = activity,
+            roleManager = EntryPointAccessors
+                .fromApplication(context, OnboardingEntryPoint::class.java)
+                .roleManager(),
+        )
+    }
+}
 
 internal interface OnboardingEffectHandler {
     fun handle(effect: Effect)

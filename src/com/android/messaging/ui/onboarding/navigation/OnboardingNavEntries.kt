@@ -1,14 +1,12 @@
 package com.android.messaging.ui.onboarding.navigation
 
-import android.app.role.RoleManager
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.android.messaging.ui.navigation.LocalNavigator
-import com.android.messaging.ui.onboarding.screen.OnboardingEffectHandlerImpl
 import com.android.messaging.ui.onboarding.screen.OnboardingScreen
+import com.android.messaging.ui.onboarding.screen.rememberOnboardingEffectHandler
 import com.android.messaging.util.BugleActivityUtil
 
 internal fun EntryProviderScope<NavKey>.onboardingEntry(
@@ -27,12 +25,7 @@ private fun onboardingRouteContent(
     return {
         val activity = checkNotNull(LocalActivity.current)
         val navigator = LocalNavigator.current
-        val effectHandler = remember(activity) {
-            OnboardingEffectHandlerImpl(
-                activity = activity,
-                roleManager = activity.getSystemService(RoleManager::class.java),
-            )
-        }
+        val effectHandler = rememberOnboardingEffectHandler(activity = activity)
 
         OnboardingScreen(
             effectHandler = effectHandler,
