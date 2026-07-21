@@ -9,7 +9,7 @@ import com.android.messaging.ui.onboarding.screen.OnboardingScreen
 import com.android.messaging.ui.onboarding.screen.rememberOnboardingEffectHandler
 import com.android.messaging.util.BugleActivityUtil
 
-internal fun EntryProviderScope<NavKey>.onboardingEntry(
+internal fun EntryProviderScope<NavKey>.onboardingEntries(
     destinationAfterOnboarding: NavKey,
 ) {
     entry<OnboardingNavKey>(
@@ -25,7 +25,7 @@ private fun onboardingRouteContent(
     return {
         val activity = checkNotNull(LocalActivity.current)
         val navigator = LocalNavigator.current
-        val effectHandler = rememberOnboardingEffectHandler(activity = activity)
+        val effectHandler = rememberOnboardingEffectHandler()
 
         OnboardingScreen(
             effectHandler = effectHandler,
