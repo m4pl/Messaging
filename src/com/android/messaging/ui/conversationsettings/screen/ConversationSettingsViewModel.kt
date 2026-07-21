@@ -7,7 +7,7 @@ import com.android.messaging.R
 import com.android.messaging.data.conversation.model.ConversationId
 import com.android.messaging.domain.conversation.usecase.participant.ResolveConversationId
 import com.android.messaging.domain.conversation.usecase.participant.model.ResolveConversationIdResult
-import com.android.messaging.ui.UIIntents
+import com.android.messaging.ui.conversationsettings.navigation.CONVERSATION_SETTINGS_CONVERSATION_ID_ARG
 import com.android.messaging.ui.conversationsettings.screen.delegate.ConversationSettingsDelegate
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsAction as Action
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsNavEvent as NavEvent
@@ -53,7 +53,7 @@ internal class ConversationSettingsViewModel @Inject constructor(
     override val uiState: StateFlow<State> = delegate.state
 
     override val rootConversationId: ConversationId = requireNotNull(
-        ConversationId.fromOrNull(savedStateHandle[UIIntents.UI_INTENT_EXTRA_CONVERSATION_ID]),
+        ConversationId.fromOrNull(savedStateHandle[CONVERSATION_SETTINGS_CONVERSATION_ID_ARG]),
     ) { "conversationId is required" }
 
     private var resolveConversationJob: Job? = null
@@ -181,7 +181,7 @@ internal class ConversationSettingsViewModel @Inject constructor(
         when (result) {
             is ResolveConversationIdResult.Resolved -> {
                 if (shouldOpenChat) {
-                    emitEffect(Effect.OpenParticipantChat(result.conversationId))
+                    emitNavigationEvent(NavEvent.OpenParticipantChat(result.conversationId))
                 } else {
                     emitNavigationEvent(NavEvent.OpenParticipantInfo(result.conversationId))
                 }

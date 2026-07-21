@@ -30,9 +30,7 @@ internal interface ConversationNavigator {
 
     fun replaceCurrentConversation(conversationId: ConversationId)
 
-    fun closeConversation(conversationId: ConversationId)
-
-    fun back()
+    fun replaceWithConversation(conversationId: ConversationId)
 }
 
 internal class ConversationNavigatorImpl(
@@ -96,25 +94,8 @@ internal class ConversationNavigatorImpl(
         backStack.add(updatedConversation)
     }
 
-    override fun closeConversation(conversationId: ConversationId) {
-        val remainingDestinations = backStack.dropLastWhile { navKey ->
-            navKey.belongsToConversation(conversationId)
-        }
-
-        if (remainingDestinations.isEmpty()) {
-            navigator.finish()
-            return
-        }
-
-        navigator.reset(destinations = remainingDestinations)
-    }
-
-    override fun back() {
-        navigator.back()
-    }
-
-    private fun NavKey.belongsToConversation(conversationId: ConversationId): Boolean {
-        return this is ConversationScopedNavKey && this.conversationId == conversationId
+    override fun replaceWithConversation(conversationId: ConversationId) {
+        navigator.replaceTop(destination = ConversationNavKey(conversationId = conversationId))
     }
 
     private fun removeTrailingConversationEntryDestinations() {

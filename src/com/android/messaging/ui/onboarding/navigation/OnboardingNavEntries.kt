@@ -10,17 +10,17 @@ import com.android.messaging.ui.onboarding.screen.rememberOnboardingEffectHandle
 import com.android.messaging.util.BugleActivityUtil
 
 internal fun EntryProviderScope<NavKey>.onboardingEntry(
-    destinationsAfterOnboarding: List<NavKey>,
+    destinationAfterOnboarding: NavKey,
 ) {
     entry<OnboardingNavKey>(
         content = onboardingRouteContent(
-            destinationsAfterOnboarding = destinationsAfterOnboarding,
+            destinationAfterOnboarding = destinationAfterOnboarding,
         ),
     )
 }
 
 private fun onboardingRouteContent(
-    destinationsAfterOnboarding: List<NavKey>,
+    destinationAfterOnboarding: NavKey,
 ): @Composable (OnboardingNavKey) -> Unit {
     return {
         val activity = checkNotNull(LocalActivity.current)
@@ -31,7 +31,7 @@ private fun onboardingRouteContent(
             effectHandler = effectHandler,
             onNavigateBack = navigator::back,
             onOnboardingComplete = {
-                navigator.reset(destinations = destinationsAfterOnboarding)
+                navigator.replaceTop(destination = destinationAfterOnboarding)
                 BugleActivityUtil.onActivityResume(activity, activity)
             },
         )
