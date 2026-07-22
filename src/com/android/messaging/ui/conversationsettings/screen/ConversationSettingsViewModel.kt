@@ -7,7 +7,6 @@ import com.android.messaging.R
 import com.android.messaging.data.conversation.model.ConversationId
 import com.android.messaging.domain.conversation.usecase.participant.ResolveConversationId
 import com.android.messaging.domain.conversation.usecase.participant.model.ResolveConversationIdResult
-import com.android.messaging.ui.conversationsettings.navigation.CONVERSATION_SETTINGS_CONVERSATION_ID_ARG
 import com.android.messaging.ui.conversationsettings.screen.delegate.ConversationSettingsDelegate
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsAction as Action
 import com.android.messaging.ui.conversationsettings.screen.model.ConversationSettingsNavEvent as NavEvent
@@ -23,6 +22,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+
+internal const val CONVERSATION_SETTINGS_CONVERSATION_ID_ARG = "conversationId"
 
 internal interface ConversationSettingsScreenModel {
     val effects: Flow<Effect>
