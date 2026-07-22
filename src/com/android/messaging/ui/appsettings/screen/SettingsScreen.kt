@@ -32,6 +32,7 @@ import com.android.messaging.ui.common.components.horizontalSlideContentTransfor
 import com.android.messaging.ui.core.MessagingPreviewTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 internal fun SettingsScreen(
@@ -46,7 +47,6 @@ internal fun SettingsScreen(
 ) {
     val uiState by screenModel.uiState.collectAsStateWithLifecycle()
 
-    val currentOnNavigateToLicenses by rememberUpdatedState(onNavigateToLicenses)
     var currentRoute by rememberSaveable(stateSaver = SettingsNavRouteSavedState.Saver) {
         mutableStateOf(
             resolveInitialRoute(
@@ -68,13 +68,10 @@ internal fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(screenModel) {
-        screenModel.navigationEvents.collect { event ->
-            when (event) {
-                SettingsNavEvent.OpenLicenses -> currentOnNavigateToLicenses()
-            }
-        }
-    }
+    SettingsNavEvents(
+        navigationEvents = screenModel.navigationEvents,
+        onNavigateToLicenses = onNavigateToLicenses,
+    )
 
     // For single-SIM go directly to app settings
     val effectiveRoute = if (uiState.isMultiSim == false && currentRoute is SettingsNavRoute.Main) {
@@ -114,6 +111,22 @@ internal fun SettingsScreen(
         onRouteChange = { currentRoute = it },
         modifier = modifier,
     )
+}
+
+@Composable
+private fun SettingsNavEvents(
+    navigationEvents: Flow<SettingsNavEvent>,
+    onNavigateToLicenses: () -> Unit,
+) {
+    val currentOnNavigateToLicenses by rememberUpdatedState(onNavigateToLicenses)
+
+    LaunchedEffect(navigationEvents) {
+        navigationEvents.collect { event ->
+            when (event) {
+                SettingsNavEvent.OpenLicenses -> currentOnNavigateToLicenses()
+            }
+        }
+    }
 }
 
 @Composable
