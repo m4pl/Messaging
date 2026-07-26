@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
 import com.android.messaging.domain.onboarding.usecase.ShouldShowOnboarding
+import com.android.messaging.ui.appsettings.navigation.SettingsNavKey
+import com.android.messaging.ui.appsettings.navigation.goToSettings
 import com.android.messaging.ui.conversation.entry.ConversationLaunchStore
 import com.android.messaging.ui.conversation.entry.submitIntent
 import com.android.messaging.ui.conversation.navigation.conversationRoute
@@ -69,7 +71,13 @@ internal class MainActivity : ComponentActivity() {
         when {
             shouldShowOnboarding() -> Unit
 
-            intent.goToConversationList() -> launchDestinations.trySend(rootDestinations())
+            intent.goToConversationList() -> {
+                launchDestinations.trySend(rootDestinations())
+            }
+
+            intent.goToSettings() -> {
+                launchDestinations.trySend(rootDestinations() + SettingsNavKey)
+            }
 
             else -> {
                 val route = conversationRoute(intent) ?: return
@@ -94,11 +102,11 @@ internal class MainActivity : ComponentActivity() {
     }
 
     private fun startDestinations(intent: Intent): List<NavKey> {
-        if (shouldShowOnboarding()) {
-            return listOf(OnboardingNavKey)
+        return when {
+            shouldShowOnboarding() -> listOf(OnboardingNavKey)
+            intent.goToSettings() -> rootDestinations() + SettingsNavKey
+            else -> rootDestinations() + conversationRoute(intent).orEmpty()
         }
-
-        return rootDestinations() + conversationRoute(intent).orEmpty()
     }
 
     private fun rootDestinations(): List<NavKey> {
