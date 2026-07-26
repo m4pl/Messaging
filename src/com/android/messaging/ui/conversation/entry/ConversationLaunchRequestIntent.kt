@@ -13,6 +13,10 @@ internal fun Intent.hasConversationLaunchPayload(): Boolean {
         hasExtra(UIIntents.UI_INTENT_EXTRA_ATTACHMENT_URI)
 }
 
+internal fun Intent.isComposeNewConversation(): Boolean {
+    return getBooleanExtra(UIIntents.UI_INTENT_EXTRA_COMPOSE_NEW_CONVERSATION, false)
+}
+
 internal fun Intent.toConversationLaunchRequest(): ConversationEntryLaunchRequest {
     val launchRequest = ConversationEntryLaunchRequest(
         conversationId = getStringExtra(

@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.NavKey
 import com.android.messaging.data.conversation.model.ConversationId
 import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.conversation.entry.hasConversationLaunchPayload
+import com.android.messaging.ui.conversation.entry.isComposeNewConversation
 
 internal fun conversationRoute(intent: Intent): List<NavKey>? {
     val conversationId = intent
@@ -12,8 +13,14 @@ internal fun conversationRoute(intent: Intent): List<NavKey>? {
         .let(ConversationId::fromOrNull)
 
     return when {
-        conversationId != null -> listOf(ConversationNavKey(conversationId))
-        intent.hasConversationLaunchPayload() -> listOf(NewChatNavKey)
+        conversationId != null -> {
+            listOf(ConversationNavKey(conversationId))
+        }
+
+        intent.isComposeNewConversation() || intent.hasConversationLaunchPayload() -> {
+            listOf(NewChatNavKey)
+        }
+
         else -> null
     }
 }

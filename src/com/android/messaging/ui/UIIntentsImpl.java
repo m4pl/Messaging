@@ -397,6 +397,8 @@ public class UIIntentsImpl extends UIIntents {
             // function again on a different conversation, they'll get a new PendingIntent instead
             // of the old one.
             intent.setAction(ACTION_WIDGET_CONVERSATION + conversationId);
+        } else {
+            intent.putExtra(UI_INTENT_EXTRA_COMPOSE_NEW_CONVERSATION, true);
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return getPendingIntentWithParentStack(context, intent, requestCode);
