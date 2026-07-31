@@ -64,7 +64,6 @@ import com.android.messaging.util.RingtoneUtil;
 import com.android.messaging.util.ThreadUtil;
 import com.android.messaging.util.UriUtil;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
