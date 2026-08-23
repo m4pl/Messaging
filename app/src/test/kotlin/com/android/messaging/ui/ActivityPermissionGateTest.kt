@@ -3,11 +3,9 @@ package com.android.messaging.ui
 import com.android.messaging.testutil.androidManifestDocument
 import com.android.messaging.testutil.elementsByTagName
 import com.android.messaging.ui.classzero.ClassZeroActivity
-import com.android.messaging.ui.contact.AddContactActivity
 import com.android.messaging.ui.conversation.ConversationActivity
 import com.android.messaging.ui.conversation.LaunchConversationActivity
 import com.android.messaging.ui.license.LicenseActivity
-import com.android.messaging.ui.photoviewer.PhotoViewerActivity
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -26,11 +24,9 @@ internal class ActivityPermissionGateTest {
         MainActivity::class.java,
         ConversationActivity::class.java,
         LaunchConversationActivity::class.java,
-        PhotoViewerActivity::class.java,
         LicenseActivity::class.java,
         TestActivity::class.java,
         ClassZeroActivity::class.java,
-        AddContactActivity::class.java,
     )
 
     @Test

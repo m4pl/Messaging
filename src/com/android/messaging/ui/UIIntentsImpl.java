@@ -25,7 +25,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract.Contacts;
@@ -44,12 +43,10 @@ import com.android.messaging.receiver.ConversationReadReceiver;
 import com.android.messaging.receiver.NotificationReceiver;
 import com.android.messaging.sms.MmsSmsUtils;
 import com.android.messaging.ui.classzero.ClassZeroActivity;
-import com.android.messaging.ui.contact.AddContactActivity;
 import com.android.messaging.ui.conversation.ConversationActivity;
 import com.android.messaging.ui.conversation.LaunchConversationActivity;
 import com.android.messaging.ui.conversationpicker.host.widget.WidgetPickConversationActivity;
 import com.android.messaging.ui.debug.DebugMmsConfigActivity;
-import com.android.messaging.ui.photoviewer.PhotoViewerActivity;
 import com.android.messaging.util.Assert;
 import com.android.messaging.util.ContentType;
 import com.android.messaging.util.ConversationIdSet;
@@ -164,27 +161,6 @@ public class UIIntentsImpl extends UIIntents {
     }
 
     @Override
-    public void launchAddContactActivity(final Context context, final String destination) {
-        final Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
-        final String destinationType = MmsSmsUtils.isEmailAddress(destination) ?
-                Intents.Insert.EMAIL : Intents.Insert.PHONE;
-        intent.setType(Contacts.CONTENT_ITEM_TYPE);
-        intent.putExtra(destinationType, destination);
-        startExternalActivity(context, intent);
-    }
-
-    @Override
-    public void launchAddContactConfirmation(final Context context, final Uri avatarUri,
-            final String destination) {
-        final Intent intent = new Intent(context, AddContactActivity.class);
-        intent.putExtra(AddContactActivity.EXTRA_DESTINATION, destination);
-        if (avatarUri != null) {
-            intent.putExtra(AddContactActivity.EXTRA_AVATAR_URI, avatarUri.toString());
-        }
-        context.startActivity(intent);
-    }
-
-    @Override
     public void launchPhoneCallActivity(final Context context, final String phoneNumber,
                                         final Point clickPosition) {
         final Intent intent = new Intent(Intent.ACTION_CALL,
@@ -222,16 +198,6 @@ public class UIIntentsImpl extends UIIntents {
         intent.putExtra("SingleItemOnly", true);
         intent.setDataAndType(videoUri, ContentType.VIDEO_UNSPECIFIED);
         startExternalActivity(context, intent);
-    }
-
-    @Override
-    public void launchFullScreenPhotoViewer(final Activity activity, final Uri initialPhoto,
-            final Rect initialPhotoBounds, final Uri photosUri,
-            final int initialPhotoOccurrenceIndex) {
-        activity.startActivity(PhotoViewerActivity.createIntent(
-                activity, initialPhoto, photosUri, initialPhotoBounds,
-                initialPhotoOccurrenceIndex));
-        activity.overridePendingTransition(0, 0);
     }
 
     @Override

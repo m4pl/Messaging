@@ -7,16 +7,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.android.messaging.data.conversation.model.ConversationId
-import com.android.messaging.data.conversation.model.ParticipantId
-import com.android.messaging.data.conversation.model.draft.ConversationDraft
+import com.android.messaging.ui.contact.navigation.navigateToAddContact
 import com.android.messaging.ui.conversation.addparticipants.AddParticipantsScreen
 import com.android.messaging.ui.conversation.addparticipants.rememberAddParticipantsEffectHandler
+import com.android.messaging.ui.conversation.entry.ConversationEntryScreenModel
 import com.android.messaging.ui.conversation.entry.NewChatScreen
-import com.android.messaging.ui.conversation.entry.model.ConversationEntryStartupAttachment
 import com.android.messaging.ui.conversation.entry.model.ConversationEntryUiState
 import com.android.messaging.ui.conversation.entry.rememberNewChatEffectHandler
 import com.android.messaging.ui.conversation.messagedetails.MessageDetailsScreen
 import com.android.messaging.ui.conversation.screen.ConversationScreen
+import com.android.messaging.ui.conversation.screen.model.ConversationPendingLaunchPayload
 import com.android.messaging.ui.navigation.LocalNavigator
 import com.android.messaging.ui.navigation.SeededViewModelStoreOwner
 
@@ -37,60 +37,80 @@ internal fun EntryProviderScope<NavKey>.conversationEntries() {
 
 private fun conversationScreenRouteContent(): @Composable (ConversationNavKey) -> Unit {
     return { navKey ->
-        val conversationId = navKey.conversationId
         val entryNavState = LocalConversationEntryNavState.current
-        val entryModel = entryNavState.model
-        val entryUiState by entryModel.uiState.collectAsStateWithLifecycle()
-        val navigator = rememberConversationNavigator()
-        val appNavigator = LocalNavigator.current
-        val pendingPayload = pendingLaunchPayloadForConversation(
-            entryUiState = entryUiState,
-            conversationId = conversationId,
-        )
+        val entryUiState by entryNavState.model.uiState.collectAsStateWithLifecycle()
 
-        ConversationScreen(
-            conversationId = conversationId,
-            cancelIncomingNotification = !entryNavState.isLaunchedFromBubble,
-            onAddPeopleClick = {
-                navigator.navigateToAddParticipants(conversationId = conversationId)
-            },
-            onConversationDetailsClick = {
-                navigator.navigateToConversationSettings(conversationId = conversationId)
-            },
-            onNavigateToMessageDetails = { messageId ->
-                navigator.navigateToMessageDetails(
-                    conversationId = conversationId,
-                    messageId = messageId,
-                )
-            },
-            onNavigateToVCardDetail = { uri ->
-                navigator.navigateToVCardDetail(uri = uri)
-            },
-            onNavigateToForward = { messageId ->
-                navigator.navigateToForward(
-                    conversationId = conversationId,
-                    messageId = messageId,
-                )
-            },
-            onNavigateBack = appNavigator::back,
-            pendingDraft = pendingPayload.draft,
-            pendingScrollPosition = pendingPayload.scrollPosition,
-            pendingSelfParticipantId = pendingPayload.selfParticipantId,
-            pendingStartupAttachment = pendingPayload.startupAttachment,
-            onPendingDraftConsumed = {
-                entryModel.onDraftPayloadConsumed(conversationId = conversationId)
-            },
-            onPendingScrollPositionConsumed = {
-                entryModel.onScrollPositionConsumed(conversationId = conversationId)
-            },
-            onPendingSelfParticipantIdConsumed = {
-                entryModel.onPendingSelfParticipantIdConsumed(conversationId = conversationId)
-            },
-            onPendingStartupAttachmentConsumed = {
-                entryModel.onStartupAttachmentConsumed(conversationId = conversationId)
-            },
+        ConversationRoute(
+            conversationId = navKey.conversationId,
+            isLaunchedFromBubble = entryNavState.isLaunchedFromBubble,
+            entryModel = entryNavState.model,
+            entryUiState = entryUiState,
         )
     }
+}
+
+@Composable
+private fun ConversationRoute(
+    conversationId: ConversationId,
+    isLaunchedFromBubble: Boolean,
+    entryModel: ConversationEntryScreenModel,
+    entryUiState: ConversationEntryUiState,
+) {
+    val navigator = rememberConversationNavigator()
+    val appNavigator = LocalNavigator.current
+    val pendingPayload = pendingLaunchPayloadForConversation(
+        entryUiState = entryUiState,
+        conversationId = conversationId,
+    )
+
+    ConversationScreen(
+        conversationId = conversationId,
+        cancelIncomingNotification = !isLaunchedFromBubble,
+        onAddPeopleClick = {
+            navigator.navigateToAddParticipants(conversationId = conversationId)
+        },
+        onConversationDetailsClick = {
+            navigator.navigateToConversationSettings(conversationId = conversationId)
+        },
+        onNavigateToMessageDetails = { messageId ->
+            navigator.navigateToMessageDetails(
+                conversationId = conversationId,
+                messageId = messageId,
+            )
+        },
+        onNavigateToVCardDetail = { uri ->
+            navigator.navigateToVCardDetail(uri = uri)
+        },
+        onNavigateToPhotoViewer = { launchRequest ->
+            navigator.navigateToPhotoViewer(
+                conversationId = conversationId,
+                launchRequest = launchRequest,
+            )
+        },
+        onNavigateToAddContact = { request ->
+            appNavigator.navigateToAddContact(request = request)
+        },
+        onNavigateToForward = { messageId ->
+            navigator.navigateToForward(
+                conversationId = conversationId,
+                messageId = messageId,
+            )
+        },
+        onNavigateBack = appNavigator::back,
+        pendingLaunchPayload = pendingPayload,
+        onPendingDraftConsumed = {
+            entryModel.onDraftPayloadConsumed(conversationId = conversationId)
+        },
+        onPendingScrollPositionConsumed = {
+            entryModel.onScrollPositionConsumed(conversationId = conversationId)
+        },
+        onPendingSelfParticipantIdConsumed = {
+            entryModel.onPendingSelfParticipantIdConsumed(conversationId = conversationId)
+        },
+        onPendingStartupAttachmentConsumed = {
+            entryModel.onStartupAttachmentConsumed(conversationId = conversationId)
+        },
+    )
 }
 
 private fun newChatRouteContent(): @Composable (NewChatNavKey) -> Unit {
@@ -159,10 +179,3 @@ private fun pendingLaunchPayloadForConversation(
         startupAttachment = entryUiState.pendingStartupAttachment,
     )
 }
-
-private data class ConversationPendingLaunchPayload(
-    val draft: ConversationDraft? = null,
-    val scrollPosition: Int? = null,
-    val selfParticipantId: ParticipantId? = null,
-    val startupAttachment: ConversationEntryStartupAttachment? = null,
-)
