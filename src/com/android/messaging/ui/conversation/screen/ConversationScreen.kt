@@ -29,12 +29,12 @@ import com.android.messaging.ui.conversation.screen.model.ConversationScreenScaf
 internal fun ConversationScreen(
     modifier: Modifier = Modifier,
     conversationId: ConversationId? = null,
-    launchGeneration: Int? = null,
     cancelIncomingNotification: Boolean = true,
     onAddPeopleClick: () -> Unit,
     onConversationDetailsClick: () -> Unit,
     onNavigateToMessageDetails: (messageId: MessageId) -> Unit,
     onNavigateToVCardDetail: (uri: String) -> Unit,
+    onNavigateToForward: (messageId: MessageId) -> Unit,
     onNavigateBack: () -> Unit,
     pendingDraft: ConversationDraft? = null,
     pendingScrollPosition: Int? = null,
@@ -65,7 +65,6 @@ internal fun ConversationScreen(
 
     ConversationScreenRouteEffects(
         conversationId = conversationId,
-        launchGeneration = launchGeneration,
         cancelIncomingNotification = cancelIncomingNotification,
         pendingDraft = pendingDraft,
         pendingSelfParticipantId = pendingSelfParticipantId,
@@ -77,6 +76,7 @@ internal fun ConversationScreen(
         screenModel = screenModel,
         onNavigateToMessageDetails = onNavigateToMessageDetails,
         onNavigateToVCardDetail = onNavigateToVCardDetail,
+        onNavigateToForward = onNavigateToForward,
         onNavigateBack = onNavigateBack,
         onPendingDraftConsumed = onPendingDraftConsumed,
         onPendingSelfParticipantIdConsumed = onPendingSelfParticipantIdConsumed,

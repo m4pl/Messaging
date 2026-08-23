@@ -12,7 +12,6 @@ import com.android.messaging.data.media.repository.ConversationAttachmentsReposi
 import com.android.messaging.di.core.DefaultDispatcher
 import com.android.messaging.domain.conversation.usecase.action.CheckConversationActionRequirements
 import com.android.messaging.domain.conversation.usecase.action.ConversationActionRequirementsResult
-import com.android.messaging.domain.conversation.usecase.forward.CreateForwardedMessage
 import com.android.messaging.ui.conversation.common.ConversationScreenDelegate
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessagePartUiModel
 import com.android.messaging.ui.conversation.messages.model.message.ConversationMessageUiModel
@@ -21,6 +20,7 @@ import com.android.messaging.ui.conversation.screen.model.ConversationMessageDel
 import com.android.messaging.ui.conversation.screen.model.ConversationMessageSelectionAction
 import com.android.messaging.ui.conversation.screen.model.ConversationMessageSelectionUiState
 import com.android.messaging.ui.conversation.screen.model.ConversationScreenEffect as Effect
+import com.android.messaging.ui.conversation.screen.model.ConversationScreenNavEvent as NavEvent
 import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 internal interface ConversationMessageSelectionDelegate :
     ConversationScreenDelegate<ConversationMessageSelectionUiState> {
     val effects: Flow<Effect>
+    val navigationEvents: Flow<NavEvent>
 
     fun onMessageClick(messageId: MessageId)
 
@@ -65,21 +66,20 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
     private val clipboardManager: ClipboardManager,
     private val conversationAttachmentsRepository: ConversationAttachmentsRepository,
     private val conversationMessagesDelegate: ConversationMessagesDelegate,
-    private val createForwardedMessage: CreateForwardedMessage,
     private val conversationsRepository: ConversationsRepository,
     @param:DefaultDispatcher
     private val defaultDispatcher: CoroutineDispatcher,
 ) : ConversationMessageSelectionDelegate {
 
-    private val _effects = MutableSharedFlow<Effect>(
-        extraBufferCapacity = 1,
-    )
+    private val _effects = MutableSharedFlow<Effect>(extraBufferCapacity = 1)
+    private val _navigationEvents = MutableSharedFlow<NavEvent>(extraBufferCapacity = 1)
     private val _state = MutableStateFlow(ConversationMessageSelectionUiState())
     private val messageSelectionState = MutableStateFlow(
         ConversationMessageSelectionState(),
     )
 
     override val effects = _effects.asSharedFlow()
+    override val navigationEvents = _navigationEvents.asSharedFlow()
     override val state = _state.asStateFlow()
 
     private var boundScope: CoroutineScope? = null
@@ -249,26 +249,14 @@ internal class ConversationMessageSelectionDelegateImpl @Inject constructor(
         val selectedMessage = singleSelectedMessageOrNull() ?: return
 
         clearMessageSelection()
-
-        boundScope?.launch(defaultDispatcher) {
-            val forwardedMessage = createForwardedMessage(
-                conversationId = selectedMessage.conversationId,
-                messageId = selectedMessage.messageId,
-            ) ?: return@launch
-
-            _effects.emit(
-                Effect.LaunchForwardMessage(
-                    message = forwardedMessage,
-                ),
-            )
-        }
+        _navigationEvents.tryEmit(NavEvent.ForwardMessage(selectedMessage.messageId))
     }
 
     private fun openSelectedMessageDetails() {
         val selectedMessage = singleSelectedMessageOrNull() ?: return
 
         clearMessageSelection()
-        emitEffect(Effect.NavigateToMessageDetails(selectedMessage.messageId))
+        _navigationEvents.tryEmit(NavEvent.NavigateToMessageDetails(selectedMessage.messageId))
     }
 
     private fun requestDeleteSelectedMessages() {

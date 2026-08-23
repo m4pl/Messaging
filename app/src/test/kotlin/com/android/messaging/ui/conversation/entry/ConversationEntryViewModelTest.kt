@@ -6,6 +6,7 @@ import com.android.messaging.data.conversation.model.ConversationId
 import com.android.messaging.data.conversation.model.ParticipantId
 import com.android.messaging.data.conversation.model.draft.ConversationDraft
 import com.android.messaging.datamodel.data.MessageData
+import com.android.messaging.testutil.MainDispatcherRule
 import com.android.messaging.testutil.TEST_CONVERSATION_ID as CONVERSATION_ID
 import com.android.messaging.testutil.assertThat
 import com.android.messaging.ui.conversation.entry.model.ConversationEntryLaunchRequest
@@ -14,81 +15,90 @@ import com.android.messaging.ui.conversation.entry.model.ConversationEntryUiStat
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 internal class ConversationEntryViewModelTest {
 
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @Test
     fun launchRequest_setsConversationDraftScrollAndStartupAttachment() {
-        val draftData = mockk<MessageData>()
-        val mappedDraft = ConversationDraft(messageText = "Hello")
-        val mapper = createMapper(
-            draftData = draftData,
-            mappedDraft = mappedDraft,
-        )
-        val viewModel = createViewModel(mapper = mapper)
+        runTest(context = mainDispatcherRule.testDispatcher) {
+            val draftData = mockk<MessageData>()
+            val mappedDraft = ConversationDraft(messageText = "Hello")
+            val mapper = createMapper(draftData = draftData, mappedDraft = mappedDraft)
+            val launchStore = ConversationLaunchStoreImpl()
+            createViewModel(mapper = mapper, launchStore = launchStore).also { viewModel ->
+                launchStore.submit(
+                    request = ConversationEntryLaunchRequest(
+                        conversationId = CONVERSATION_ID,
+                        draftData = draftData,
+                        startupAttachmentUri = "content://media/1",
+                        startupAttachmentType = "image/png",
+                        messagePosition = 12,
+                    ),
+                )
+                advanceUntilIdle()
 
-        viewModel.onLaunchRequest(
-            launchRequest = ConversationEntryLaunchRequest(
-                launchGeneration = 4,
-                conversationId = CONVERSATION_ID,
-                draftData = draftData,
-                startupAttachmentUri = "content://media/1",
-                startupAttachmentType = "image/png",
-                messagePosition = 12,
-            ),
-        )
-
-        assertEquals(
-            ConversationEntryUiState(
-                launchGeneration = 4,
-                conversationId = CONVERSATION_ID,
-                pendingDraft = mappedDraft,
-                pendingScrollPosition = 12,
-                pendingStartupAttachment = ConversationEntryStartupAttachment(
-                    contentType = "image/png",
-                    contentUri = "content://media/1",
-                ),
-            ),
-            viewModel.uiState.value,
-        )
-        verify(exactly = 1) {
-            mapper.map(messageData = draftData)
+                assertEquals(
+                    ConversationEntryUiState(
+                        conversationId = CONVERSATION_ID,
+                        pendingDraft = mappedDraft,
+                        pendingScrollPosition = 12,
+                        pendingStartupAttachment = ConversationEntryStartupAttachment(
+                            contentType = "image/png",
+                            contentUri = "content://media/1",
+                        ),
+                    ),
+                    viewModel.uiState.value,
+                )
+            }
+            verify(exactly = 1) {
+                mapper.map(messageData = draftData)
+            }
         }
     }
 
     @Test
-    fun launchRequest_ignoresDuplicateGeneration() {
-        val draftData = mockk<MessageData>()
-        val mapper = createMapper(
-            draftData = draftData,
-            mappedDraft = ConversationDraft(messageText = "First"),
-        )
-        val viewModel = createViewModel(mapper = mapper)
-
-        viewModel.onLaunchRequest(
-            launchRequest = ConversationEntryLaunchRequest(
-                launchGeneration = 1,
-                conversationId = CONVERSATION_ID,
+    fun launchRequest_appliesEveryRequestUnconditionally() {
+        runTest(context = mainDispatcherRule.testDispatcher) {
+            val draftData = mockk<MessageData>()
+            val mapper = createMapper(
                 draftData = draftData,
-            ),
-        )
-        viewModel.onLaunchRequest(
-            launchRequest = ConversationEntryLaunchRequest(
-                launchGeneration = 1,
-                conversationId = ConversationId("conversation-2"),
-                draftData = draftData,
-            ),
-        )
+                mappedDraft = ConversationDraft(messageText = "First"),
+            )
+            val launchStore = ConversationLaunchStoreImpl()
+            val viewModel = createViewModel(mapper = mapper, launchStore = launchStore)
 
-        assertEquals(CONVERSATION_ID, viewModel.uiState.value.conversationId)
-        verify(exactly = 1) {
-            mapper.map(messageData = draftData)
+            launchStore.submit(
+                request = ConversationEntryLaunchRequest(
+                    conversationId = CONVERSATION_ID,
+                    draftData = draftData,
+                ),
+            )
+            launchStore.submit(
+                request = ConversationEntryLaunchRequest(
+                    conversationId = ConversationId("conversation-2"),
+                    draftData = draftData,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals(ConversationId("conversation-2"), viewModel.uiState.value.conversationId)
+            verify(exactly = 2) {
+                mapper.map(messageData = draftData)
+            }
         }
     }
 
@@ -109,90 +119,102 @@ internal class ConversationEntryViewModelTest {
 
     @Test
     fun consumeCallbacks_clearOnlyMatchingPendingValues() {
-        val viewModel = createViewModel()
-        viewModel.onLaunchRequest(
-            launchRequest = ConversationEntryLaunchRequest(
-                launchGeneration = 1,
+        runTest(context = mainDispatcherRule.testDispatcher) {
+            val launchStore = ConversationLaunchStoreImpl()
+            val viewModel = createViewModel(launchStore = launchStore)
+            launchStore.submit(
+                request = ConversationEntryLaunchRequest(
+                    conversationId = CONVERSATION_ID,
+                    draftData = mockk(),
+                    startupAttachmentUri = "content://media/1",
+                    startupAttachmentType = "image/png",
+                    messagePosition = 3,
+                ),
+            )
+            advanceUntilIdle()
+            viewModel.onConversationNavigationRequested(
                 conversationId = CONVERSATION_ID,
-                draftData = mockk(),
-                startupAttachmentUri = "content://media/1",
-                startupAttachmentType = "image/png",
-                messagePosition = 3,
-            ),
-        )
-        viewModel.onConversationNavigationRequested(
-            conversationId = CONVERSATION_ID,
-            pendingSelfParticipantId = ParticipantId("self-1"),
-        )
+                pendingSelfParticipantId = ParticipantId("self-1"),
+            )
 
-        viewModel.onDraftPayloadConsumed(conversationId = ConversationId("other"))
-        viewModel.onScrollPositionConsumed(conversationId = ConversationId("other"))
-        viewModel.onStartupAttachmentConsumed(conversationId = ConversationId("other"))
-        viewModel.onPendingSelfParticipantIdConsumed(conversationId = ConversationId("other"))
+            viewModel.onDraftPayloadConsumed(conversationId = ConversationId("other"))
+            viewModel.onScrollPositionConsumed(conversationId = ConversationId("other"))
+            viewModel.onStartupAttachmentConsumed(conversationId = ConversationId("other"))
+            viewModel.onPendingSelfParticipantIdConsumed(conversationId = ConversationId("other"))
 
-        assertEquals(
-            ConversationDraft(messageText = "Mapped"),
-            viewModel.uiState.value.pendingDraft,
-        )
-        assertEquals(3, viewModel.uiState.value.pendingScrollPosition)
-        assertThat(viewModel.uiState.value.pendingSelfParticipantId).isEqualTo(
-            ParticipantId("self-1"),
-        )
-        assertEquals(
-            ConversationEntryStartupAttachment(
-                contentType = "image/png",
-                contentUri = "content://media/1",
-            ),
-            viewModel.uiState.value.pendingStartupAttachment,
-        )
-
-        viewModel.onDraftPayloadConsumed(conversationId = CONVERSATION_ID)
-        viewModel.onScrollPositionConsumed(conversationId = CONVERSATION_ID)
-        viewModel.onStartupAttachmentConsumed(conversationId = CONVERSATION_ID)
-        viewModel.onPendingSelfParticipantIdConsumed(conversationId = CONVERSATION_ID)
-
-        assertNull(viewModel.uiState.value.pendingDraft)
-        assertNull(viewModel.uiState.value.pendingScrollPosition)
-        assertNull(viewModel.uiState.value.pendingSelfParticipantId)
-        assertNull(viewModel.uiState.value.pendingStartupAttachment)
-    }
-
-    @Test
-    fun launchRequestState_survivesViewModelRecreationViaSavedStateHandle() {
-        val draftData = mockk<MessageData>()
-        val mappedDraft = ConversationDraft(messageText = "Restored")
-        val mapper = createMapper(draftData = draftData, mappedDraft = mappedDraft)
-        val savedStateHandle = SavedStateHandle()
-
-        createViewModel(mapper = mapper, savedStateHandle = savedStateHandle).onLaunchRequest(
-            launchRequest = ConversationEntryLaunchRequest(
-                launchGeneration = 4,
-                conversationId = CONVERSATION_ID,
-                draftData = draftData,
-                startupAttachmentUri = "content://media/1",
-                startupAttachmentType = "image/png",
-                messagePosition = 12,
-            ),
-        )
-
-        val recreatedViewModel = createViewModel(
-            mapper = mapper,
-            savedStateHandle = savedStateHandle,
-        )
-
-        assertEquals(
-            ConversationEntryUiState(
-                launchGeneration = 4,
-                conversationId = CONVERSATION_ID,
-                pendingDraft = mappedDraft,
-                pendingScrollPosition = 12,
-                pendingStartupAttachment = ConversationEntryStartupAttachment(
+            assertEquals(
+                ConversationDraft(messageText = "Mapped"),
+                viewModel.uiState.value.pendingDraft,
+            )
+            assertEquals(3, viewModel.uiState.value.pendingScrollPosition)
+            assertThat(viewModel.uiState.value.pendingSelfParticipantId).isEqualTo(
+                ParticipantId("self-1"),
+            )
+            assertEquals(
+                ConversationEntryStartupAttachment(
                     contentType = "image/png",
                     contentUri = "content://media/1",
                 ),
-            ),
-            recreatedViewModel.uiState.value,
-        )
+                viewModel.uiState.value.pendingStartupAttachment,
+            )
+
+            viewModel.onDraftPayloadConsumed(conversationId = CONVERSATION_ID)
+            viewModel.onScrollPositionConsumed(conversationId = CONVERSATION_ID)
+            viewModel.onStartupAttachmentConsumed(conversationId = CONVERSATION_ID)
+            viewModel.onPendingSelfParticipantIdConsumed(conversationId = CONVERSATION_ID)
+
+            assertNull(viewModel.uiState.value.pendingDraft)
+            assertNull(viewModel.uiState.value.pendingScrollPosition)
+            assertNull(viewModel.uiState.value.pendingSelfParticipantId)
+            assertNull(viewModel.uiState.value.pendingStartupAttachment)
+        }
+    }
+
+    @Test
+    fun launchPayload_survivesRecreationAndIsNotReseededByAFreshStore() {
+        runTest(context = mainDispatcherRule.testDispatcher) {
+            val draftData = mockk<MessageData>()
+            val mappedDraft = ConversationDraft(messageText = "Restored")
+            val mapper = createMapper(draftData = draftData, mappedDraft = mappedDraft)
+            val savedStateHandle = SavedStateHandle()
+
+            val launchStore = ConversationLaunchStoreImpl()
+            createViewModel(
+                mapper = mapper,
+                savedStateHandle = savedStateHandle,
+                launchStore = launchStore,
+            )
+            launchStore.submit(
+                request = ConversationEntryLaunchRequest(
+                    conversationId = CONVERSATION_ID,
+                    draftData = draftData,
+                    startupAttachmentUri = "content://media/1",
+                    startupAttachmentType = "image/png",
+                    messagePosition = 12,
+                ),
+            )
+            advanceUntilIdle()
+
+            val recreatedViewModel = createViewModel(
+                mapper = mapper,
+                savedStateHandle = savedStateHandle,
+                launchStore = ConversationLaunchStoreImpl(),
+            )
+            advanceUntilIdle()
+
+            assertEquals(
+                ConversationEntryUiState(
+                    conversationId = CONVERSATION_ID,
+                    pendingDraft = mappedDraft,
+                    pendingScrollPosition = 12,
+                    pendingStartupAttachment = ConversationEntryStartupAttachment(
+                        contentType = "image/png",
+                        contentUri = "content://media/1",
+                    ),
+                ),
+                recreatedViewModel.uiState.value,
+            )
+        }
     }
 
     @Test
@@ -212,37 +234,15 @@ internal class ConversationEntryViewModelTest {
         )
     }
 
-    @Test
-    fun duplicateLaunchGeneration_isIgnoredAfterViewModelRecreation() {
-        val savedStateHandle = SavedStateHandle()
-
-        createViewModel(savedStateHandle = savedStateHandle).onLaunchRequest(
-            launchRequest = ConversationEntryLaunchRequest(
-                launchGeneration = 1,
-                conversationId = CONVERSATION_ID,
-                draftData = mockk(),
-            ),
-        )
-
-        val recreatedViewModel = createViewModel(savedStateHandle = savedStateHandle)
-        recreatedViewModel.onLaunchRequest(
-            launchRequest = ConversationEntryLaunchRequest(
-                launchGeneration = 1,
-                conversationId = ConversationId("conversation-2"),
-                draftData = mockk(),
-            ),
-        )
-
-        assertEquals(CONVERSATION_ID, recreatedViewModel.uiState.value.conversationId)
-    }
-
     private fun createViewModel(
         mapper: ConversationMessageDataDraftMapper = createMapper(),
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
+        launchStore: ConversationLaunchStore = ConversationLaunchStoreImpl(),
     ): ConversationEntryViewModel {
         return ConversationEntryViewModel(
             conversationMessageDataDraftMapper = mapper,
             savedStateHandle = savedStateHandle,
+            launchStore = launchStore,
         )
     }
 

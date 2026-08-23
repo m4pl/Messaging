@@ -31,7 +31,9 @@ import com.android.messaging.ui.conversation.mediapicker.ConversationMediaPicker
 import com.android.messaging.ui.conversation.mediapicker.RefreshConversationMediaPickerPermissionsEffect
 import com.android.messaging.ui.conversation.mediapicker.model.ConversationMediaPickerPermissionState
 import com.android.messaging.ui.conversation.screen.model.ConversationMediaPickerOverlayUiState
+import com.android.messaging.ui.conversation.screen.model.ConversationScreenNavEvent
 import com.android.messaging.ui.conversation.screen.model.ConversationScreenScaffoldUiState
+import com.android.messaging.ui.core.CollectEvents
 
 @Composable
 internal fun rememberOpenContactPickerCallback(
@@ -88,7 +90,6 @@ internal fun rememberAudioRecordingStartRequest(
 @Composable
 internal fun ConversationScreenRouteEffects(
     conversationId: ConversationId?,
-    launchGeneration: Int?,
     cancelIncomingNotification: Boolean,
     pendingDraft: ConversationDraft?,
     pendingSelfParticipantId: ParticipantId?,
@@ -100,6 +101,7 @@ internal fun ConversationScreenRouteEffects(
     screenModel: ConversationScreenModel,
     onNavigateToMessageDetails: (messageId: MessageId) -> Unit,
     onNavigateToVCardDetail: (uri: String) -> Unit,
+    onNavigateToForward: (messageId: MessageId) -> Unit,
     onNavigateBack: () -> Unit,
     onPendingDraftConsumed: () -> Unit,
     onPendingSelfParticipantIdConsumed: () -> Unit,
@@ -107,7 +109,6 @@ internal fun ConversationScreenRouteEffects(
 ) {
     ConversationPendingLaunchEffects(
         conversationId = conversationId,
-        launchGeneration = launchGeneration,
         pendingDraft = pendingDraft,
         pendingSelfParticipantId = pendingSelfParticipantId,
         pendingStartupAttachment = pendingStartupAttachment,
@@ -131,20 +132,31 @@ internal fun ConversationScreenRouteEffects(
         screenModel.dismissMessageSelection()
     }
 
+    CollectEvents(events = screenModel.navigationEvents) { event ->
+        when (event) {
+            ConversationScreenNavEvent.CloseConversation -> onNavigateBack()
+
+            is ConversationScreenNavEvent.NavigateToMessageDetails -> {
+                onNavigateToMessageDetails(event.messageId)
+            }
+
+            is ConversationScreenNavEvent.ForwardMessage -> {
+                onNavigateToForward(event.messageId)
+            }
+        }
+    }
+
     ConversationScreenEffects(
         screenModel = screenModel,
         snackbarHostState = snackbarHostState,
         hostBoundsState = hostBoundsState,
-        onNavigateToMessageDetails = onNavigateToMessageDetails,
         onNavigateToVCardDetail = onNavigateToVCardDetail,
-        onNavigateBack = onNavigateBack,
     )
 }
 
 @Composable
 private fun ConversationPendingLaunchEffects(
     conversationId: ConversationId?,
-    launchGeneration: Int?,
     pendingDraft: ConversationDraft?,
     pendingSelfParticipantId: ParticipantId?,
     pendingStartupAttachment: ConversationEntryStartupAttachment?,
@@ -157,8 +169,8 @@ private fun ConversationPendingLaunchEffects(
         screenModel.onConversationIdChanged(conversationId = conversationId)
     }
 
-    LaunchedEffect(conversationId, launchGeneration, pendingDraft, screenModel) {
-        if (conversationId != null && launchGeneration != null && pendingDraft != null) {
+    LaunchedEffect(conversationId, pendingDraft, screenModel) {
+        if (conversationId != null && pendingDraft != null) {
             screenModel.onSeedDraft(
                 conversationId = conversationId,
                 draft = pendingDraft,
@@ -169,13 +181,11 @@ private fun ConversationPendingLaunchEffects(
 
     LaunchedEffect(
         conversationId,
-        launchGeneration,
         pendingSelfParticipantId,
         screenModel,
     ) {
         if (
             conversationId != null &&
-            launchGeneration != null &&
             pendingSelfParticipantId != null
         ) {
             screenModel.onSimSelected(selfParticipantId = pendingSelfParticipantId)
@@ -185,13 +195,11 @@ private fun ConversationPendingLaunchEffects(
 
     LaunchedEffect(
         conversationId,
-        launchGeneration,
         pendingStartupAttachment,
         screenModel,
     ) {
         if (
             conversationId != null &&
-            launchGeneration != null &&
             pendingStartupAttachment != null
         ) {
             screenModel.onOpenStartupAttachment(

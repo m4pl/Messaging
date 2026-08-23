@@ -1,26 +1,26 @@
 package com.android.messaging.ui.conversation.navigation
 
+import android.content.Intent
 import androidx.navigation3.runtime.NavKey
-import com.android.messaging.ui.conversation.entry.model.ConversationEntryLaunchRequest
+import com.android.messaging.data.conversation.model.ConversationId
+import com.android.messaging.ui.UIIntents
+import com.android.messaging.ui.conversation.entry.hasConversationLaunchPayload
+import com.android.messaging.ui.conversation.entry.isComposeNewConversation
 
-internal fun conversationLaunchBackStack(
-    rootDestinations: List<NavKey>,
-    launchRequest: ConversationEntryLaunchRequest?,
-): List<NavKey> {
-    val destination = conversationLaunchDestination(launchRequest = launchRequest)
+internal fun conversationRoute(intent: Intent): List<NavKey>? {
+    val conversationId = intent
+        .getStringExtra(UIIntents.UI_INTENT_EXTRA_CONVERSATION_ID)
+        .let(ConversationId::fromOrNull)
 
-    return rootDestinations + listOfNotNull(destination)
-}
+    return when {
+        conversationId != null -> {
+            listOf(ConversationNavKey(conversationId))
+        }
 
-internal fun conversationLaunchDestination(
-    launchRequest: ConversationEntryLaunchRequest?,
-): NavKey? {
-    if (launchRequest == null) {
-        return null
+        intent.isComposeNewConversation() || intent.hasConversationLaunchPayload() -> {
+            listOf(NewChatNavKey)
+        }
+
+        else -> null
     }
-
-    return launchRequest
-        .conversationId
-        ?.let(::ConversationNavKey)
-        ?: NewChatNavKey
 }

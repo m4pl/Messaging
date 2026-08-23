@@ -1,4 +1,4 @@
-package com.android.messaging.ui.host
+package com.android.messaging.ui.conversation.entry
 
 import android.content.Intent
 import android.text.TextUtils
@@ -13,12 +13,12 @@ internal fun Intent.hasConversationLaunchPayload(): Boolean {
         hasExtra(UIIntents.UI_INTENT_EXTRA_ATTACHMENT_URI)
 }
 
-internal fun Intent.toConversationLaunchRequest(
-    launchGeneration: Int,
-    isLaunchedFromBubble: Boolean,
-): ConversationEntryLaunchRequest {
+internal fun Intent.isComposeNewConversation(): Boolean {
+    return getBooleanExtra(UIIntents.UI_INTENT_EXTRA_COMPOSE_NEW_CONVERSATION, false)
+}
+
+internal fun Intent.toConversationLaunchRequest(): ConversationEntryLaunchRequest {
     val launchRequest = ConversationEntryLaunchRequest(
-        launchGeneration = launchGeneration,
         conversationId = getStringExtra(
             UIIntents.UI_INTENT_EXTRA_CONVERSATION_ID
         ).let(ConversationId::fromOrNull),
@@ -36,7 +36,6 @@ internal fun Intent.toConversationLaunchRequest(
             UIIntents.UI_INTENT_EXTRA_MESSAGE_POSITION,
             -1,
         ).takeIf { position -> position >= 0 },
-        isLaunchedFromBubble = isLaunchedFromBubble,
     )
 
     removeExtra(UIIntents.UI_INTENT_EXTRA_DRAFT_DATA)

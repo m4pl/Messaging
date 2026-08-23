@@ -12,12 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect as ComposeRect
 import androidx.compose.ui.platform.LocalContext
@@ -29,10 +27,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.unit.dp
 import com.android.messaging.R
-import com.android.messaging.data.conversation.model.MessageId
 import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.common.components.snackbar.showActionSnackbar
 import com.android.messaging.ui.conversation.screen.model.ConversationScreenEffect
+import com.android.messaging.ui.core.CollectEvents
 import com.android.messaging.util.BuglePrefs
 import com.android.messaging.util.ContactUtil
 import com.android.messaging.util.LogUtil
@@ -46,9 +44,7 @@ internal fun ConversationScreenEffects(
     screenModel: ConversationScreenModel,
     snackbarHostState: SnackbarHostState,
     hostBoundsState: State<ComposeRect?>,
-    onNavigateToMessageDetails: (messageId: MessageId) -> Unit,
     onNavigateToVCardDetail: (uri: String) -> Unit,
-    onNavigateBack: () -> Unit,
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -58,32 +54,18 @@ internal fun ConversationScreenEffects(
         screenModel.onDefaultSmsRoleRequestResult(resultCode = result.resultCode)
     }
     val draftSentTick = remember { mutableIntStateOf(0) }
-    val currentContext = rememberUpdatedState(context)
-    val currentView = rememberUpdatedState(view)
-    val currentSnackbarHostState = rememberUpdatedState(snackbarHostState)
-    val currentHostBoundsState = rememberUpdatedState(hostBoundsState)
-    val currentLaunchRoleRequest = rememberUpdatedState<(Intent) -> Unit>(
-        defaultSmsRoleLauncher::launch,
-    )
-    val currentOnNavigateToMessageDetails = rememberUpdatedState(onNavigateToMessageDetails)
-    val currentOnNavigateToVCardDetail = rememberUpdatedState(onNavigateToVCardDetail)
-    val currentOnNavigateBack = rememberUpdatedState(onNavigateBack)
 
-    LaunchedEffect(screenModel) {
-        screenModel.effects.collect { effect ->
-            screenModel.handleConversationScreenEffect(
-                context = currentContext.value,
-                view = currentView.value,
-                snackbarHostState = currentSnackbarHostState.value,
-                hostBoundsState = currentHostBoundsState.value,
-                effect = effect,
-                launchRoleRequest = currentLaunchRoleRequest.value,
-                onNavigateToMessageDetails = currentOnNavigateToMessageDetails.value,
-                onNavigateToVCardDetail = currentOnNavigateToVCardDetail.value,
-                onNavigateBack = currentOnNavigateBack.value,
-                onDraftSent = { draftSentTick.intValue++ },
-            )
-        }
+    CollectEvents(events = screenModel.effects) { effect ->
+        screenModel.handleConversationScreenEffect(
+            context = context,
+            view = view,
+            snackbarHostState = snackbarHostState,
+            hostBoundsState = hostBoundsState,
+            effect = effect,
+            launchRoleRequest = defaultSmsRoleLauncher::launch,
+            onNavigateToVCardDetail = onNavigateToVCardDetail,
+            onDraftSent = { draftSentTick.intValue++ },
+        )
     }
 
     SendingMessageAnnouncement(triggerKey = draftSentTick.intValue)
@@ -96,18 +78,10 @@ private suspend fun ConversationScreenModel.handleConversationScreenEffect(
     hostBoundsState: State<ComposeRect?>,
     effect: ConversationScreenEffect,
     launchRoleRequest: (Intent) -> Unit,
-    onNavigateToMessageDetails: (messageId: MessageId) -> Unit,
     onNavigateToVCardDetail: (uri: String) -> Unit,
-    onNavigateBack: () -> Unit,
     onDraftSent: () -> Unit,
 ) {
     when (effect) {
-        ConversationScreenEffect.CloseConversation -> onNavigateBack()
-
-        is ConversationScreenEffect.NavigateToMessageDetails -> {
-            onNavigateToMessageDetails(effect.messageId)
-        }
-
         is ConversationScreenEffect.NavigateToVCardDetail -> {
             onNavigateToVCardDetail(effect.uri)
         }
@@ -147,7 +121,6 @@ private suspend fun ConversationScreenModel.handleConversationScreenEffect(
         }
 
         is ConversationScreenEffect.LaunchAddContactFlow,
-        is ConversationScreenEffect.LaunchForwardMessage,
         ConversationScreenEffect.NotifyDraftSent,
         is ConversationScreenEffect.OpenExternalUri,
         is ConversationScreenEffect.PlacePhoneCall,
@@ -176,13 +149,6 @@ private fun handleImmediateConversationScreenEffect(
             UIIntents.get().launchAddContactActivity(
                 context,
                 effect.destination,
-            )
-        }
-
-        is ConversationScreenEffect.LaunchForwardMessage -> {
-            UIIntents.get().launchForwardMessageActivity(
-                context,
-                effect.message,
             )
         }
 

@@ -9,6 +9,7 @@ import com.android.messaging.testutil.TEST_WAIT_TIMEOUT_MILLIS
 import com.android.messaging.testutil.assertThat
 import com.android.messaging.ui.UIIntents
 import com.android.messaging.ui.conversation.screen.model.ConversationScreenEffect
+import com.android.messaging.ui.conversation.screen.model.ConversationScreenNavEvent
 import com.android.messaging.util.ContactUtil
 import com.android.messaging.util.ContentType
 import io.mockk.every
@@ -35,7 +36,7 @@ internal class ConversationScreenImmediateEffectsTest : BaseConversationScreenEf
             },
         )
 
-        emitEffect(ConversationScreenEffect.CloseConversation)
+        emitNavigationEvent(ConversationScreenNavEvent.CloseConversation)
 
         composeTestRule.runOnIdle {
             assertEquals(1, navigationCount)
@@ -88,25 +89,6 @@ internal class ConversationScreenImmediateEffectsTest : BaseConversationScreenEf
 
         verify(timeout = TEST_WAIT_TIMEOUT_MILLIS, exactly = 1) {
             uiIntents.launchAddContactActivity(any(), CONTACT_DESTINATION)
-        }
-    }
-
-    @Test
-    fun launchForwardMessage_forwardsMessageToUiIntents() {
-        val uiIntents = mockk<UIIntents>(relaxed = true)
-        val message = mockk<MessageData>()
-        mockkStatic(UIIntents::class)
-        every { UIIntents.get() } returns uiIntents
-        setEffectsContent()
-
-        emitEffect(
-            ConversationScreenEffect.LaunchForwardMessage(
-                message = message,
-            ),
-        )
-
-        verify(timeout = TEST_WAIT_TIMEOUT_MILLIS, exactly = 1) {
-            uiIntents.launchForwardMessageActivity(any(), message)
         }
     }
 
@@ -188,8 +170,8 @@ internal class ConversationScreenImmediateEffectsTest : BaseConversationScreenEf
             onNavigateToMessageDetails = { messageId -> navigatedMessageId = messageId },
         )
 
-        emitEffect(
-            ConversationScreenEffect.NavigateToMessageDetails(
+        emitNavigationEvent(
+            ConversationScreenNavEvent.NavigateToMessageDetails(
                 messageId = MessageId("message-1"),
             ),
         )

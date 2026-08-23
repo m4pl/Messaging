@@ -56,6 +56,9 @@ public abstract class UIIntents {
     // For the widget to go to the ConversationList from the Conversation.
     public static final String UI_INTENT_EXTRA_GOTO_CONVERSATION_LIST = "goto_conv_list";
 
+    // For the widget to start composing a new conversation.
+    public static final String UI_INTENT_EXTRA_COMPOSE_NEW_CONVERSATION = "compose_new_conv";
+
     // Indicates whether a conversation is launched with custom transition.
     public static final String UI_INTENT_EXTRA_WITH_CUSTOM_TRANSITION = "with_custom_transition";
 
@@ -143,11 +146,6 @@ public abstract class UIIntents {
      * Launch an activity to show a class zero message
      */
     public abstract void launchClassZeroActivity(Context context, ContentValues messageValues);
-
-    /**
-     * Launch an activity to let the user forward a message
-     */
-    public abstract void launchForwardMessageActivity(Context context, MessageData message);
 
     /**
      * Launch an external activity that handles the intent to add VCard to contacts

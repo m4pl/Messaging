@@ -50,7 +50,6 @@ private fun conversationScreenRouteContent(): @Composable (ConversationNavKey) -
 
         ConversationScreen(
             conversationId = conversationId,
-            launchGeneration = entryUiState.launchGeneration,
             cancelIncomingNotification = !entryNavState.isLaunchedFromBubble,
             onAddPeopleClick = {
                 navigator.navigateToAddParticipants(conversationId = conversationId)
@@ -66,6 +65,12 @@ private fun conversationScreenRouteContent(): @Composable (ConversationNavKey) -
             },
             onNavigateToVCardDetail = { uri ->
                 navigator.navigateToVCardDetail(uri = uri)
+            },
+            onNavigateToForward = { messageId ->
+                navigator.navigateToForward(
+                    conversationId = conversationId,
+                    messageId = messageId,
+                )
             },
             onNavigateBack = appNavigator::back,
             pendingDraft = pendingPayload.draft,
